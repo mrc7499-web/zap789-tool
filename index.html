@@ -2,14 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Dashboard</title>
+<title>Zap789 PRO</title>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f5f6fa;
-}
+body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
 /* HEADER */
@@ -29,10 +25,10 @@ body{
   width:260px;
 }
 
-/* GRID */
+/* GRID = 4 คอลัมน์ */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  grid-template-columns:repeat(4,1fr);
   gap:20px;
   padding:20px;
 }
@@ -46,7 +42,6 @@ body{
   position:relative;
   line-height:1.5;
   font-size:14px;
-  transition:.15s;
 }
 .dark .card{background:#1e1e1e}
 
@@ -60,7 +55,6 @@ body{
   top:0;
   width:6px;
   height:100%;
-  border-radius:12px 0 0 12px;
 }
 
 .green::before{background:#22c55e}
@@ -69,7 +63,7 @@ body{
 .blue::before{background:#3b82f6}
 .orange::before{background:#f97316}
 
-/* ACTION */
+/* ACTION (hover only) */
 .actions{
   position:absolute;
   top:6px;
@@ -83,7 +77,6 @@ body{
   position:absolute;
   top:6px;
   left:6px;
-  font-size:14px;
 }
 
 /* VARIABLE */
@@ -92,10 +85,12 @@ body{
   color:#333;
   padding:2px 6px;
   border-radius:6px;
+  border:1px solid #ddd;
 }
 .dark .var{
-  background:#333;
+  background:#2a2f3a;
   color:#fff;
+  border:1px solid #444;
 }
 
 /* TOAST */
@@ -135,43 +130,33 @@ let DATA=[];
 let ADMINS=[];
 let favorites=new Set();
 let editMode=false;
+let hoverIndex=null;
 
 /* LOAD */
 async function init(){
-  try{
-    const d = await fetch(`${API}?action=get`).then(r=>r.json());
-    DATA = d;
+  const d=await fetch(`${API}?action=get`).then(r=>r.json());
+  DATA=d;
 
-    const a = await fetch(`${API}?action=admins`).then(r=>r.json());
-    ADMINS = a.map(x=>x[0]);
+  const a=await fetch(`${API}?action=admins`).then(r=>r.json());
+  ADMINS=a.map(x=>x[0]);
 
-    render();
-  }catch(e){
-    console.error(e);
-    alert("โหลดข้อมูลไม่สำเร็จ");
-  }
+  render();
 }
 init();
 
 /* RANDOM NAME */
 function randomName(){
-  if(ADMINS.length===0) return "แอดมิน";
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)];
-}
-
-/* APPLY VARIABLE */
-function applyVars(text){
-  return text.replaceAll("{name}", randomName());
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
 }
 
 /* COPY */
-function copy(text){
-  navigator.clipboard.writeText(applyVars(text));
-  showToast();
+function copy(text,i){
+  navigator.clipboard.writeText(text.replaceAll("{name}",randomName()));
+  toast();
 }
 
 /* TOAST */
-function showToast(){
+function toast(){
   const t=document.getElementById("toast");
   t.style.opacity=1;
   setTimeout(()=>t.style.opacity=0,1200);
@@ -190,7 +175,6 @@ function toggleDark(){
 
 /* COLOR */
 function getColor(cat){
-  if(!cat) return "orange";
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
@@ -211,7 +195,7 @@ function highlight(text){
 }
 
 /* SORT */
-function sortedIndex(){
+function sorted(){
   return [...DATA.keys()].sort((a,b)=>{
     return (favorites.has(b)-favorites.has(a));
   });
@@ -219,33 +203,28 @@ function sortedIndex(){
 
 /* RENDER */
 function render(){
-  const grid=document.getElementById("grid");
-  const searchText=(document.getElementById("search").value||"").toLowerCase();
-
+  const s=(search.value||"").toLowerCase();
   let html="";
 
-  sortedIndex().forEach(i=>{
-    const row = DATA[i];
-    if(!row) return;
-
-    const cat=row[0]||"";
-    const text=row[1]||"";
-    const status=row[2]||"";
+  sorted().forEach(i=>{
+    const [cat,text,status,tags]=DATA[i];
 
     if(status==="deleted") return;
 
-    if(searchText && !text.toLowerCase().includes(searchText)) return;
+    if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+    <div class="card ${getColor(cat)}"
+      onmouseenter="hoverIndex=${i}"
+      onclick="copy(\`${text}\`,${i})">
 
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
-        ${favorites.has(i) ? "⭐" : "☆"}
+        ${favorites.has(i)?"⭐":"☆"}
       </div>
 
       ${highlight(text)}
 
-      ${editMode ? `
+      ${editMode?`
       <div class="actions">
         <button onclick="event.stopPropagation();edit(${i},\`${text}\`)">✏️</button>
         <button onclick="event.stopPropagation();del(${i})">🗑</button>
@@ -259,7 +238,7 @@ function render(){
 
 /* EDIT */
 function edit(i,old){
-  const t=prompt("แก้ไขข้อความ",old);
+  const t=prompt("แก้ไข",old);
   if(!t) return;
 
   fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
@@ -268,11 +247,24 @@ function edit(i,old){
 
 /* DELETE */
 function del(i){
-  if(!confirm("ลบ?")) return;
-
   fetch(`${API}?action=delete&row=${i}`)
   .then(()=>init());
 }
+
+/* SHORTCUT */
+document.addEventListener("keydown",(e)=>{
+  if(e.altKey){
+    let n=parseInt(e.key);
+    if(n>=1 && n<=4){
+      let i=sorted()[n-1];
+      if(i!==undefined) copy(DATA[i][1],i);
+    }
+  }
+
+  if(e.key==="e" && hoverIndex!==null && editMode){
+    edit(hoverIndex, DATA[hoverIndex][1]);
+  }
+});
 </script>
 
 </body>
