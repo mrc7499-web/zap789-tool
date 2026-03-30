@@ -9,23 +9,30 @@ body {
   font-family:system-ui;
   display:flex;
   height:100vh;
-  background:#f5f5f5;
+  background:#f3f4f6;
 }
 
 /* SIDEBAR */
 .sidebar {
-  width:200px;
-  background:#ff6a00;
-  color:#fff;
-  padding:10px;
+  width:220px;
+  background:#fff;
+  padding:15px;
+  border-right:1px solid #eee;
 }
-.sidebar div {
-  padding:12px;
+.logo {
+  font-weight:bold;
+  color:#ff6a00;
+  margin-bottom:15px;
+}
+.menu div {
+  padding:10px;
   border-radius:8px;
   cursor:pointer;
 }
-.sidebar div:hover {
-  background:rgba(255,255,255,0.2);
+.menu div.active,
+.menu div:hover {
+  background:#ff6a00;
+  color:#fff;
 }
 
 /* MAIN */
@@ -34,15 +41,14 @@ body {
   padding:20px;
 }
 
-/* TOP BAR */
-.top {
-  display:flex;
-  gap:10px;
+/* SEARCH */
+.search {
   margin-bottom:15px;
 }
-input {
+.search input {
+  width:100%;
   padding:10px;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid #ddd;
 }
 
@@ -51,37 +57,58 @@ input {
   background:#fff;
   padding:15px;
   margin-bottom:10px;
-  border-radius:10px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-/* TEXT */
 .text {
+  flex:1;
   cursor:pointer;
-  padding:8px;
-  border-radius:6px;
-}
-.text:hover {
-  background:#f1f1f1;
 }
 
-/* BUTTON */
-.btn {
+.text:hover {
+  opacity:0.7;
+}
+
+/* RIGHT ACTION */
+.actions button {
+  margin-left:5px;
   padding:6px 10px;
   border:none;
   border-radius:6px;
   cursor:pointer;
-  margin-top:5px;
 }
-.add { background:#ff6a00; color:#fff; }
-.copy { background:#22c55e; color:#fff; }
+
+.edit { background:#3b82f6; color:#fff; }
 .del { background:#ef4444; color:#fff; }
+
+/* ADD */
+.add {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+.add input {
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+.add button {
+  background:#ff6a00;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:8px 12px;
+}
 
 /* TOAST */
 .toast {
   position:fixed;
   bottom:20px;
   right:20px;
-  background:#333;
+  background:#111;
   color:#fff;
   padding:8px 12px;
   border-radius:6px;
@@ -94,18 +121,25 @@ input {
 
 <body>
 
-<div class="sidebar" id="menu"></div>
+<div class="sidebar">
+  <div class="logo">🔥 Zap789</div>
+  <div id="menu" class="menu"></div>
+</div>
 
 <div class="main">
-  <div class="top">
+
+  <div class="add">
     <input id="cat" placeholder="หมวด">
     <input id="text" placeholder="ข้อความ">
-    <button class="btn add" onclick="add()">+ เพิ่ม</button>
+    <button onclick="add()">+ เพิ่ม</button>
   </div>
 
-  <input id="search" placeholder="ค้นหา..." oninput="load()">
+  <div class="search">
+    <input id="search" placeholder="ค้นหา..." oninput="load()">
+  </div>
 
   <div id="list"></div>
+
 </div>
 
 <div id="toast" class="toast">คัดลอกแล้ว</div>
@@ -162,17 +196,14 @@ function load(){
 
       html+=`
       <div class="card">
-        <b>${cat}</b>
-
         <div class="text" onclick="copyText(\`${text}\`)">
-          ${text}
+          <b>${cat}</b><br>${text}
         </div>
 
-        <input value="${text}" onchange="edit(${i}, this.value)">
-
-        <button class="btn copy" onclick="copyText(\`${text}\`)">Copy</button>
-
-        ${role==="admin" ? `<button class="btn del" onclick="del(${i})">ลบ</button>` : ""}
+        <div class="actions">
+          <button class="edit" onclick="editPrompt(${i}, \`${text}\`)">แก้</button>
+          ${role==="admin" ? `<button class="del" onclick="del(${i})">ลบ</button>` : ""}
+        </div>
       </div>`;
     });
 
@@ -206,20 +237,25 @@ function add(){
   const cat = document.getElementById("cat").value;
   const text = document.getElementById("text").value;
 
-  fetch(API, {
+  fetch(API,{
     method:"POST",
-    body: JSON.stringify({ cat, text, user })
+    body:JSON.stringify({cat,text,user})
   }).then(()=>load());
 }
 
 /* EDIT */
-function edit(i,val){
-  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${user}`);
+function editPrompt(i,oldText){
+  const val = prompt("แก้ข้อความ", oldText);
+  if(!val) return;
+
+  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${user}`)
+  .then(()=>load());
 }
 
 /* DELETE */
 function del(i){
   if(!confirm("ลบ?")) return;
+
   fetch(`${API}?action=delete&index=${i}&user=${user}`)
   .then(()=>load());
 }
