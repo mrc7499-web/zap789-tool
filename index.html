@@ -8,28 +8,47 @@
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
-/* HEADER */
+/* HEADER + FILTER (STICKY) */
 .header{
   position:sticky;
   top:0;
+  z-index:100;
   background:#ff7a00;
-  color:#fff;
   padding:10px;
+}
+
+.topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-.logo{
-  font-weight:bold;
-  font-size:18px;
-}
+.logo{font-weight:bold;color:#fff}
 
 .search{
   padding:8px;
   border-radius:8px;
   border:none;
   width:240px;
+}
+
+/* CATEGORY BAR */
+.categories{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  overflow:auto;
+}
+.cat{
+  background:#fff;
+  padding:6px 10px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:13px;
+}
+.cat.active{
+  background:#000;
+  color:#fff;
 }
 
 /* GRID */
@@ -43,15 +62,15 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 /* CARD */
 .card{
   background:#fff;
-  padding:14px;
+  padding:16px;
   border-radius:12px;
-  cursor:pointer;
   position:relative;
+  cursor:pointer;
   line-height:1.5;
 }
 .dark .card{background:#1e1e1e}
 
-/* COLOR */
+/* COLOR BAR */
 .card::before{
   content:"";
   position:absolute;
@@ -65,29 +84,35 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .pink::before{background:#ec4899}
 .blue::before{background:#3b82f6}
 
-/* ACTION */
+/* ⭐ STAR (ย้ายขวาบนแล้ว) */
+.star{
+  position:absolute;
+  top:6px;
+  right:6px;
+  cursor:pointer;
+}
+
+/* ACTION (hover only) */
 .actions{
   position:absolute;
-  top:5px;
-  right:5px;
+  top:6px;
+  right:35px;
   display:none;
 }
 .card:hover .actions{display:block}
 
-/* STAR */
-.star{
-  position:absolute;
-  top:5px;
-  left:5px;
-}
-
-/* VARIABLE */
+/* VARIABLE TAG (แก้แล้ว) */
 .var{
-  background:#eee;
+  background:#eaeaea;
+  color:#222;
   padding:2px 6px;
-  border-radius:5px;
+  border-radius:6px;
+  font-weight:500;
 }
-.dark .var{background:#333;color:#fff}
+.dark .var{
+  background:#2a2f3a;
+  color:#fff;
+}
 
 /* TOAST */
 .toast{
@@ -106,11 +131,15 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 <body>
 
 <div class="header">
-  <div class="logo">🔥 Zap789 OWNER</div>
+  <div class="topbar">
+    <div class="logo">🔥 Zap789</div>
 
-  <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
 
-  <button onclick="toggleDark()">🌙</button>
+    <button onclick="toggleDark()">🌙</button>
+  </div>
+
+  <div id="cats" class="categories"></div>
 </div>
 
 <div id="grid" class="grid"></div>
@@ -119,11 +148,11 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[];
-let ADMINS=[];
+let DATA=[], ADMINS=[];
 let favorites=new Set();
+let currentCat="ทั้งหมด";
 
-/* 🚀 โหลดครั้งเดียว (เร็วขึ้นโคตรๆ) */
+/* LOAD */
 async function init(){
   const [data, admins] = await Promise.all([
     fetch(`${API}?action=get`).then(r=>r.json()),
@@ -152,7 +181,7 @@ function copy(text){
 function showToast(){
   const t=document.getElementById("toast");
   t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,800);
+  setTimeout(()=>t.style.opacity=0,1000);
 }
 
 /* COLOR */
@@ -174,15 +203,24 @@ function sorted(){
   return [...DATA.keys()].sort((a,b)=>favorites.has(b)-favorites.has(a));
 }
 
-/* RENDER (เร็ว ไม่มี fetch ซ้ำ) */
+/* HIGHLIGHT */
+function highlight(text){
+  return text.replaceAll("{name}",'<span class="var">{name}</span>');
+}
+
+/* RENDER */
 function render(){
   const s=(search.value||"").toLowerCase();
   let html="";
+  let cats=new Set(["ทั้งหมด"]);
 
   sorted().forEach(i=>{
     const [cat,text,status]=DATA[i];
     if(status==="deleted") return;
 
+    cats.add(cat);
+
+    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
@@ -192,7 +230,7 @@ function render(){
         ${favorites.has(i)?"⭐":"☆"}
       </div>
 
-      ${text.replaceAll("{name}",'<span class="var">{name}</span>')}
+      ${highlight(text)}
 
       <div class="actions">
         <button onclick="event.stopPropagation();edit(${i})">✏️</button>
@@ -202,9 +240,21 @@ function render(){
   });
 
   grid.innerHTML=html;
+
+  /* CATEGORY */
+  let cHTML="";
+  cats.forEach(c=>{
+    const count=DATA.filter(x=>x[0]===c).length;
+    cHTML+=`
+      <div class="cat ${c===currentCat?"active":""}"
+        onclick="currentCat='${c}';render()">
+        ${c} (${count})
+      </div>`;
+  });
+  document.getElementById("cats").innerHTML=cHTML;
 }
 
-/* EDIT (ไม่ reload หน้าแล้ว → เร็วขึ้น) */
+/* EDIT */
 function edit(i){
   const t=prompt("แก้",DATA[i][1]);
   if(!t) return;
