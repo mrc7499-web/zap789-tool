@@ -6,8 +6,9 @@
 body { font-family: Arial; background:#f5f6fa; margin:0; }
 .container { max-width:800px; margin:auto; padding:20px; }
 .card { background:#fff; padding:15px; margin:10px 0; border-radius:10px; }
-button { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; }
+button { padding:6px 10px; margin:3px; border:none; border-radius:6px; cursor:pointer; }
 .copy { background:#2ecc71; color:#fff; }
+.del { background:#e74c3c; color:#fff; }
 .add { background:#3498db; color:#fff; }
 .login { max-width:300px; margin:100px auto; }
 input { width:100%; padding:10px; margin:5px 0; }
@@ -39,51 +40,97 @@ input { width:100%; padding:10px; margin:5px 0; }
 
 const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
+let currentUser = "";
+
+// 🔐 SESSION AUTO LOGIN
+window.onload = () => {
+  const saved = localStorage.getItem("user");
+  if (saved) {
+    currentUser = saved;
+    loginBox.style.display = "none";
+    app.style.display = "block";
+    load();
+  }
+};
+
 // 🔐 LOGIN
 function login(){
-  const u = document.getElementById("user").value;
-  const p = document.getElementById("pass").value;
+  const u = user.value;
+  const p = pass.value;
 
-  fetch(`${API}?action=login&username=${u}&password=${p}`)
-    .then(res=>res.json())
-    .then(data=>{
-      if(data.status==="success"){
-        document.getElementById("loginBox").style.display="none";
-        document.getElementById("app").style.display="block";
-        load();
-      }else{
-        alert("รหัสผิด");
-      }
-    });
+  fetch(`${API}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`)
+  .then(r=>r.json())
+  .then(res=>{
+    if(res.status==="success"){
+      localStorage.setItem("user", u);
+      currentUser = u;
+
+      loginBox.style.display="none";
+      app.style.display="block";
+      load();
+    } else {
+      alert("รหัสผิด");
+    }
+  });
 }
 
 // 📥 LOAD
 function load(){
   fetch(`${API}?action=get`)
-    .then(res=>res.json())
-    .then(data=>{
-      let html="";
+  .then(r=>r.json())
+  .then(data=>{
+    let html="";
 
-      data.forEach(row=>{
-        html+=`
-        <div class="card">
-          <b>${row[0]}</b><br>
-          <div onclick="copyText(\`${row[1]}\`)">${row[1]}</div><br>
-          <button class="copy" onclick="copyText(\`${row[1]}\`)">Copy</button>
-        </div>`;
-      });
+    data.forEach((row,i)=>{
+      const safeText = row[1].replace(/`/g,"");
 
-      document.getElementById("list").innerHTML=html;
+      html+=`
+      <div class="card">
+        <b>${row[0]}</b><br>
+
+        <input value="${safeText}" onchange="edit(${i}, this.value)" />
+
+        <br>
+        <button class="copy" onclick="copyText(\`${safeText}\`)">Copy</button>
+        <button class="del" onclick="del(${i})">ลบ</button>
+      </div>`;
     });
+
+    list.innerHTML = html;
+  });
 }
 
 // ➕ ADD
 function add(){
-  const cat=document.getElementById("cat").value;
-  const text=document.getElementById("text").value;
+  const c = cat.value;
+  const t = text.value;
 
-  fetch(`${API}?action=add&cat=${cat}&text=${encodeURIComponent(text)}`)
-    .then(()=>load());
+  if(!c || !t){
+    alert("กรอกให้ครบ");
+    return;
+  }
+
+  fetch(`${API}?action=add&cat=${encodeURIComponent(c)}&text=${encodeURIComponent(t)}`)
+  .then(()=>{
+    cat.value="";
+    text.value="";
+    load();
+  });
+}
+
+// 🗑 DELETE
+function del(i){
+  if(!confirm("ลบใช่ไหม")){
+    return;
+  }
+
+  fetch(`${API}?action=delete&index=${i}&user=${currentUser}`)
+  .then(()=>load());
+}
+
+// ✏️ EDIT
+function edit(i,val){
+  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${currentUser}`);
 }
 
 // 📋 COPY
