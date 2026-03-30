@@ -2,42 +2,65 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 PRO</title>
+<title>Zap789 Dashboard</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f5f6fa}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f5f6fa;
+}
 .dark{background:#111;color:#eee}
 
+/* HEADER */
 .header{
   background:#ff7a00;
   color:#fff;
   padding:12px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
 
-.search{padding:8px;border-radius:8px;border:none;width:250px}
+.search{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  width:260px;
+}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:15px;
-  padding:15px;
+  gap:20px;
+  padding:20px;
 }
 
+/* CARD */
 .card{
   background:#fff;
-  padding:15px;
+  padding:16px;
   border-radius:12px;
   cursor:pointer;
   position:relative;
+  line-height:1.5;
+  font-size:14px;
+  transition:.15s;
 }
 .dark .card{background:#1e1e1e}
 
+.card:hover{transform:scale(1.02)}
+
+/* COLOR BAR */
 .card::before{
   content:"";
   position:absolute;
-  left:0;top:0;width:6px;height:100%;
+  left:0;
+  top:0;
+  width:6px;
+  height:100%;
+  border-radius:12px 0 0 12px;
 }
 
 .green::before{background:#22c55e}
@@ -46,33 +69,43 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .blue::before{background:#3b82f6}
 .orange::before{background:#f97316}
 
+/* ACTION */
 .actions{
   position:absolute;
-  top:5px;
-  right:5px;
+  top:6px;
+  right:6px;
   display:none;
 }
 .card:hover .actions{display:block}
 
+/* STAR */
 .star{
   position:absolute;
-  top:5px;
-  left:5px;
+  top:6px;
+  left:6px;
+  font-size:14px;
 }
 
+/* VARIABLE */
 .var{
-  background:#ddd;
-  padding:2px 4px;
-  border-radius:4px;
+  background:#eee;
+  color:#333;
+  padding:2px 6px;
+  border-radius:6px;
+}
+.dark .var{
+  background:#333;
+  color:#fff;
 }
 
+/* TOAST */
 .toast{
   position:fixed;
   bottom:20px;
   right:20px;
   background:#000;
   color:#fff;
-  padding:10px;
+  padding:10px 14px;
   border-radius:8px;
   opacity:0;
   transition:.3s;
@@ -98,40 +131,50 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[], CONFIG={}, ADMINS=[];
-let editMode=false;
+let DATA=[];
+let ADMINS=[];
 let favorites=new Set();
+let editMode=false;
 
 /* LOAD */
-fetch(`${API}?action=get`).then(r=>r.json()).then(d=>{DATA=d;render();});
-fetch(`${API}?action=admins`).then(r=>r.json()).then(d=>{ADMINS=d.map(x=>x[0]);});
+async function init(){
+  try{
+    const d = await fetch(`${API}?action=get`).then(r=>r.json());
+    DATA = d;
+
+    const a = await fetch(`${API}?action=admins`).then(r=>r.json());
+    ADMINS = a.map(x=>x[0]);
+
+    render();
+  }catch(e){
+    console.error(e);
+    alert("โหลดข้อมูลไม่สำเร็จ");
+  }
+}
+init();
 
 /* RANDOM NAME */
 function randomName(){
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
+  if(ADMINS.length===0) return "แอดมิน";
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)];
 }
 
-/* APPLY VARIABLES */
+/* APPLY VARIABLE */
 function applyVars(text){
-  text=text.replaceAll("{name}",randomName());
-  Object.keys(CONFIG).forEach(k=>{
-    text=text.replaceAll(`{${k}}`,CONFIG[k]);
-  });
-  return text;
+  return text.replaceAll("{name}", randomName());
 }
 
 /* COPY */
-function copy(text,i){
+function copy(text){
   navigator.clipboard.writeText(applyVars(text));
-  toast();
-  fetch(`${API}?action=count&row=${i}`);
+  showToast();
 }
 
 /* TOAST */
-function toast(){
+function showToast(){
   const t=document.getElementById("toast");
   t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1000);
+  setTimeout(()=>t.style.opacity=0,1200);
 }
 
 /* MODE */
@@ -147,6 +190,7 @@ function toggleDark(){
 
 /* COLOR */
 function getColor(cat){
+  if(!cat) return "orange";
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
@@ -167,7 +211,7 @@ function highlight(text){
 }
 
 /* SORT */
-function getSorted(){
+function sortedIndex(){
   return [...DATA.keys()].sort((a,b)=>{
     return (favorites.has(b)-favorites.has(a));
   });
@@ -175,23 +219,30 @@ function getSorted(){
 
 /* RENDER */
 function render(){
-  let html="";
-  const s=search.value.toLowerCase();
+  const grid=document.getElementById("grid");
+  const searchText=(document.getElementById("search").value||"").toLowerCase();
 
-  getSorted().forEach(i=>{
-    const [cat,text,status,tags,count]=DATA[i];
+  let html="";
+
+  sortedIndex().forEach(i=>{
+    const row = DATA[i];
+    if(!row) return;
+
+    const cat=row[0]||"";
+    const text=row[1]||"";
+    const status=row[2]||"";
+
     if(status==="deleted") return;
 
-    if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
+    if(searchText && !text.toLowerCase().includes(searchText)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`,${i})">
+    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
 
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${favorites.has(i) ? "⭐" : "☆"}
       </div>
 
-      <b>${cat}</b><br><br>
       ${highlight(text)}
 
       ${editMode ? `
@@ -208,27 +259,20 @@ function render(){
 
 /* EDIT */
 function edit(i,old){
-  const t=prompt("แก้ไข",old);
+  const t=prompt("แก้ไขข้อความ",old);
   if(!t) return;
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`).then(()=>location.reload());
+
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
+  .then(()=>init());
 }
 
 /* DELETE */
 function del(i){
-  fetch(`${API}?action=delete&row=${i}`).then(()=>location.reload());
-}
+  if(!confirm("ลบ?")) return;
 
-/* SHORTCUT ALT+1-5 */
-document.addEventListener("keydown",(e)=>{
-  if(e.altKey){
-    let n=parseInt(e.key);
-    if(n>=1 && n<=5){
-      let sorted=getSorted();
-      let i=sorted[n-1];
-      if(i!==undefined) copy(DATA[i][1],i);
-    }
-  }
-});
+  fetch(`${API}?action=delete&row=${i}`)
+  .then(()=>init());
+}
 </script>
 
 </body>
