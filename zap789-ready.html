@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>zap789 Tool</title>
+<style>
+body {
+  font-family:sans-serif;
+  background:#1e1e1e;
+  color:#fff;
+  padding:20px;
+}
+h2 { text-align:center; color:#ff7a00; }
+button {
+  margin:5px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#ff7a00;
+  color:white;
+}
+.card {
+  background:#2a2a2a;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  cursor:pointer;
+  white-space:pre-line;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔥 zap789 Team Tool</h2>
+
+<div id="tabs"></div>
+<div id="list"></div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?output=csv";
+
+const admins = ["น้องมิ้นท์ 💖","น้องแป้ง 🍰","น้องฟ้า ☁️","น้องมายด์ 🌸"];
+
+function randomAdmin(){
+  return admins[Math.floor(Math.random()*admins.length)];
+}
+
+let data=[];
+let currentTab="ทั้งหมด";
+
+async function loadData(){
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+
+  const rows = text.split("\n").slice(1);
+
+  data = rows.map(r=>{
+    const [cat,text] = r.split(",");
+    return {cat,text};
+  });
+
+  createTabs();
+  render();
+}
+
+function createTabs(){
+  const tabsDiv=document.getElementById("tabs");
+  tabsDiv.innerHTML="";
+
+  const cats=["ทั้งหมด",...new Set(data.map(d=>d.cat))];
+
+  cats.forEach(cat=>{
+    const btn=document.createElement("button");
+    btn.innerText=cat;
+    btn.onclick=()=>{
+      currentTab=cat;
+      render();
+    };
+    tabsDiv.appendChild(btn);
+  });
+}
+
+function render(){
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  data
+  .filter(d=> currentTab==="ทั้งหมด" || d.cat===currentTab)
+  .forEach(d=>{
+    if(!d.text) return;
+
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerText=d.text.replaceAll("{name}","น้องแอดมิน");
+
+    div.onclick=()=>{
+      const finalText=d.text.replaceAll("{name}",randomAdmin());
+      navigator.clipboard.writeText(finalText);
+    };
+
+    list.appendChild(div);
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
