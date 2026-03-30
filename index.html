@@ -2,19 +2,20 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body {
   margin:0;
-  font-family: system-ui;
+  font-family:system-ui;
   display:flex;
   height:100vh;
-  background:#f1f5f9;
+  background:#f5f5f5;
 }
 
 /* SIDEBAR */
 .sidebar {
-  width:220px;
-  background:#0f172a;
+  width:200px;
+  background:#ff6a00;
   color:#fff;
   padding:10px;
 }
@@ -24,68 +25,66 @@ body {
   cursor:pointer;
 }
 .sidebar div:hover {
-  background:#1e293b;
+  background:rgba(255,255,255,0.2);
 }
 
 /* MAIN */
 .main {
   flex:1;
   padding:20px;
-  overflow:auto;
+}
+
+/* TOP BAR */
+.top {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+input {
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
 }
 
 /* CARD */
 .card {
   background:#fff;
   padding:15px;
-  margin-bottom:12px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.05);
-  transition:.2s;
-}
-.card:hover {
-  transform:translateY(-2px);
+  margin-bottom:10px;
+  border-radius:10px;
 }
 
 /* TEXT */
 .text {
-  padding:10px;
-  border-radius:8px;
   cursor:pointer;
+  padding:8px;
+  border-radius:6px;
 }
 .text:hover {
-  background:#f1f5f9;
+  background:#f1f1f1;
 }
 
 /* BUTTON */
 .btn {
-  padding:6px 12px;
+  padding:6px 10px;
   border:none;
   border-radius:6px;
   cursor:pointer;
-  font-size:13px;
+  margin-top:5px;
 }
+.add { background:#ff6a00; color:#fff; }
 .copy { background:#22c55e; color:#fff; }
 .del { background:#ef4444; color:#fff; }
-
-/* SEARCH */
-input {
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  margin-bottom:15px;
-}
 
 /* TOAST */
 .toast {
   position:fixed;
   bottom:20px;
   right:20px;
-  background:#111;
+  background:#333;
   color:#fff;
-  padding:10px 15px;
-  border-radius:8px;
+  padding:8px 12px;
+  border-radius:6px;
   opacity:0;
   transition:.3s;
 }
@@ -98,7 +97,14 @@ input {
 <div class="sidebar" id="menu"></div>
 
 <div class="main">
+  <div class="top">
+    <input id="cat" placeholder="หมวด">
+    <input id="text" placeholder="ข้อความ">
+    <button class="btn add" onclick="add()">+ เพิ่ม</button>
+  </div>
+
   <input id="search" placeholder="ค้นหา..." oninput="load()">
+
   <div id="list"></div>
 </div>
 
@@ -146,22 +152,25 @@ function load(){
     const search = document.getElementById("search").value.toLowerCase();
 
     data.forEach((row,i)=>{
-      cats.add(row[0]);
+      const cat = row[0];
+      const text = row[1];
 
-      if(currentCat !== "ทั้งหมด" && row[0] !== currentCat) return;
-      if(search && !row[1].toLowerCase().includes(search)) return;
+      cats.add(cat);
+
+      if(currentCat !== "ทั้งหมด" && cat !== currentCat) return;
+      if(search && !text.toLowerCase().includes(search)) return;
 
       html+=`
       <div class="card">
-        <b>${row[0]}</b>
+        <b>${cat}</b>
 
-        <div class="text" onclick="copy(\`${row[1]}\`)">
-          ${row[1]}
+        <div class="text" onclick="copyText(\`${text}\`)">
+          ${text}
         </div>
 
-        <input value="${row[1]}" onchange="edit(${i}, this.value)" />
+        <input value="${text}" onchange="edit(${i}, this.value)">
 
-        <button class="btn copy" onclick="copy(\`${row[1]}\`)">Copy</button>
+        <button class="btn copy" onclick="copyText(\`${text}\`)">Copy</button>
 
         ${role==="admin" ? `<button class="btn del" onclick="del(${i})">ลบ</button>` : ""}
       </div>`;
@@ -187,9 +196,20 @@ function selectCat(c){
 }
 
 /* COPY */
-function copy(text){
+function copyText(text){
   navigator.clipboard.writeText(text);
   toast();
+}
+
+/* ADD */
+function add(){
+  const cat = document.getElementById("cat").value;
+  const text = document.getElementById("text").value;
+
+  fetch(API, {
+    method:"POST",
+    body: JSON.stringify({ cat, text, user })
+  }).then(()=>load());
 }
 
 /* EDIT */
