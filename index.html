@@ -8,66 +8,89 @@
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
-/* HEADER */
+/* HEADER (STICKY) */
 .header{
+  position:sticky;
+  top:0;
+  z-index:10;
   background:#ff7a00;
-  color:#fff;
-  padding:12px;
+  padding:10px;
   display:flex;
-  justify-content:space-between;
+  gap:10px;
   align-items:center;
 }
 
-.search{
-  padding:8px;
-  border-radius:8px;
-  border:none;
-  width:260px;
-}
+.search{padding:8px;border-radius:8px;border:none;width:220px}
 
-/* GRID = 4 คอลัมน์ */
+/* CATEGORY */
+.categories{
+  display:flex;
+  gap:8px;
+  overflow:auto;
+}
+.cat{
+  background:#fff;
+  padding:6px 10px;
+  border-radius:20px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.cat.active{background:#000;color:#fff}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:20px;
-  padding:20px;
+  gap:16px;
+  padding:16px;
 }
 
 /* CARD */
 .card{
   background:#fff;
-  padding:16px;
+  padding:14px;
   border-radius:12px;
-  cursor:pointer;
   position:relative;
+  cursor:pointer;
   line-height:1.5;
-  font-size:14px;
 }
 .dark .card{background:#1e1e1e}
-
-.card:hover{transform:scale(1.02)}
 
 /* COLOR BAR */
 .card::before{
   content:"";
   position:absolute;
-  left:0;
-  top:0;
-  width:6px;
-  height:100%;
+  left:0;top:0;width:5px;height:100%;
 }
-
 .green::before{background:#22c55e}
 .red::before{background:#ef4444}
 .pink::before{background:#ec4899}
 .blue::before{background:#3b82f6}
 .orange::before{background:#f97316}
 
-/* ACTION (hover only) */
+/* CATEGORY TEXT (MUTED) */
+.cat-label{
+  font-size:11px;
+  color:#999;
+  margin-bottom:4px;
+}
+
+/* VARIABLE */
+.var{
+  background:#eee;
+  border-radius:5px;
+  padding:2px 6px;
+}
+.dark .var{
+  background:#2a2f3a;
+  color:#fff;
+}
+
+/* ACTIONS */
 .actions{
   position:absolute;
-  top:6px;
-  right:6px;
+  top:5px;
+  right:5px;
   display:none;
 }
 .card:hover .actions{display:block}
@@ -75,22 +98,8 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 /* STAR */
 .star{
   position:absolute;
-  top:6px;
-  left:6px;
-}
-
-/* VARIABLE */
-.var{
-  background:#eee;
-  color:#333;
-  padding:2px 6px;
-  border-radius:6px;
-  border:1px solid #ddd;
-}
-.dark .var{
-  background:#2a2f3a;
-  color:#fff;
-  border:1px solid #444;
+  top:5px;
+  left:5px;
 }
 
 /* TOAST */
@@ -100,73 +109,94 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   right:20px;
   background:#000;
   color:#fff;
-  padding:10px 14px;
+  padding:10px;
   border-radius:8px;
   opacity:0;
-  transition:.3s;
 }
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modal-content{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  max-width:400px;
+}
+.dark .modal-content{background:#222;color:#fff}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  🔥 Zap789
   <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+  
+  <div id="cats" class="categories"></div>
 
-  <div>
-    <button onclick="toggleMode()">⚙️</button>
-    <button onclick="toggleDark()">🌙</button>
-  </div>
+  <button onclick="toggleDark()">🌙</button>
+  <button onclick="showHelp()">❓</button>
 </div>
 
 <div id="grid" class="grid"></div>
+
 <div id="toast" class="toast">✅ คัดลอกแล้ว</div>
+
+<!-- HELP -->
+<div id="help" class="modal">
+  <div class="modal-content">
+    <h3>⚡ วิธีใช้งาน</h3>
+    <p>คลิกการ์ด = คัดลอก</p>
+    <p>Alt+1-4 = ข้อความด่วน</p>
+    <p>{name} = ระบบใส่ให้เอง</p>
+    <button onclick="hideHelp()">ปิด</button>
+  </div>
+</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[];
-let ADMINS=[];
+let DATA=[], ADMINS=[], CONFIG={};
 let favorites=new Set();
-let editMode=false;
-let hoverIndex=null;
+let currentCat="ทั้งหมด";
+let focusIndex=0;
 
 /* LOAD */
 async function init(){
-  const d=await fetch(`${API}?action=get`).then(r=>r.json());
-  DATA=d;
-
-  const a=await fetch(`${API}?action=admins`).then(r=>r.json());
-  ADMINS=a.map(x=>x[0]);
-
+  DATA=await fetch(`${API}?action=get`).then(r=>r.json());
+  ADMINS=(await fetch(`${API}?action=admins`).then(r=>r.json())).map(x=>x[0]);
   render();
 }
 init();
 
-/* RANDOM NAME */
-function randomName(){
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
+/* VARIABLES */
+function applyVars(text){
+  text=text.replaceAll("{name}", ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน");
+  Object.keys(CONFIG).forEach(k=>{
+    text=text.replaceAll(`{${k}}`,CONFIG[k]);
+  });
+  return text;
 }
 
 /* COPY */
-function copy(text,i){
-  navigator.clipboard.writeText(text.replaceAll("{name}",randomName()));
+function copy(text){
+  navigator.clipboard.writeText(applyVars(text));
   toast();
 }
 
 /* TOAST */
 function toast(){
-  const t=document.getElementById("toast");
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1200);
+  toastEl.style.opacity=1;
+  setTimeout(()=>toastEl.style.opacity=0,1000);
 }
-
-/* MODE */
-function toggleMode(){
-  editMode=!editMode;
-  render();
-}
+const toastEl=document.getElementById("toast");
 
 /* DARK */
 function toggleDark(){
@@ -174,7 +204,7 @@ function toggleDark(){
 }
 
 /* COLOR */
-function getColor(cat){
+function color(cat){
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
@@ -182,89 +212,96 @@ function getColor(cat){
   return "orange";
 }
 
-/* PIN */
-function toggleFav(i){
-  if(favorites.has(i)) favorites.delete(i);
-  else favorites.add(i);
-  render();
-}
-
 /* HIGHLIGHT */
 function highlight(text){
-  return text.replaceAll("{name}", `<span class="var">{name}</span>`);
+  return text.replaceAll("{name}",'<span class="var">{name}</span>');
 }
 
 /* SORT */
 function sorted(){
   return [...DATA.keys()].sort((a,b)=>{
-    return (favorites.has(b)-favorites.has(a));
+    return favorites.has(b)-favorites.has(a);
   });
 }
 
 /* RENDER */
 function render(){
-  const s=(search.value||"").toLowerCase();
   let html="";
+  let cats=new Set(["ทั้งหมด"]);
+  const s=search.value.toLowerCase();
 
   sorted().forEach(i=>{
-    const [cat,text,status,tags]=DATA[i];
-
+    const [cat,text,status,tags,type]=DATA[i];
     if(status==="deleted") return;
 
+    cats.add(cat);
+
+    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}"
-      onmouseenter="hoverIndex=${i}"
-      onclick="copy(\`${text}\`,${i})">
-
+    <div class="card ${color(cat)}" onclick="copy(\`${text}\`)">
+      
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${favorites.has(i)?"⭐":"☆"}
       </div>
 
+      <div class="cat-label">${cat}</div>
+
       ${highlight(text)}
 
-      ${editMode?`
       <div class="actions">
-        <button onclick="event.stopPropagation();edit(${i},\`${text}\`)">✏️</button>
+        <button onclick="event.stopPropagation();edit(${i})">✏️</button>
         <button onclick="event.stopPropagation();del(${i})">🗑</button>
-      </div>`:""}
+      </div>
 
     </div>`;
   });
 
   grid.innerHTML=html;
+
+  let catHTML="";
+  cats.forEach(c=>{
+    catHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c} (${DATA.filter(x=>x[0]===c).length})</div>`;
+  });
+  catsEl.innerHTML=catHTML;
+}
+
+const grid=document.getElementById("grid");
+const catsEl=document.getElementById("cats");
+
+/* PIN */
+function toggleFav(i){
+  favorites.has(i)?favorites.delete(i):favorites.add(i);
+  render();
 }
 
 /* EDIT */
-function edit(i,old){
-  const t=prompt("แก้ไข",old);
+function edit(i){
+  const t=prompt("แก้",DATA[i][1]);
   if(!t) return;
-
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
-  .then(()=>init());
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`).then(init);
 }
 
 /* DELETE */
 function del(i){
-  fetch(`${API}?action=delete&row=${i}`)
-  .then(()=>init());
+  fetch(`${API}?action=delete&row=${i}`).then(init);
 }
 
-/* SHORTCUT */
-document.addEventListener("keydown",(e)=>{
+/* KEYBOARD */
+document.addEventListener("keydown",e=>{
   if(e.altKey){
     let n=parseInt(e.key);
-    if(n>=1 && n<=4){
+    if(n>=1&&n<=4){
       let i=sorted()[n-1];
-      if(i!==undefined) copy(DATA[i][1],i);
+      if(i!==undefined) copy(DATA[i][1]);
     }
   }
-
-  if(e.key==="e" && hoverIndex!==null && editMode){
-    edit(hoverIndex, DATA[hoverIndex][1]);
-  }
 });
+
+/* HELP */
+function showHelp(){help.style.display="flex"}
+function hideHelp(){help.style.display="none"}
 </script>
 
 </body>
