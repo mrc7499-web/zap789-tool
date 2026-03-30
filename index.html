@@ -8,7 +8,7 @@
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
-/* HEADER + FILTER (STICKY) */
+/* HEADER (Sticky ทั้งก้อน) */
 .header{
   position:sticky;
   top:0;
@@ -17,13 +17,14 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   padding:10px;
 }
 
+/* TOP */
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-.logo{font-weight:bold;color:#fff}
+.logo{color:#fff;font-weight:bold}
 
 .search{
   padding:8px;
@@ -32,20 +33,23 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   width:240px;
 }
 
-/* CATEGORY BAR */
+/* 🔥 FILTER BAR (กลับมาแล้ว + sticky) */
 .categories{
   margin-top:8px;
   display:flex;
   gap:8px;
   overflow:auto;
 }
+
 .cat{
   background:#fff;
   padding:6px 10px;
   border-radius:20px;
   cursor:pointer;
   font-size:13px;
+  white-space:nowrap;
 }
+
 .cat.active{
   background:#000;
   color:#fff;
@@ -84,30 +88,30 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .pink::before{background:#ec4899}
 .blue::before{background:#3b82f6}
 
-/* ⭐ STAR (ย้ายขวาบนแล้ว) */
+/* ⭐ STAR (แก้ตำแหน่งแล้วจริง) */
 .star{
   position:absolute;
-  top:6px;
-  right:6px;
+  top:10px;
+  right:10px;
   cursor:pointer;
+  z-index:2;
 }
 
-/* ACTION (hover only) */
+/* ACTION */
 .actions{
   position:absolute;
-  top:6px;
-  right:35px;
+  top:10px;
+  right:40px;
   display:none;
 }
 .card:hover .actions{display:block}
 
-/* VARIABLE TAG (แก้แล้ว) */
+/* VARIABLE */
 .var{
   background:#eaeaea;
   color:#222;
   padding:2px 6px;
   border-radius:6px;
-  font-weight:500;
 }
 .dark .var{
   background:#2a2f3a;
@@ -139,6 +143,7 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
     <button onclick="toggleDark()">🌙</button>
   </div>
 
+  <!-- 🔥 FILTER BAR -->
   <div id="cats" class="categories"></div>
 </div>
 
@@ -241,16 +246,18 @@ function render(){
 
   grid.innerHTML=html;
 
-  /* CATEGORY */
+  /* 🔥 FILTER BAR GENERATE */
   let cHTML="";
   cats.forEach(c=>{
     const count=DATA.filter(x=>x[0]===c).length;
+
     cHTML+=`
       <div class="cat ${c===currentCat?"active":""}"
         onclick="currentCat='${c}';render()">
         ${c} (${count})
       </div>`;
   });
+
   document.getElementById("cats").innerHTML=cHTML;
 }
 
