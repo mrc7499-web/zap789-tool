@@ -1,231 +1,134 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Admin Tool</title>
+<title>Zap789</title>
 
 <style>
-body {margin:0;font-family:sans-serif;background:#f5f6fa;}
+body {font-family:sans-serif;margin:0;background:#f4f6f9;}
 header {background:#ff7a00;color:#fff;padding:15px;text-align:center;}
-.container {display:flex;}
-.sidebar {width:220px;background:#fff;padding:10px;}
-.sidebar button {width:100%;padding:10px;margin-bottom:8px;border:none;border-radius:8px;background:#eee;cursor:pointer;}
-.sidebar button.active {background:#ff7a00;color:#fff;}
-.main {flex:1;padding:15px;}
-.topbar {display:flex;gap:10px;margin-bottom:10px;}
-input,select{padding:8px;border-radius:8px;border:1px solid #ccc;}
-.card{background:#fff;padding:10px;margin-bottom:10px;border-radius:10px;display:flex;justify-content:space-between;cursor:pointer;}
-.actions button{margin-left:5px;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;}
-.copy{background:#2ecc71;color:#fff;}
-.edit{background:#3498db;color:#fff;}
-.delete{background:#e74c3c;color:#fff;}
-.pin{background:#f1c40f;color:#fff;}
-#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px;border-radius:8px;opacity:0;transition:0.3s;}
-#toast.show{opacity:1;}
-#loginBox{text-align:center;margin-top:100px;}
+.container {display:flex}
+.sidebar {width:200px;background:#fff;padding:10px}
+.sidebar button {width:100%;margin:5px 0;padding:10px;border:none;background:#eee;cursor:pointer}
+.main {flex:1;padding:20px}
+.card {background:#fff;padding:10px;margin:10px 0;border-radius:10px;display:flex;justify-content:space-between}
+.edit {border:none;width:100%;background:transparent}
+.btn {margin-left:5px;padding:5px 10px;border:none;cursor:pointer}
+.copy{background:#4caf50;color:#fff}
+.del{background:red;color:#fff}
+.restore{background:blue;color:#fff}
 </style>
+
 </head>
 
 <body>
 
-<div id="loginBox">
-<h2>🔐 Login</h2>
-<input id="user" placeholder="Username"><br><br>
-<input id="pass" type="password" placeholder="Password"><br><br>
-<button onclick="login()">เข้าใช้งาน</button>
+<header>🔥 Zap789 Admin</header>
+
+<div id="loginBox" style="padding:20px;">
+  <input id="user" placeholder="user"><br><br>
+  <input id="pass" type="password" placeholder="pass"><br><br>
+  <button onclick="login()">Login</button>
 </div>
 
 <div id="app" style="display:none;">
-
-<header>🔥 Zap789 Admin Tool</header>
-
 <div class="container">
-<div class="sidebar" id="cats"></div>
+
+<div class="sidebar">
+  <button onclick="mode='active';render()">📂 ข้อความ</button>
+  <button onclick="mode='trash';render()">🗑 ถังขยะ</button>
+</div>
 
 <div class="main">
-<div class="topbar">
-<input id="search" placeholder="ค้นหา..." oninput="render()">
-<input id="newText" placeholder="ข้อความใหม่">
-<select id="newCat"></select>
-<button onclick="add()">➕</button>
-</div>
-
+<input id="search" placeholder="ค้นหา..." oninput="render()"><br><br>
 <div id="list"></div>
 </div>
-</div>
 
 </div>
-
-<div id="toast"></div>
+</div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let data=[];
-let current="ทั้งหมด";
-let pinned=[];
+let DATA=[];
+let user="";
+let role="";
+let mode="active";
 
-const names=["น้องแอด","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
-
-function rand(){
-  return names[Math.floor(Math.random()*names.length)];
+function login(){
+  google.script.run.withSuccessHandler(res=>{
+    if(res.status==="success"){
+      user=res.user;
+      role=res.role;
+      loginBox.style.display="none";
+      app.style.display="block";
+      load();
+    }else alert("ผิด");
+  }).login(userInput.value, pass.value);
 }
 
-function formatText(t){
-  return t
-    .replace("{name}", rand())
-    .replace("{time}", new Date().toLocaleTimeString())
-    .replace("{date}", new Date().toLocaleDateString());
-}
-
-function toast(msg){
-  const el=document.getElementById("toast");
-  el.innerText=msg;
-  el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),1500);
-}
-
-async function login(){
-  const username=user.value;
-  const password=pass.value;
-
-  const res=await fetch(API,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"login",
-      username,
-      password
-    })
-  });
-
-  const json=await res.json();
-
-  if(json.success){
-    loginBox.style.display="none";
-    app.style.display="block";
-    load();
-  }else{
-    alert("❌ รหัสผิด");
-  }
-}
-
-async function load(){
-  const res=await fetch(API);
-  const json=await res.json();
-
-  data=json.slice(1).map(r=>({
-    cat:r[0],
-    text:r[1]
-  }));
-
-  renderCats();
-  render();
-}
-
-function renderCats(){
-  const cats=["ทั้งหมด",...new Set(data.map(i=>i.cat))];
-
-  catsEl.innerHTML=cats.map(c=>{
-    const count=data.filter(i=>i.cat===c).length;
-    return `<button onclick="selectCat('${c}')" class="${c===current?'active':''}">
-      ${c} (${count})
-    </button>`;
-  }).join("");
-
-  newCat.innerHTML=cats.filter(c=>c!=="ทั้งหมด")
-    .map(c=>`<option>${c}</option>`).join("");
-}
-
-function selectCat(c){
-  current=c;
-  render();
-  renderCats();
+function load(){
+  google.script.run.withSuccessHandler(res=>{
+    DATA=res.slice(1);
+    render();
+  }).getData();
 }
 
 function render(){
-  const q=search.value.toLowerCase();
+  let kw=search.value.toLowerCase();
+  let list=DATA.filter((d)=>{
 
-  let list=data.filter(i=>
-    (current==="ทั้งหมด"||i.cat===current)&&
-    i.text.toLowerCase().includes(q)
-  );
+    if(mode==="active" && d[2]!=="active") return false;
+    if(mode==="trash" && d[2]!=="deleted") return false;
 
-  list=[...pinned,...list];
+    return d[1].toLowerCase().includes(kw);
+  });
 
-  listEl.innerHTML=list.map((i,idx)=>{
-    const t=formatText(i.text);
+  listDiv.innerHTML="";
 
-    return `
-    <div class="card" onclick="copy('${i.text}')">
-      <div style="flex:1;">${t}</div>
+  list.forEach((d,i)=>{
+    listDiv.innerHTML+=`
+    <div class="card">
+      <input class="edit" value="${d[1]}" 
+        onchange="edit(${i},this.value)">
+      <div>
+        <button class="btn copy" onclick="copy('${d[1]}')">📋</button>
 
-      <div class="actions">
-        <button class="copy" onclick="event.stopPropagation();copy('${i.text}')">📋</button>
-        <button class="pin" onclick="event.stopPropagation();pin(${idx})">⭐</button>
-        <button class="edit" onclick="event.stopPropagation();edit(${idx})">✏️</button>
-        <button class="delete" onclick="event.stopPropagation();del(${idx})">🗑</button>
+        ${role==="admin" ? `
+          ${mode==="active" 
+            ? `<button class="btn del" onclick="del(${i})">ลบ</button>`
+            : `<button class="btn restore" onclick="restore(${i})">กู้คืน</button>`
+          }
+        ` : ""}
       </div>
-    </div>
-    `;
-  }).join("");
+    </div>`;
+  });
 }
 
 function copy(t){
-  navigator.clipboard.writeText(formatText(t));
-  toast("คัดลอกแล้ว ✅");
+  navigator.clipboard.writeText(t);
+  alert("คัดลอกแล้ว");
 }
 
-function add(){
-  if(!newText.value)return;
-
-  fetch(API,{
-    method:"POST",
-    body: JSON.stringify({
-      id:newCat.value,
-      text:newText.value
-    })
-  });
-
-  data.push({cat:newCat.value,text:newText.value});
-  render();
-  toast("เพิ่มแล้ว");
+function edit(i,text){
+  let row=i+2;
+  google.script.run.updateRow(row,text);
+  google.script.run.addLog(user,"edit",text);
 }
 
 function del(i){
-  data.splice(i,1);
-  render();
-  toast("ลบแล้ว");
+  let row=i+2;
+  google.script.run.deleteRow(row);
+  google.script.run.addLog(user,"delete",DATA[i][1]);
+  load();
 }
 
-function edit(i){
-  const t=prompt("แก้ข้อความ",data[i].text);
-  if(t){
-    data[i].text=t;
-    render();
-    toast("แก้แล้ว");
-  }
+function restore(i){
+  let row=i+2;
+  google.script.run.restoreRow(row);
+  google.script.run.addLog(user,"restore",DATA[i][1]);
+  load();
 }
 
-function pin(i){
-  pinned.unshift(data[i]);
-  render();
-  toast("ปักหมุดแล้ว");
-}
-
-// shortcut
-document.addEventListener("keydown",(e)=>{
-  if(e.key==="/"){
-    e.preventDefault();
-    search.focus();
-  }
-});
-
-// shortcut variables
-const catsEl=document.getElementById("cats");
-const listEl=document.getElementById("list");
-const newCat=document.getElementById("newCat");
-const newText=document.getElementById("newText");
-const search=document.getElementById("search");
 </script>
 
 </body>
