@@ -3,142 +3,208 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body { font-family: Arial; background:#f5f6fa; margin:0; }
-.container { max-width:800px; margin:auto; padding:20px; }
-.card { background:#fff; padding:15px; margin:10px 0; border-radius:10px; }
-button { padding:6px 10px; margin:3px; border:none; border-radius:6px; cursor:pointer; }
-.copy { background:#2ecc71; color:#fff; }
-.del { background:#e74c3c; color:#fff; }
-.add { background:#3498db; color:#fff; }
-.login { max-width:300px; margin:100px auto; }
-input { width:100%; padding:10px; margin:5px 0; }
+body {
+  margin:0;
+  font-family: system-ui;
+  display:flex;
+  height:100vh;
+  background:#f1f5f9;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width:220px;
+  background:#0f172a;
+  color:#fff;
+  padding:10px;
+}
+.sidebar div {
+  padding:12px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.sidebar div:hover {
+  background:#1e293b;
+}
+
+/* MAIN */
+.main {
+  flex:1;
+  padding:20px;
+  overflow:auto;
+}
+
+/* CARD */
+.card {
+  background:#fff;
+  padding:15px;
+  margin-bottom:12px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  transition:.2s;
+}
+.card:hover {
+  transform:translateY(-2px);
+}
+
+/* TEXT */
+.text {
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.text:hover {
+  background:#f1f5f9;
+}
+
+/* BUTTON */
+.btn {
+  padding:6px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+}
+.copy { background:#22c55e; color:#fff; }
+.del { background:#ef4444; color:#fff; }
+
+/* SEARCH */
+input {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  margin-bottom:15px;
+}
+
+/* TOAST */
+.toast {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#111;
+  color:#fff;
+  padding:10px 15px;
+  border-radius:8px;
+  opacity:0;
+  transition:.3s;
+}
+.toast.show { opacity:1; }
 </style>
 </head>
 
 <body>
 
-<div id="loginBox" class="login">
-  <h3>Login</h3>
-  <input id="user" placeholder="username">
-  <input id="pass" type="password" placeholder="password">
-  <button onclick="login()">เข้า</button>
+<div class="sidebar" id="menu"></div>
+
+<div class="main">
+  <input id="search" placeholder="ค้นหา..." oninput="load()">
+  <div id="list"></div>
 </div>
 
-<div id="app" style="display:none;">
-  <div class="container">
-    <h2>📋 Zap789 Tool</h2>
-
-    <input id="cat" placeholder="หมวด">
-    <input id="text" placeholder="ข้อความ">
-    <button class="add" onclick="add()">+ เพิ่ม</button>
-
-    <div id="list"></div>
-  </div>
-</div>
+<div id="toast" class="toast">คัดลอกแล้ว</div>
 
 <script>
-
 const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let currentUser = "";
+let user = localStorage.getItem("user") || "";
+let role = localStorage.getItem("role") || "";
+let currentCat = "ทั้งหมด";
 
-// 🔐 SESSION AUTO LOGIN
-window.onload = () => {
-  const saved = localStorage.getItem("user");
-  if (saved) {
-    currentUser = saved;
-    loginBox.style.display = "none";
-    app.style.display = "block";
-    load();
-  }
-};
+/* LOGIN */
+if(!user){
+  const u = prompt("username");
+  const p = prompt("password");
 
-// 🔐 LOGIN
-function login(){
-  const u = user.value;
-  const p = pass.value;
-
-  fetch(`${API}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`)
+  fetch(`${API}?action=login&username=${u}&password=${p}`)
   .then(r=>r.json())
   .then(res=>{
     if(res.status==="success"){
       localStorage.setItem("user", u);
-      currentUser = u;
-
-      loginBox.style.display="none";
-      app.style.display="block";
-      load();
+      localStorage.setItem("role", res.role);
+      location.reload();
     } else {
       alert("รหัสผิด");
     }
   });
 }
 
-// 📥 LOAD
+/* TOAST */
+function toast(){
+  const t = document.getElementById("toast");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1000);
+}
+
+/* LOAD */
 function load(){
   fetch(`${API}?action=get`)
   .then(r=>r.json())
   .then(data=>{
     let html="";
+    let cats = new Set(["ทั้งหมด"]);
+    const search = document.getElementById("search").value.toLowerCase();
 
     data.forEach((row,i)=>{
-      const safeText = row[1].replace(/`/g,"");
+      cats.add(row[0]);
+
+      if(currentCat !== "ทั้งหมด" && row[0] !== currentCat) return;
+      if(search && !row[1].toLowerCase().includes(search)) return;
 
       html+=`
       <div class="card">
-        <b>${row[0]}</b><br>
+        <b>${row[0]}</b>
 
-        <input value="${safeText}" onchange="edit(${i}, this.value)" />
+        <div class="text" onclick="copy(\`${row[1]}\`)">
+          ${row[1]}
+        </div>
 
-        <br>
-        <button class="copy" onclick="copyText(\`${safeText}\`)">Copy</button>
-        <button class="del" onclick="del(${i})">ลบ</button>
+        <input value="${row[1]}" onchange="edit(${i}, this.value)" />
+
+        <button class="btn copy" onclick="copy(\`${row[1]}\`)">Copy</button>
+
+        ${role==="admin" ? `<button class="btn del" onclick="del(${i})">ลบ</button>` : ""}
       </div>`;
     });
 
-    list.innerHTML = html;
+    document.getElementById("list").innerHTML = html;
+    renderMenu([...cats]);
   });
 }
 
-// ➕ ADD
-function add(){
-  const c = cat.value;
-  const t = text.value;
-
-  if(!c || !t){
-    alert("กรอกให้ครบ");
-    return;
-  }
-
-  fetch(`${API}?action=add&cat=${encodeURIComponent(c)}&text=${encodeURIComponent(t)}`)
-  .then(()=>{
-    cat.value="";
-    text.value="";
-    load();
+/* MENU */
+function renderMenu(cats){
+  let html="";
+  cats.forEach(c=>{
+    html+=`<div onclick="selectCat('${c}')">${c}</div>`;
   });
+  document.getElementById("menu").innerHTML = html;
 }
 
-// 🗑 DELETE
+function selectCat(c){
+  currentCat = c;
+  load();
+}
+
+/* COPY */
+function copy(text){
+  navigator.clipboard.writeText(text);
+  toast();
+}
+
+/* EDIT */
+function edit(i,val){
+  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${user}`);
+}
+
+/* DELETE */
 function del(i){
-  if(!confirm("ลบใช่ไหม")){
-    return;
-  }
-
-  fetch(`${API}?action=delete&index=${i}&user=${currentUser}`)
+  if(!confirm("ลบ?")) return;
+  fetch(`${API}?action=delete&index=${i}&user=${user}`)
   .then(()=>load());
 }
 
-// ✏️ EDIT
-function edit(i,val){
-  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${currentUser}`);
-}
-
-// 📋 COPY
-function copyText(text){
-  navigator.clipboard.writeText(text);
-  alert("คัดลอกแล้ว");
-}
-
+load();
 </script>
 
 </body>
