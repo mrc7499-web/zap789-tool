@@ -1,102 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Zap789 Admin Tool</title>
 
 <style>
 body {
   margin: 0;
   font-family: sans-serif;
-  background: #f5f6fa;
+  background: #f5f5f5;
 }
 
-header {
-  background: #ff7a00;
+/* Header */
+.header {
+  background: #ff6a00;
   color: white;
   padding: 15px;
   text-align: center;
   font-size: 20px;
+  font-weight: bold;
 }
 
+/* Layout */
 .container {
-  padding: 20px;
+  display: flex;
+  height: calc(100vh - 60px);
 }
 
-input {
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  background: #fff;
+  border-right: 1px solid #ddd;
   padding: 10px;
-  width: 300px;
 }
 
+.sidebar button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #eee;
+}
+
+.sidebar button.active {
+  background: #ff6a00;
+  color: white;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* Search */
+.search {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+/* Card */
 .card {
   background: white;
   padding: 12px;
-  margin: 10px 0;
+  margin-bottom: 10px;
   border-radius: 10px;
+  border: 1px solid #ddd;
   cursor: pointer;
+}
+
+.card:hover {
+  background: #fff3e6;
 }
 </style>
 </head>
 
 <body>
 
-<header>🔥 Zap789 Tool</header>
+<div class="header">🔥 Zap789 Admin Tool</div>
 
 <div class="container">
-  <input type="text" id="search" placeholder="ค้นหา..." onkeyup="search()">
-  <div id="list"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="menu"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <input type="text" class="search" placeholder="🔍 ค้นหา..." id="search">
+    <div id="list"></div>
+  </div>
+
 </div>
 
 <script>
-const API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
+const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA = [];
+const nameList = ["น้องแอดมิน","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
 
-async function load() {
-  const res = await fetch(API);
-  const text = await res.text();
+let allData = [];
+let currentCat = "ทั้งหมด";
 
-  DATA = text.split("\n").slice(1).map(row => {
-    const [cat, msg] = row.split(",");
-    return { cat, msg };
-  });
-
-  render(DATA);
+function randomName() {
+  return nameList[Math.floor(Math.random() * nameList.length)];
 }
 
-function render(data) {
-  const box = document.getElementById("list");
-  box.innerHTML = "";
+async function loadData() {
+  const res = await fetch(API_URL);
+  const raw = await res.json();
 
-  data.forEach(d => {
-    const names = ["น้องแอดมิน","น้องฟ้า","น้องมิ้นท์","น้องแป้ง"];
-    const name = names[Math.floor(Math.random()*names.length)];
+  allData = raw.slice(1).map(row => ({
+    cat: row[0],
+    text: row[1]
+  }));
 
-    let text = d.msg.replaceAll("{name}", name);
+  renderMenu();
+  render();
+}
+
+/* เมนูซ้าย */
+function renderMenu() {
+  const menu = document.getElementById("menu");
+
+  const cats = ["ทั้งหมด", ...new Set(allData.map(d => d.cat))];
+
+  menu.innerHTML = "";
+
+  cats.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.innerText = cat;
+
+    if (cat === currentCat) btn.classList.add("active");
+
+    btn.onclick = () => {
+      currentCat = cat;
+      renderMenu();
+      render();
+    };
+
+    menu.appendChild(btn);
+  });
+}
+
+/* แสดงรายการ */
+function render() {
+  const list = document.getElementById("list");
+  const keyword = document.getElementById("search").value;
+
+  list.innerHTML = "";
+
+  let data = allData;
+
+  if (currentCat !== "ทั้งหมด") {
+    data = data.filter(d => d.cat === currentCat);
+  }
+
+  if (keyword) {
+    data = data.filter(d => d.text.includes(keyword));
+  }
+
+  data.forEach(item => {
+    const name = randomName();
+    const text = item.text.replace("{name}", name);
 
     const div = document.createElement("div");
     div.className = "card";
-    div.innerHTML = `<b>${d.cat}</b><br>${text}`;
+    div.innerHTML = `<b>${item.cat}</b><br>${text}`;
 
     div.onclick = () => {
       navigator.clipboard.writeText(text);
       alert("คัดลอกแล้ว!");
     };
 
-    box.appendChild(div);
+    list.appendChild(div);
   });
 }
 
-function search() {
-  const q = document.getElementById("search").value.toLowerCase();
-  const filtered = DATA.filter(d =>
-    d.cat.toLowerCase().includes(q) ||
-    d.msg.toLowerCase().includes(q)
-  );
-  render(filtered);
-}
+/* ค้นหา */
+document.getElementById("search").addEventListener("input", render);
 
-load();
+loadData();
 </script>
 
 </body>
