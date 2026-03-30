@@ -5,63 +5,42 @@
 <title>Zap789 Dashboard</title>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#f5f6fa; }
+body{margin:0;font-family:sans-serif;background:#f5f6fa}
 
 /* HEADER */
-.header {
+.header{
   background:#ff7a00;
   color:#fff;
-  padding:12px 20px;
+  padding:12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-.search {
-  width:300px;
+.search{
   padding:8px;
   border-radius:8px;
   border:none;
+  width:250px;
 }
 
-.toggle {
+.toggle{
   background:#fff;
-  padding:5px 10px;
+  padding:6px 12px;
   border-radius:20px;
   cursor:pointer;
 }
 
-/* CATEGORY */
-.categories {
-  padding:10px;
-  display:flex;
-  gap:10px;
-  overflow:auto;
-}
-
-.cat-btn {
-  background:#fff;
-  padding:8px 12px;
-  border-radius:20px;
-  cursor:pointer;
-  white-space:nowrap;
-}
-
-.cat-btn.active {
-  background:#ff7a00;
-  color:#fff;
-}
-
-/* GRID */
-.grid {
+/* GRID (แก้ให้กว้างขึ้น อ่านง่าย) */
+.grid{
   display:grid;
-  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
-  gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:15px;
   padding:15px;
 }
 
 /* CARD */
-.card {
+.card{
   background:#fff;
   padding:15px;
   border-radius:12px;
@@ -69,11 +48,10 @@ body { margin:0; font-family:sans-serif; background:#f5f6fa; }
   position:relative;
   transition:.2s;
 }
-
-.card:hover { transform:scale(1.02); }
+.card:hover{transform:scale(1.02)}
 
 /* COLOR BAR */
-.card::before {
+.card::before{
   content:"";
   position:absolute;
   left:0;
@@ -83,20 +61,47 @@ body { margin:0; font-family:sans-serif; background:#f5f6fa; }
   border-radius:12px 0 0 12px;
 }
 
-/* COLORS */
-.green::before { background:#22c55e; }
-.red::before { background:#ef4444; }
-.pink::before { background:#ec4899; }
-.blue::before { background:#3b82f6; }
-.orange::before { background:#f97316; }
+.green::before{background:#22c55e}
+.red::before{background:#ef4444}
+.pink::before{background:#ec4899}
+.blue::before{background:#3b82f6}
+.orange::before{background:#f97316}
 
-/* EDIT MODE */
-.actions {
-  margin-top:10px;
+/* ACTION (ซ่อนจน hover) */
+.actions{
+  position:absolute;
+  top:8px;
+  right:8px;
+  display:none;
+}
+.card:hover .actions{display:block}
+
+/* STAR */
+.star{
+  position:absolute;
+  top:8px;
+  left:8px;
+  cursor:pointer;
 }
 
-.actions button {
-  margin-right:5px;
+/* VARIABLE HIGHLIGHT */
+.var{
+  background:#ffe4c7;
+  padding:2px 4px;
+  border-radius:4px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#000;
+  color:#fff;
+  padding:10px;
+  border-radius:8px;
+  opacity:0;
+  transition:.3s;
 }
 </style>
 </head>
@@ -104,7 +109,7 @@ body { margin:0; font-family:sans-serif; background:#f5f6fa; }
 <body>
 
 <div class="header">
-  <div>🔥 Zap789 PRO</div>
+  🔥 Zap789 PRO
 
   <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
 
@@ -113,17 +118,16 @@ body { margin:0; font-family:sans-serif; background:#f5f6fa; }
   </div>
 </div>
 
-<div id="categories" class="categories"></div>
-
 <div id="grid" class="grid"></div>
+
+<div id="toast" class="toast">✅ คัดลอกแล้ว</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[];
-let ADMINS=[];
-let currentCat="ทั้งหมด";
+let DATA=[], ADMINS=[];
 let editMode=false;
+let favorites=new Set();
 
 /* LOAD */
 fetch(`${API}?action=get`)
@@ -144,10 +148,18 @@ function randomName(){
   return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
 }
 
+/* TOAST */
+function toast(){
+  const t=document.getElementById("toast");
+  t.style.opacity=1;
+  setTimeout(()=>t.style.opacity=0,1000);
+}
+
 /* COPY */
 function copy(text){
   const final=text.replaceAll("{name}",randomName());
   navigator.clipboard.writeText(final);
+  toast();
 }
 
 /* MODE */
@@ -157,7 +169,7 @@ function toggleMode(){
   render();
 }
 
-/* COLOR BY CAT */
+/* COLOR */
 function getColor(cat){
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
@@ -166,26 +178,42 @@ function getColor(cat){
   return "orange";
 }
 
+/* PIN */
+function toggleFav(i){
+  if(favorites.has(i)) favorites.delete(i);
+  else favorites.add(i);
+  render();
+}
+
+/* HIGHLIGHT {name} */
+function highlight(text){
+  return text.replaceAll("{name}", `<span class="var">{name}</span>`);
+}
+
 /* RENDER */
 function render(){
   let html="";
-  let cats=new Set(["ทั้งหมด"]);
   const s=search.value.toLowerCase();
 
-  DATA.forEach((r,i)=>{
-    const [cat,text,status]=r;
+  // เรียง favorites ขึ้นก่อน
+  let sorted=[...DATA.keys()].sort((a,b)=>{
+    return (favorites.has(b)-favorites.has(a));
+  });
 
+  sorted.forEach(i=>{
+    const [cat,text,status]=DATA[i];
     if(status==="deleted") return;
-
-    cats.add(cat);
-
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
     <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+
+      <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
+        ${favorites.has(i) ? "⭐" : "☆"}
+      </div>
+
       <b>${cat}</b><br><br>
-      ${text}
+      ${highlight(text)}
 
       ${editMode ? `
       <div class="actions">
@@ -193,16 +221,11 @@ function render(){
         <button onclick="event.stopPropagation(); del(${i})">🗑</button>
       </div>
       `:""}
+
     </div>`;
   });
 
   grid.innerHTML=html;
-
-  let cHTML="";
-  cats.forEach(c=>{
-    cHTML+=`<div class="cat-btn ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
-  });
-  categories.innerHTML=cHTML;
 }
 
 /* EDIT */
