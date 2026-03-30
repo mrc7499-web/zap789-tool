@@ -37,57 +37,57 @@ input { width:100%; padding:10px; margin:5px 0; }
 
 <script>
 
-function login() {
+const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+
+// 🔐 LOGIN
+function login(){
   const u = document.getElementById("user").value;
   const p = document.getElementById("pass").value;
 
-  google.script.run.withSuccessHandler(res=>{
-    if(res.status=="success"){
-      document.getElementById("loginBox").style.display="none";
-      document.getElementById("app").style.display="block";
-      load();
-    }else{
-      alert("รหัสผิด");
-    }
-  }).login(u,p);
-}
-
-function load(){
-  google.script.run.withSuccessHandler(data=>{
-    let html="";
-
-    data.forEach((row,i)=>{
-      const text = row[1].replace(/'/g, "\\'"); // กันพัง
-
-      html+=`
-      <div class="card">
-        <b>${row[0]}</b><br>
-        <div onclick="copy('${text}')">${row[1]}</div><br>
-        <button class="copy" onclick="copy('${text}')">Copy</button>
-      </div>`;
+  fetch(`${API}?action=login&username=${u}&password=${p}`)
+    .then(res=>res.json())
+    .then(data=>{
+      if(data.status==="success"){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("app").style.display="block";
+        load();
+      }else{
+        alert("รหัสผิด");
+      }
     });
-
-    document.getElementById("list").innerHTML=html;
-  }).getMessages();
 }
 
+// 📥 LOAD
+function load(){
+  fetch(`${API}?action=get`)
+    .then(res=>res.json())
+    .then(data=>{
+      let html="";
+
+      data.forEach(row=>{
+        html+=`
+        <div class="card">
+          <b>${row[0]}</b><br>
+          <div onclick="copyText(\`${row[1]}\`)">${row[1]}</div><br>
+          <button class="copy" onclick="copyText(\`${row[1]}\`)">Copy</button>
+        </div>`;
+      });
+
+      document.getElementById("list").innerHTML=html;
+    });
+}
+
+// ➕ ADD
 function add(){
   const cat=document.getElementById("cat").value;
   const text=document.getElementById("text").value;
 
-  if(!cat || !text){
-    alert("กรอกให้ครบ");
-    return;
-  }
-
-  google.script.run.withSuccessHandler(()=>{
-    document.getElementById("cat").value="";
-    document.getElementById("text").value="";
-    load();
-  }).addMessage(cat,text);
+  fetch(`${API}?action=add&cat=${cat}&text=${encodeURIComponent(text)}`)
+    .then(()=>load());
 }
 
-function copy(text){
+// 📋 COPY
+function copyText(text){
   navigator.clipboard.writeText(text);
   alert("คัดลอกแล้ว");
 }
