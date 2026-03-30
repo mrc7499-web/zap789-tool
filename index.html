@@ -1,202 +1,50 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Zap789 PRO</title>
-
-<style>
-body{margin:0;font-family:sans-serif;background:#f5f6fa}
-
-/* HEADER */
-.header{
-  position:sticky;
-  top:0;
-  background:#ff7a00;
-  padding:10px;
-  color:#fff;
-}
-
-/* SEARCH */
-.search{
-  padding:8px;
-  border-radius:8px;
-  border:none;
-  width:200px;
-}
-
-/* CATEGORY */
-.categories{
-  margin-top:8px;
-  display:flex;
-  gap:8px;
-  overflow:auto;
-}
-.cat{
-  background:#fff;
-  padding:5px 10px;
-  border-radius:20px;
-  cursor:pointer;
-}
-.cat.active{
-  background:#000;
-  color:#fff;
-}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  padding:16px;
-}
-
-/* CARD */
-.card{
-  background:#fff;
-  padding:12px;
-  border-radius:10px;
-  position:relative;
-  cursor:pointer;
-  line-height:1.5;
-}
-
-/* STAR */
-.star{
-  position:absolute;
-  top:8px;
-  right:8px;
-}
-
-/* VARIABLE */
-.var{
-  background:#eee;
-  padding:2px 6px;
-  border-radius:6px;
-}
-
-/* IMAGE */
-.img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-  border-radius:8px;
-  margin-bottom:6px;
-}
-
-/* TOAST */
-.toast{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#000;
-  color:#fff;
-  padding:10px;
-  border-radius:8px;
-  opacity:0;
-}
-
-/* ERROR */
-.error{
-  padding:20px;
-  color:red;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  🔥 Zap789 PRO
-  <br>
-  <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-  <div id="cats" class="categories"></div>
-</div>
-
-<div id="grid" class="grid"></div>
-<div id="toast" class="toast"></div>
-
 <script>
-/* 🔥 ใส่ API ของคุณตรงนี้ */
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA=[];
 let currentCat="ทั้งหมด";
-let favorites=new Set();
 
-/* 🔥 LOAD SAFE */
-async function init(){
+/* 🚀 แสดงก่อน (ไม่รอ API) */
+function init(){
+  showLoading();
+  loadData(); // โหลด async
+}
+
+init();
+
+/* 🚀 skeleton */
+function showLoading(){
+  let html="";
+  for(let i=0;i<8;i++){
+    html+=`<div class="card">⏳ โหลด...</div>`;
+  }
+  grid.innerHTML=html;
+}
+
+/* 🚀 โหลดแบบไม่บล็อก */
+async function loadData(){
   try{
     const res=await fetch(API+"?action=get");
     DATA=await res.json();
-
-    if(!Array.isArray(DATA)) throw "bad data";
-
   }catch(e){
-    console.error(e);
-
-    /* 🔥 fallback กันหน้าโล่ง */
-    DATA=[
-      ["ทดสอบ","🙏 {name} ระบบพร้อมใช้งาน","active",""],
-      ["ทดสอบ","📢 ถ้าเห็นอันนี้ แปลว่า API ยังไม่ทำงาน","active",""]
-    ];
+    DATA=[];
   }
-
   render();
 }
-init();
 
-/* COPY TEXT */
-function copyText(text){
-  navigator.clipboard.writeText(text);
-  toast("✅ คัดลอกข้อความ");
-}
-
-/* COPY IMAGE */
-async function copyImage(url){
-  try{
-    const res=await fetch(url);
-    const blob=await res.blob();
-
-    await navigator.clipboard.write([
-      new ClipboardItem({[blob.type]: blob})
-    ]);
-
-    toast("✅ คัดลอกรูป");
-
-  }catch(e){
-    alert("เบราว์เซอร์ไม่รองรับ copy รูป");
-  }
-}
-
-/* TOAST */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1000);
-}
-
-/* RENDER */
+/* 🚀 render เร็ว */
 function render(){
+  let html="";
   const s=(search.value||"").toLowerCase();
 
-  let html="";
-  let cats=new Set(["ทั้งหมด"]);
+  for(let i=0;i<DATA.length;i++){
+    const [cat,text,status,img]=DATA[i];
 
-  DATA.forEach((r,i)=>{
-    const [cat,text,status,img]=r;
-
-    if(status==="deleted") return;
-
-    cats.add(cat);
-
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-    if(s && !text.toLowerCase().includes(s)) return;
+    if(status==="deleted") continue;
+    if(s && !text.toLowerCase().includes(s)) continue;
 
     html+=`
     <div class="card">
-
-      <div class="star">${favorites.has(i)?"⭐":"☆"}</div>
 
       ${img ? `<img src="${img}" class="img" onclick="copyImage('${img}')">`:""}
 
@@ -205,20 +53,8 @@ function render(){
       </div>
 
     </div>`;
-  });
+  }
 
   grid.innerHTML=html;
-
-  /* CATEGORY */
-  let cHTML="";
-  cats.forEach(c=>{
-    cHTML+=`<div class="cat ${c===currentCat?"active":""}"
-      onclick="currentCat='${c}';render()">${c}</div>`;
-  });
-
-  document.getElementById("cats").innerHTML=cHTML;
 }
 </script>
-
-</body>
-</html>
