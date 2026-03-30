@@ -11,7 +11,7 @@
         /* LOGIN UI */
         #login-page { position: fixed; inset: 0; background: #ff7a00; display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; outline: none; }
         .login-btn { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         /* DASHBOARD UI */
@@ -23,10 +23,11 @@
         .cat.active { background: #000; color: #fff; border-color: #000; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
-        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; display: flex; flex-direction: column; }
+        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; display: flex; flex-direction: column; min-height: 100px; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .card::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; z-index: 2; }
         .green::before { background: #22c55e; } .red::before { background: #ef4444; } .pink::before { background: #ec4899; } .blue::before { background: #3b82f6; }
+        
         .star { position: absolute; top: 8px; right: 8px; z-index: 3; font-size: 18px; color: #ffca28; }
         .actions { position: absolute; top: 8px; left: 12px; display: none; gap: 5px; z-index: 10; }
         .card:hover .actions { display: flex; }
@@ -36,7 +37,7 @@
         .content { padding: 12px; line-height: 1.5; font-size: 14px; flex-grow: 1; }
         .var { background: var(--var-bg); padding: 2px 5px; border-radius: 4px; color: var(--primary); font-weight: bold; }
         
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; z-index: 1000; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; z-index: 1000; pointer-events: none; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .modal-box { background: #fff; padding: 20px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; color: #333; }
     </style>
@@ -49,7 +50,7 @@
         <input type="text" id="userIn" placeholder="Username">
         <input type="password" id="passIn" placeholder="Password">
         <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
-        <p id="errorMsg" style="color: red; font-size: 12px; margin-top: 10px; display: none;">❌ ข้อมูลไม่ถูกต้อง</p>
+        <p id="errorMsg" style="color: red; font-size: 12px; margin-top: 15px; display: none;">❌ ข้อมูลไม่ถูกต้อง</p>
     </div>
 </div>
 
@@ -74,11 +75,11 @@
 <div id="modal" class="modal">
     <div class="modal-box">
         <h3 style="margin:0;">📝 จัดการข้อมูล</h3>
-        <input id="catInput" style="padding:10px; border-radius:6px; border:1px solid #ddd;" placeholder="หมวดหมู่">
-        <textarea id="textInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; height:80px;" placeholder="ข้อความ..."></textarea>
+        <input id="catInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; width:100%; box-sizing:border-box;" placeholder="หมวดหมู่">
+        <textarea id="textInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; height:80px; width:100%; box-sizing:border-box;" placeholder="ข้อความ..."></textarea>
         <input type="file" id="imgInput" accept="image/*">
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeModal()">ยกเลิก</button>
+            <button onclick="closeModal()" style="cursor:pointer; padding: 8px 15px; border-radius:5px; border:none;">ยกเลิก</button>
             <button onclick="save()" style="background: #ff7a00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">บันทึก</button>
         </div>
     </div>
@@ -87,57 +88,65 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 let DATA = [];
-let USERS = []; // เก็บข้อมูล user จากชีท
 let currentCat = "ทั้งหมด";
 let editIndex = null;
 let currentUser = null;
 
+// เริ่มต้นระบบ
 async function init() {
-    try {
-        const res = await fetch(API_URL + "?action=get");
-        const json = await res.json();
-        DATA = json.data || json; // รับข้อมูลแผ่นหลัก
-        
-        // ดึงข้อมูล User จากแผ่น users (สมมติว่า API ส่งแผ่น users มาด้วย หรือต้องดึงแยก)
-        const resUser = await fetch(API_URL + "?action=getUsers"); 
-        USERS = await resUser.json();
-
-        // เช็คว่าเคยล็อคอินค้างไว้ไหม
-        const savedUser = localStorage.getItem('zapUser');
-        if(savedUser) {
-            currentUser = JSON.parse(savedUser);
-            showDashboard();
-        }
-    } catch(e) { console.log("Init Error"); }
-}
-
-function login() {
-    const u = document.getElementById('userIn').value;
-    const p = document.getElementById('passIn').value;
-    const found = USERS.find(item => item[0] == u && item[1] == p);
-
-    if(found) {
-        currentUser = { name: found[0], role: found[2] };
-        localStorage.setItem('zapUser', JSON.stringify(currentUser));
+    const savedUser = localStorage.getItem('zapUser');
+    if(savedUser) {
+        currentUser = JSON.parse(savedUser);
         showDashboard();
-    } else {
-        document.getElementById('errorMsg').style.display = "block";
     }
 }
 
-function showDashboard() {
+// ฟังก์ชัน Login (เช็คผ่าน Server โดยตรง)
+async function login() {
+    const u = document.getElementById('userIn').value;
+    const p = document.getElementById('passIn').value;
+    const err = document.getElementById('errorMsg');
+    
+    if(!u || !p) return;
+
+    err.style.display = "block";
+    err.innerText = "⌛ กำลังตรวจสอบ...";
+
+    try {
+        const res = await fetch(`${API_URL}?action=login&username=${u}&password=${p}`);
+        const result = await res.json();
+
+        if(result.success) {
+            currentUser = { name: result.user, role: result.role };
+            localStorage.setItem('zapUser', JSON.stringify(currentUser));
+            showDashboard();
+        } else {
+            err.innerText = "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+        }
+    } catch(e) {
+        err.innerText = "⚠️ เชื่อมต่อระบบไม่ได้";
+        console.error(e);
+    }
+}
+
+async function showDashboard() {
     document.getElementById('login-page').style.display = "none";
     document.getElementById('main-content').style.display = "block";
     
-    // ถ้าไม่ใช่ admin ห้ามเห็นปุ่มเพิ่ม/แก้ไข
     if(currentUser.role !== 'admin') {
         document.getElementById('addBtn').style.display = "none";
-        // ใส่ CSS ซ่อนปุ่มแก้ไขในการ์ดด้วย
         const style = document.createElement('style');
         style.innerHTML = '.actions { display: none !important; }';
         document.head.appendChild(style);
     }
-    render();
+    
+    // โหลดข้อมูลการ์ด
+    try {
+        const res = await fetch(API_URL + "?action=get");
+        const json = await res.json();
+        DATA = json.data || json;
+        render();
+    } catch(e) { console.log("Load Data Error"); }
 }
 
 function logout() {
@@ -145,7 +154,6 @@ function logout() {
     location.reload();
 }
 
-/* --- ระบบเดิมที่ทำงานได้ดีอยู่แล้ว --- */
 function getColor(cat) {
     if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
     if (cat.includes("ปัญหา")) return "red";
