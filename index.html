@@ -2,41 +2,42 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Admin</title>
+<title>Zap789 Admin Tool</title>
 
 <style>
 body {margin:0;font-family:sans-serif;background:#f5f6fa;}
 header {background:#ff7a00;color:#fff;padding:15px;text-align:center;}
 .container {display:flex;}
 .sidebar {width:220px;background:#fff;padding:10px;}
-.sidebar button {width:100%;padding:10px;margin-bottom:8px;border:none;border-radius:8px;background:#eee;}
+.sidebar button {width:100%;padding:10px;margin-bottom:8px;border:none;border-radius:8px;background:#eee;cursor:pointer;}
 .sidebar button.active {background:#ff7a00;color:#fff;}
 .main {flex:1;padding:15px;}
 .topbar {display:flex;gap:10px;margin-bottom:10px;}
 input,select{padding:8px;border-radius:8px;border:1px solid #ccc;}
-.card{background:#fff;padding:10px;margin-bottom:10px;border-radius:10px;display:flex;justify-content:space-between;}
-.actions button{margin-left:5px;border:none;padding:5px 8px;border-radius:6px;}
+.card{background:#fff;padding:10px;margin-bottom:10px;border-radius:10px;display:flex;justify-content:space-between;cursor:pointer;}
+.actions button{margin-left:5px;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;}
 .copy{background:#2ecc71;color:#fff;}
 .edit{background:#3498db;color:#fff;}
 .delete{background:#e74c3c;color:#fff;}
 .pin{background:#f1c40f;color:#fff;}
-#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px;border-radius:8px;opacity:0;}
+#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px;border-radius:8px;opacity:0;transition:0.3s;}
 #toast.show{opacity:1;}
+#loginBox{text-align:center;margin-top:100px;}
 </style>
 </head>
 
 <body>
 
-<script>
-// 🔐 PASSWORD
-const PASSWORD="zap789";
-if(prompt("ใส่รหัสเข้าใช้งาน")!==PASSWORD){
-  document.body.innerHTML="❌ เข้าไม่ได้";
-  throw new Error();
-}
-</script>
+<div id="loginBox">
+<h2>🔐 Login</h2>
+<input id="user" placeholder="Username"><br><br>
+<input id="pass" type="password" placeholder="Password"><br><br>
+<button onclick="login()">เข้าใช้งาน</button>
+</div>
 
-<header>🔥 Zap789 Tool</header>
+<div id="app" style="display:none;">
+
+<header>🔥 Zap789 Admin Tool</header>
 
 <div class="container">
 <div class="sidebar" id="cats"></div>
@@ -53,6 +54,8 @@ if(prompt("ใส่รหัสเข้าใช้งาน")!==PASSWORD){
 </div>
 </div>
 
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -64,105 +67,165 @@ let pinned=[];
 
 const names=["น้องแอด","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
 
-function toast(t){
-const el=document.getElementById("toast");
-el.innerText=t;
-el.classList.add("show");
-setTimeout(()=>el.classList.remove("show"),1500);
+function rand(){
+  return names[Math.floor(Math.random()*names.length)];
 }
 
-function rand(){return names[Math.floor(Math.random()*names.length)];}
+function formatText(t){
+  return t
+    .replace("{name}", rand())
+    .replace("{time}", new Date().toLocaleTimeString())
+    .replace("{date}", new Date().toLocaleDateString());
+}
+
+function toast(msg){
+  const el=document.getElementById("toast");
+  el.innerText=msg;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),1500);
+}
+
+async function login(){
+  const username=user.value;
+  const password=pass.value;
+
+  const res=await fetch(API,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"login",
+      username,
+      password
+    })
+  });
+
+  const json=await res.json();
+
+  if(json.success){
+    loginBox.style.display="none";
+    app.style.display="block";
+    load();
+  }else{
+    alert("❌ รหัสผิด");
+  }
+}
 
 async function load(){
-const res=await fetch(API);
-const json=await res.json();
+  const res=await fetch(API);
+  const json=await res.json();
 
-data=json.slice(1).map(r=>({cat:r[0],text:r[1]}));
+  data=json.slice(1).map(r=>({
+    cat:r[0],
+    text:r[1]
+  }));
 
-renderCats();
-render();
+  renderCats();
+  render();
 }
 
 function renderCats(){
-const box=document.getElementById("cats");
-const cats=["ทั้งหมด",...new Set(data.map(i=>i.cat))];
+  const cats=["ทั้งหมด",...new Set(data.map(i=>i.cat))];
 
-box.innerHTML=cats.map(c=>{
-const count=data.filter(i=>i.cat===c).length;
-return `<button onclick="select('${c}')" class="${c===current?'active':''}">
-${c} (${count})
-</button>`;
-}).join("");
+  catsEl.innerHTML=cats.map(c=>{
+    const count=data.filter(i=>i.cat===c).length;
+    return `<button onclick="selectCat('${c}')" class="${c===current?'active':''}">
+      ${c} (${count})
+    </button>`;
+  }).join("");
 
-const sel=document.getElementById("newCat");
-sel.innerHTML=cats.filter(c=>c!=="ทั้งหมด").map(c=>`<option>${c}</option>`).join("");
+  newCat.innerHTML=cats.filter(c=>c!=="ทั้งหมด")
+    .map(c=>`<option>${c}</option>`).join("");
 }
 
-function select(c){current=c;render();renderCats();}
+function selectCat(c){
+  current=c;
+  render();
+  renderCats();
+}
 
 function render(){
-const q=document.getElementById("search").value.toLowerCase();
+  const q=search.value.toLowerCase();
 
-let list=data.filter(i=>
-(current==="ทั้งหมด"||i.cat===current)&&
-i.text.toLowerCase().includes(q)
-);
+  let list=data.filter(i=>
+    (current==="ทั้งหมด"||i.cat===current)&&
+    i.text.toLowerCase().includes(q)
+  );
 
-// ⭐ pinned
-list=[...pinned,...list];
+  list=[...pinned,...list];
 
-const el=document.getElementById("list");
+  listEl.innerHTML=list.map((i,idx)=>{
+    const t=formatText(i.text);
 
-el.innerHTML=list.map((i,idx)=>{
-const t=i.text.replace("{name}",rand());
+    return `
+    <div class="card" onclick="copy('${i.text}')">
+      <div style="flex:1;">${t}</div>
 
-return `
-<div class="card">
-<div>${t}</div>
-<div class="actions">
-<button class="copy" onclick="copy('${i.text}')">📋</button>
-<button class="pin" onclick="pin(${idx})">⭐</button>
-<button class="edit" onclick="edit(${idx})">✏️</button>
-<button class="delete" onclick="del(${idx})">🗑</button>
-</div>
-</div>
-`;
-}).join("");
+      <div class="actions">
+        <button class="copy" onclick="event.stopPropagation();copy('${i.text}')">📋</button>
+        <button class="pin" onclick="event.stopPropagation();pin(${idx})">⭐</button>
+        <button class="edit" onclick="event.stopPropagation();edit(${idx})">✏️</button>
+        <button class="delete" onclick="event.stopPropagation();del(${idx})">🗑</button>
+      </div>
+    </div>
+    `;
+  }).join("");
 }
 
 function copy(t){
-navigator.clipboard.writeText(t.replace("{name}",rand()));
-toast("คัดลอกแล้ว");
+  navigator.clipboard.writeText(formatText(t));
+  toast("คัดลอกแล้ว ✅");
 }
 
 function add(){
-const t=newText.value;
-const c=newCat.value;
-if(!t)return;
+  if(!newText.value)return;
 
-data.push({cat:c,text:t});
-render();
-toast("เพิ่มแล้ว");
+  fetch(API,{
+    method:"POST",
+    body: JSON.stringify({
+      id:newCat.value,
+      text:newText.value
+    })
+  });
+
+  data.push({cat:newCat.value,text:newText.value});
+  render();
+  toast("เพิ่มแล้ว");
 }
 
 function del(i){
-data.splice(i,1);
-render();
-toast("ลบแล้ว");
+  data.splice(i,1);
+  render();
+  toast("ลบแล้ว");
 }
 
 function edit(i){
-const t=prompt("แก้ข้อความ",data[i].text);
-if(t){data[i].text=t;render();toast("แก้แล้ว");}
+  const t=prompt("แก้ข้อความ",data[i].text);
+  if(t){
+    data[i].text=t;
+    render();
+    toast("แก้แล้ว");
+  }
 }
 
 function pin(i){
-pinned.unshift(data[i]);
-toast("ปักหมุดแล้ว");
-render();
+  pinned.unshift(data[i]);
+  render();
+  toast("ปักหมุดแล้ว");
 }
 
-load();
+// shortcut
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="/"){
+    e.preventDefault();
+    search.focus();
+  }
+});
+
+// shortcut variables
+const catsEl=document.getElementById("cats");
+const listEl=document.getElementById("list");
+const newCat=document.getElementById("newCat");
+const newText=document.getElementById("newText");
+const search=document.getElementById("search");
 </script>
 
 </body>
