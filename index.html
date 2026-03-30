@@ -2,36 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Dashboard</title>
+<title>Zap789 PRO</title>
 
 <style>
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
+.dark{background:#111;color:#eee}
 
-/* HEADER */
 .header{
   background:#ff7a00;
   color:#fff;
   padding:12px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
 
-.search{
-  padding:8px;
-  border-radius:8px;
-  border:none;
-  width:250px;
-}
+.search{padding:8px;border-radius:8px;border:none;width:250px}
 
-.toggle{
-  background:#fff;
-  padding:6px 12px;
-  border-radius:20px;
-  cursor:pointer;
-}
-
-/* GRID (แก้ให้กว้างขึ้น อ่านง่าย) */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -39,26 +25,19 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   padding:15px;
 }
 
-/* CARD */
 .card{
   background:#fff;
   padding:15px;
   border-radius:12px;
   cursor:pointer;
   position:relative;
-  transition:.2s;
 }
-.card:hover{transform:scale(1.02)}
+.dark .card{background:#1e1e1e}
 
-/* COLOR BAR */
 .card::before{
   content:"";
   position:absolute;
-  left:0;
-  top:0;
-  width:6px;
-  height:100%;
-  border-radius:12px 0 0 12px;
+  left:0;top:0;width:6px;height:100%;
 }
 
 .green::before{background:#22c55e}
@@ -67,31 +46,26 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .blue::before{background:#3b82f6}
 .orange::before{background:#f97316}
 
-/* ACTION (ซ่อนจน hover) */
 .actions{
   position:absolute;
-  top:8px;
-  right:8px;
+  top:5px;
+  right:5px;
   display:none;
 }
 .card:hover .actions{display:block}
 
-/* STAR */
 .star{
   position:absolute;
-  top:8px;
-  left:8px;
-  cursor:pointer;
+  top:5px;
+  left:5px;
 }
 
-/* VARIABLE HIGHLIGHT */
 .var{
-  background:#ffe4c7;
+  background:#ddd;
   padding:2px 4px;
   border-radius:4px;
 }
 
-/* TOAST */
 .toast{
   position:fixed;
   bottom:20px;
@@ -109,43 +83,48 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 <body>
 
 <div class="header">
-  🔥 Zap789 PRO
-
+  🔥 Zap789
   <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
 
-  <div class="toggle" onclick="toggleMode()">
-    ⚙️ <span id="modeText">โหมดตอบแชท</span>
+  <div>
+    <button onclick="toggleMode()">⚙️</button>
+    <button onclick="toggleDark()">🌙</button>
   </div>
 </div>
 
 <div id="grid" class="grid"></div>
-
 <div id="toast" class="toast">✅ คัดลอกแล้ว</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[], ADMINS=[];
+let DATA=[], CONFIG={}, ADMINS=[];
 let editMode=false;
 let favorites=new Set();
 
 /* LOAD */
-fetch(`${API}?action=get`)
-.then(r=>r.json())
-.then(d=>{
-  DATA=d;
-  render();
-});
-
-fetch(`${API}?action=admins`)
-.then(r=>r.json())
-.then(d=>{
-  ADMINS=d.map(x=>x[0]);
-});
+fetch(`${API}?action=get`).then(r=>r.json()).then(d=>{DATA=d;render();});
+fetch(`${API}?action=admins`).then(r=>r.json()).then(d=>{ADMINS=d.map(x=>x[0]);});
 
 /* RANDOM NAME */
 function randomName(){
   return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
+}
+
+/* APPLY VARIABLES */
+function applyVars(text){
+  text=text.replaceAll("{name}",randomName());
+  Object.keys(CONFIG).forEach(k=>{
+    text=text.replaceAll(`{${k}}`,CONFIG[k]);
+  });
+  return text;
+}
+
+/* COPY */
+function copy(text,i){
+  navigator.clipboard.writeText(applyVars(text));
+  toast();
+  fetch(`${API}?action=count&row=${i}`);
 }
 
 /* TOAST */
@@ -155,18 +134,15 @@ function toast(){
   setTimeout(()=>t.style.opacity=0,1000);
 }
 
-/* COPY */
-function copy(text){
-  const final=text.replaceAll("{name}",randomName());
-  navigator.clipboard.writeText(final);
-  toast();
-}
-
 /* MODE */
 function toggleMode(){
   editMode=!editMode;
-  modeText.innerText = editMode ? "โหมดแก้ไข" : "โหมดตอบแชท";
   render();
+}
+
+/* DARK */
+function toggleDark(){
+  document.body.classList.toggle("dark");
 }
 
 /* COLOR */
@@ -185,9 +161,16 @@ function toggleFav(i){
   render();
 }
 
-/* HIGHLIGHT {name} */
+/* HIGHLIGHT */
 function highlight(text){
   return text.replaceAll("{name}", `<span class="var">{name}</span>`);
+}
+
+/* SORT */
+function getSorted(){
+  return [...DATA.keys()].sort((a,b)=>{
+    return (favorites.has(b)-favorites.has(a));
+  });
 }
 
 /* RENDER */
@@ -195,18 +178,14 @@ function render(){
   let html="";
   const s=search.value.toLowerCase();
 
-  // เรียง favorites ขึ้นก่อน
-  let sorted=[...DATA.keys()].sort((a,b)=>{
-    return (favorites.has(b)-favorites.has(a));
-  });
-
-  sorted.forEach(i=>{
-    const [cat,text,status]=DATA[i];
+  getSorted().forEach(i=>{
+    const [cat,text,status,tags,count]=DATA[i];
     if(status==="deleted") return;
-    if(s && !text.toLowerCase().includes(s)) return;
+
+    if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`,${i})">
 
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${favorites.has(i) ? "⭐" : "☆"}
@@ -217,10 +196,9 @@ function render(){
 
       ${editMode ? `
       <div class="actions">
-        <button onclick="event.stopPropagation(); edit(${i},\`${text}\`)">✏️</button>
-        <button onclick="event.stopPropagation(); del(${i})">🗑</button>
-      </div>
-      `:""}
+        <button onclick="event.stopPropagation();edit(${i},\`${text}\`)">✏️</button>
+        <button onclick="event.stopPropagation();del(${i})">🗑</button>
+      </div>`:""}
 
     </div>`;
   });
@@ -232,16 +210,25 @@ function render(){
 function edit(i,old){
   const t=prompt("แก้ไข",old);
   if(!t) return;
-
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
-  .then(()=>location.reload());
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`).then(()=>location.reload());
 }
 
 /* DELETE */
 function del(i){
-  fetch(`${API}?action=delete&row=${i}`)
-  .then(()=>location.reload());
+  fetch(`${API}?action=delete&row=${i}`).then(()=>location.reload());
 }
+
+/* SHORTCUT ALT+1-5 */
+document.addEventListener("keydown",(e)=>{
+  if(e.altKey){
+    let n=parseInt(e.key);
+    if(n>=1 && n<=5){
+      let sorted=getSorted();
+      let i=sorted[n-1];
+      if(i!==undefined) copy(DATA[i][1],i);
+    }
+  }
+});
 </script>
 
 </body>
