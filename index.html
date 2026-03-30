@@ -2,189 +2,140 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Tool</title>
+<title>Zap789 Pro</title>
 
 <style>
-body { font-family:sans-serif; margin:0; background:#f5f5f5; }
+body{margin:0;font-family:sans-serif;background:#f5f5f5}
+.header{background:#ff7a00;color:#fff;padding:15px;font-size:20px}
+.container{display:flex}
+.sidebar{width:200px;background:#fff;padding:10px}
+.menu{padding:10px;margin:5px 0;border-radius:8px;cursor:pointer}
+.menu.active{background:#ff7a00;color:#fff}
+.main{flex:1;padding:20px}
 
-.header{
-  background:#ff7a00;
-  color:white;
-  padding:15px;
-  font-size:20px;
-}
+.card{background:#fff;padding:15px;margin-bottom:10px;border-radius:10px}
+.text{margin-bottom:10px}
+input.inline{width:100%;padding:5px}
 
-.container{ display:flex; }
+.actions button{margin-right:5px}
 
-.sidebar{
-  width:200px;
-  background:#fff;
-  padding:10px;
-}
-
-.menu{
-  padding:10px;
-  margin:5px 0;
-  cursor:pointer;
-  border-radius:8px;
-}
-
-.menu.active{
-  background:#ff7a00;
-  color:white;
-}
-
-.main{
-  flex:1;
-  padding:20px;
-}
-
-.card{
-  background:white;
-  padding:15px;
-  margin-bottom:10px;
-  border-radius:10px;
-}
-
-.actions button{
-  margin-right:5px;
-}
-
-.login{
-  text-align:center;
-  margin-top:100px;
-}
-
-.toast{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:black;
-  color:white;
-  padding:10px;
-  border-radius:8px;
-  opacity:0;
-  transition:.3s;
-}
+.toast{position:fixed;bottom:20px;right:20px;background:#000;color:#fff;padding:10px;border-radius:8px;opacity:0}
 </style>
 </head>
 
 <body>
 
-<div id="loginPage" class="login">
+<div id="loginPage" style="text-align:center;margin-top:120px">
 <h2>Login</h2>
-<input id="u" placeholder="username"><br><br>
-<input id="p" type="password" placeholder="password"><br><br>
+<input id="u"><br><br>
+<input id="p" type="password"><br><br>
 <button onclick="login()">เข้า</button>
 </div>
 
 <div id="app" style="display:none">
-<div class="header">🔥 Zap789</div>
+
+<div class="header">🔥 Zap789 PRO</div>
 
 <div class="container">
 
 <div class="sidebar" id="menu"></div>
 
 <div class="main">
+
 <input id="search" placeholder="ค้นหา..." oninput="render()"><br><br>
 
 <input id="cat" placeholder="หมวด">
 <input id="text" placeholder="ข้อความ">
 <button onclick="add()">+ เพิ่ม</button>
 
-<div id="list"></div>
-</div>
+<hr>
 
+<button onclick="viewMode='normal';render()">📋 ปกติ</button>
+<button onclick="viewMode='trash';render()">🗑 Trash</button>
+<button onclick="showLogs()">📜 Log</button>
+
+<div id="list"></div>
+
+</div>
 </div>
 </div>
 
 <div id="toast" class="toast">Copied</div>
 
 <script>
-const API="YOUR_SCRIPT_URL";
+const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[];
-let ADMINS=[];
-let role="";
-let user="";
-let currentCat="ทั้งหมด";
+let DATA=[], ADMINS=[], role="", user="", currentCat="ทั้งหมด", viewMode="normal";
+
+window.onload=()=>{
+  const u=localStorage.getItem("user");
+  const r=localStorage.getItem("role");
+  if(u){ user=u; role=r; start(); }
+};
 
 function login(){
   fetch(`${API}?action=login&username=${u.value}&password=${p.value}`)
   .then(r=>r.json())
   .then(d=>{
     if(d.success){
-      role=d.role;
-      user=d.user;
+      user=d.user; role=d.role;
       localStorage.setItem("user",user);
+      localStorage.setItem("role",role);
       start();
-    }else alert("ผิด");
+    } else alert("ผิด");
   });
 }
 
 function start(){
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("app").style.display="block";
-  load();
-  loadAdmins();
+  loginPage.style.display="none";
+  app.style.display="block";
+  load(); loadAdmins();
 }
 
 function load(){
-  fetch(`${API}?action=get`)
-  .then(r=>r.json())
-  .then(d=>{
-    DATA=d;
-    render();
-  });
+  fetch(`${API}?action=get`).then(r=>r.json()).then(d=>{DATA=d;render();});
 }
 
 function loadAdmins(){
-  fetch(`${API}?action=admins`)
-  .then(r=>r.json())
-  .then(d=>{
-    ADMINS=d.map(x=>x[0]);
-  });
+  fetch(`${API}?action=admins`).then(r=>r.json()).then(d=>{ADMINS=d.map(x=>x[0]);});
 }
 
 function randomName(){
-  if(ADMINS.length===0) return "แอดมิน";
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)];
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน";
 }
 
-function copyText(text){
-  const final = text.replaceAll("{name}", randomName());
-  navigator.clipboard.writeText(final);
-  showToast();
-}
-
-function showToast(){
-  const t=document.getElementById("toast");
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1000);
+function copyText(t){
+  navigator.clipboard.writeText(t.replaceAll("{name}",randomName()));
+  toast.style.opacity=1; setTimeout(()=>toast.style.opacity=0,1000);
 }
 
 function render(){
-  let html="";
-  let cats=new Set(["ทั้งหมด"]);
+  let html=""; let cats=new Set(["ทั้งหมด"]);
+  const s=search.value.toLowerCase();
 
   DATA.forEach((r,i)=>{
-    if(r[2]==="deleted") return;
+    const [cat,text,status]=r;
+    cats.add(cat);
 
-    cats.add(r[0]);
-
-    if(currentCat!=="ทั้งหมด" && r[0]!==currentCat) return;
-    if(search.value && !r[1].includes(search.value)) return;
+    if(viewMode==="normal" && status==="deleted") return;
+    if(viewMode==="trash" && status!=="deleted") return;
+    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
+    if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
     <div class="card">
-      <div onclick="copyText(\`${r[1]}\`)">
-        <b>${r[0]}</b><br>${r[1]}
+
+      <div onclick="copyText(\`${text}\`)">
+        <b>${cat}</b>
       </div>
 
+      <input class="inline" value="${text}" onchange="edit(${i},this.value)">
+
       <div class="actions">
-        <button onclick="edit(${i},\`${r[1]}\`)">✏️</button>
-        ${role==="admin" ? `<button onclick="del(${i})">🗑</button>`:""}
+        ${viewMode==="normal" && role==="admin" ? `<button onclick="del(${i})">🗑</button>`:""}
+        ${viewMode==="trash" ? `<button onclick="restore(${i})">♻️</button>`:""}
       </div>
+
     </div>`;
   });
 
@@ -198,23 +149,30 @@ function render(){
 }
 
 function add(){
-  fetch(`${API}?action=add&cat=${cat.value}&text=${text.value}&user=${user}`)
-  .then(()=>load());
+  fetch(`${API}?action=add&cat=${cat.value}&text=${text.value}&user=${user}`).then(()=>load());
 }
 
-function edit(i,old){
-  const t=prompt("แก้ไข",old);
-  if(!t) return;
-  fetch(`${API}?action=edit&row=${i}&text=${t}&user=${user}`)
-  .then(()=>load());
+function edit(i,val){
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(val)}&user=${user}`);
 }
 
 function del(i){
-  fetch(`${API}?action=delete&row=${i}&user=${user}`)
-  .then(()=>load());
+  fetch(`${API}?action=delete&row=${i}&user=${user}`).then(()=>load());
 }
 
-start();
+function restore(i){
+  fetch(`${API}?action=restore&row=${i}&user=${user}`).then(()=>load());
+}
+
+function showLogs(){
+  fetch(`${API}?action=logs`).then(r=>r.json()).then(d=>{
+    let html="";
+    d.reverse().forEach(r=>{
+      html+=`<div class="card">${r.join(" | ")}</div>`;
+    });
+    list.innerHTML=html;
+  });
+}
 </script>
 
 </body>
