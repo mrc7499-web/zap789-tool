@@ -2,265 +2,286 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Admin Dashboard</title>
+<title>Zap789 Admin Tool</title>
 
 <style>
-body {
+body{
   margin:0;
-  font-family: system-ui;
+  font-family:sans-serif;
   background:#f5f6fa;
 }
 
-/* Layout */
-.container {
+/* TOP BAR */
+.top{
+  background:#ff7a00;
+  color:#fff;
+  padding:15px;
+  font-size:20px;
+  text-align:center;
+  font-weight:bold;
+}
+
+/* LAYOUT */
+.container{
   display:flex;
-  height:100vh;
+  height:calc(100vh - 60px);
 }
 
-/* Sidebar */
-.sidebar {
-  width:230px;
-  background:#ffffff;
-  border-right:1px solid #eee;
-  padding:20px;
+/* SIDEBAR */
+.sidebar{
+  width:200px;
+  background:#fff;
+  border-right:1px solid #ddd;
+  padding:10px;
 }
 
-.sidebar h2 {
-  color:#ff7a00;
-  font-size:18px;
-}
-
-.menu button {
+.btn{
   display:block;
-  width:100%;
-  margin:6px 0;
   padding:10px;
+  margin:5px 0;
+  border-radius:8px;
   border:none;
-  background:#f3f4f6;
-  border-radius:8px;
   cursor:pointer;
-}
-
-.menu button.active {
-  background:#ff7a00;
-  color:white;
-}
-
-/* Main */
-.main {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-}
-
-/* Topbar */
-.topbar {
-  background:white;
-  padding:10px;
-  border-bottom:1px solid #eee;
-}
-
-.search {
   width:100%;
-  padding:10px;
-  border:1px solid #ddd;
-  border-radius:8px;
 }
 
-/* Chat */
-.chat {
+.active{ background:#ff7a00; color:#fff; }
+.gray{ background:#eee; }
+
+/* MAIN */
+.main{
   flex:1;
+  padding:15px;
   overflow:auto;
-  padding:20px;
 }
 
-.card {
-  background:white;
-  padding:12px;
-  border-radius:10px;
+/* SEARCH */
+.search{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
   margin-bottom:10px;
-  border:1px solid #eee;
 }
 
-.admin {
-  border-left:5px solid #ff7a00;
+/* CARD */
+.card{
+  background:#fff;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
 }
 
-.pin {
-  float:right;
+.card b{ color:#ff7a00; }
+
+/* ACTION */
+.actions{
+  margin-top:8px;
+}
+
+.actions button{
+  margin-right:5px;
+  border:none;
+  padding:5px 8px;
+  border-radius:6px;
   cursor:pointer;
 }
 
-/* Login */
-.login {
-  display:flex;
-  height:100vh;
-  align-items:center;
-  justify-content:center;
-}
+.edit{ background:#ffc107; }
+.del{ background:#ff4d4f; color:#fff; }
 
-.login-box {
-  background:white;
-  padding:30px;
-  border-radius:12px;
-  width:300px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.1);
-}
-
-input {
-  width:100%;
-  margin:10px 0;
+/* ADD BOX */
+.addbox{
+  background:#fff;
   padding:10px;
+  border-radius:10px;
+  margin-bottom:15px;
+  border:1px solid #ddd;
 }
 
-button.login-btn {
-  width:100%;
-  padding:10px;
-  background:#ff7a00;
-  color:white;
-  border:none;
-  border-radius:8px;
+.addbox input, .addbox select{
+  margin:5px;
+  padding:8px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage" class="login">
-  <div class="login-box">
-    <h3>🔐 Admin Login</h3>
-    <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
-    <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
-  </div>
-</div>
+<div class="top">🔥 Zap789 Admin Tool</div>
 
-<!-- APP -->
-<div id="app" class="container" style="display:none">
+<div class="container">
 
-  <!-- Sidebar -->
+  <!-- SIDEBAR -->
   <div class="sidebar">
-    <h2>🔥 Zap789</h2>
-    <div class="menu">
-      <button onclick="filter('ทั้งหมด')" class="active">ทั้งหมด</button>
-      <button onclick="filter('สมัคร')">สมัคร</button>
-      <button onclick="filter('ฝากถอน')">ฝากถอน</button>
-      <button onclick="filter('โปร')">โปร</button>
-      <button onclick="filter('ปัญหา')">ปัญหา</button>
-    </div>
+    <button class="btn active" onclick="setCat('ทั้งหมด')">ทั้งหมด</button>
+    <button class="btn gray" onclick="setCat('ทักทาย')">ทักทาย</button>
+    <button class="btn gray" onclick="setCat('สมัคร')">สมัคร</button>
+    <button class="btn gray" onclick="setCat('ฝากถอน')">ฝากถอน</button>
+    <button class="btn gray" onclick="setCat('โปร')">โปร</button>
+    <button class="btn gray" onclick="setCat('ปัญหา')">ปัญหา</button>
   </div>
 
-  <!-- Main -->
+  <!-- MAIN -->
   <div class="main">
-    <div class="topbar">
-      <input class="search" placeholder="🔍 ค้นหา..." oninput="search(this.value)">
+
+    <input class="search" placeholder="🔍 ค้นหา..." oninput="searchMsg(this.value)">
+
+    <!-- ADD -->
+    <div class="addbox">
+      <input id="newMsg" placeholder="ข้อความใหม่">
+      <select id="newType">
+        <option>ทักทาย</option>
+        <option>สมัคร</option>
+        <option>ฝากถอน</option>
+        <option>โปร</option>
+        <option>ปัญหา</option>
+      </select>
+      <button onclick="addMsg()">➕ เพิ่ม</button>
     </div>
 
-    <div class="chat" id="chat"></div>
+    <div id="list"></div>
+
   </div>
 
 </div>
 
 <script>
-// ====== CONFIG ======
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?output=csv";
-const USER_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
+const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let data = [];
-let users = [];
-let current = "ทั้งหมด";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
 
-// ====== LOAD USERS ======
-async function loadUsers(){
-  const res = await fetch(USER_SHEET);
-  const text = await res.text();
-  const rows = text.split("\n").slice(1);
+let data=[];
+let current="ทั้งหมด";
 
-  users = rows.map(r=>{
-    let c=r.split(",");
-    return {u:c[0], p:c[1]};
-  });
+const names=["น้องแอดมิน","น้องฟ้า","น้องมิ้นท์","น้องแป้ง"];
+
+function randomName(){
+  return names[Math.floor(Math.random()*names.length)];
 }
 
-// ====== LOGIN ======
-function login(){
-  let u=document.getElementById("user").value;
-  let p=document.getElementById("pass").value;
-
-  let ok = users.find(x=>x.u===u && x.p===p);
-
-  if(ok){
-    document.getElementById("loginPage").style.display="none";
-    document.getElementById("app").style.display="flex";
-  } else {
-    alert("❌ รหัสผิด");
-  }
-}
-
-// ====== LOAD DATA ======
+/* LOAD */
 async function load(){
-  const res = await fetch(SHEET_URL);
-  const text = await res.text();
-  const rows = text.split("\n").slice(1);
+  const res=await fetch(CSV_URL);
+  const text=await res.text();
 
-  data = rows.map(r=>{
-    let c=r.split(",");
-    return {
-      name:c[0],
+  const rows=text.split("\n").slice(1);
+
+  data=rows.map(r=>{
+    const c=r.split(",");
+    return{
+      id:c[0],
       msg:c[1],
-      type:c[2],
-      role:c[3]
+      type:c[2]
     }
   });
 
   render();
 }
 
-// ====== RENDER ======
+/* RENDER */
 function render(){
   let html="";
 
-  data
-  .filter(x=> current==="ทั้งหมด" || x.type===current)
-  .forEach(x=>{
+  data.filter(x=>{
+    return current=="ทั้งหมด" || x.type==current;
+  }).forEach(x=>{
+
+    let msg=x.msg.replace("{name}", randomName());
+
     html+=`
-    <div class="card ${x.role==='admin'?'admin':''}">
-      <b>${x.name}</b>
-      <span class="pin">📌</span>
-      <div>${x.msg}</div>
+    <div class="card">
+      <b>${x.type}</b>
+      <div>${msg}</div>
+
+      <div class="actions">
+        <button class="edit" onclick="editMsg('${x.id}','${x.msg}')">✏️</button>
+        <button class="del" onclick="deleteMsg('${x.id}')">❌</button>
+      </div>
     </div>
     `;
   });
 
-  document.getElementById("chat").innerHTML=html;
+  list.innerHTML=html;
 }
 
-// ====== FILTER ======
-function filter(t){
-  current=t;
+/* SEARCH */
+function searchMsg(v){
+  let html="";
+
+  data.filter(x=>x.msg.includes(v)).forEach(x=>{
+    let msg=x.msg.replace("{name}", randomName());
+
+    html+=`
+    <div class="card">
+      <b>${x.type}</b>
+      <div>${msg}</div>
+    </div>
+    `;
+  });
+
+  list.innerHTML=html;
+}
+
+/* CATEGORY */
+function setCat(c){
+  current=c;
   render();
 }
 
-// ====== SEARCH ======
-function search(v){
-  let html="";
-  data
-  .filter(x=> x.msg.includes(v))
-  .forEach(x=>{
-    html+=`
-    <div class="card">
-      <b>${x.name}</b>
-      <div>${x.msg}</div>
-    </div>
-    `;
+/* ADD */
+async function addMsg(){
+  let msg=newMsg.value;
+  let type=newType.value;
+
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"add",
+      message:msg,
+      type:type,
+      role:"admin"
+    })
   });
 
-  document.getElementById("chat").innerHTML=html;
+  alert("เพิ่มแล้ว");
+  location.reload();
 }
 
-// INIT
-loadUsers();
+/* DELETE */
+async function deleteMsg(id){
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"delete",
+      id:id
+    })
+  });
+
+  alert("ลบแล้ว");
+  location.reload();
+}
+
+/* EDIT */
+async function editMsg(id,oldMsg){
+  let newMsg=prompt("แก้ข้อความ:", oldMsg);
+
+  if(!newMsg) return;
+
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"edit",
+      id:id,
+      newMessage:newMsg
+    })
+  });
+
+  alert("แก้แล้ว");
+  location.reload();
+}
+
 load();
 </script>
 
