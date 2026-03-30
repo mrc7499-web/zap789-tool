@@ -1,159 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Zap789 Admin</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:sans-serif;margin:0;background:#f5f6fa}
-header{background:#ff7a00;color:#fff;padding:15px;text-align:center}
-.container{display:flex}
-.sidebar{width:200px;background:#fff;padding:10px}
-.sidebar button{width:100%;padding:10px;margin-bottom:5px;border:none;background:#eee;cursor:pointer}
-.main{flex:1;padding:20px}
-.card{background:#fff;padding:10px;margin:10px 0;border-radius:10px;display:flex;justify-content:space-between}
-.edit{width:100%;border:none;background:transparent}
-.btn{margin-left:5px;padding:5px 10px;border:none;cursor:pointer}
-.copy{background:#2ecc71;color:#fff}
-.del{background:red;color:#fff}
-.restore{background:blue;color:#fff}
-#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px;border-radius:8px;opacity:0}
-#toast.show{opacity:1}
+body { font-family: Arial; background:#f5f6fa; margin:0; }
+.container { max-width:800px; margin:auto; padding:20px; }
+.card { background:#fff; padding:15px; margin:10px 0; border-radius:10px; }
+button { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; }
+.copy { background:#2ecc71; color:#fff; }
+.add { background:#3498db; color:#fff; }
+.login { max-width:300px; margin:100px auto; }
+input { width:100%; padding:10px; margin:5px 0; }
 </style>
-
 </head>
 
 <body>
 
-<header>🔥 Zap789 Admin</header>
-
-<!-- LOGIN -->
-<div id="loginBox" style="padding:20px;text-align:center;">
+<div id="loginBox" class="login">
   <h3>Login</h3>
-  <input id="user" placeholder="username"><br><br>
-  <input id="pass" type="password" placeholder="password"><br><br>
-  <button onclick="login()">เข้าสู่ระบบ</button>
+  <input id="user" placeholder="username">
+  <input id="pass" type="password" placeholder="password">
+  <button onclick="login()">เข้า</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
-<div class="container">
+  <div class="container">
+    <h2>📋 Zap789 Tool</h2>
 
-<div class="sidebar">
-  <button onclick="mode='active';render()">📂 ข้อความ</button>
-  <button onclick="mode='trash';render()">🗑 ถังขยะ</button>
-</div>
+    <input id="cat" placeholder="หมวด">
+    <input id="text" placeholder="ข้อความ">
+    <button class="add" onclick="add()">+ เพิ่ม</button>
 
-<div class="main">
-<input id="search" placeholder="ค้นหา..." oninput="render()"><br><br>
-<div id="list"></div>
+    <div id="list"></div>
+  </div>
 </div>
-
-</div>
-</div>
-
-<div id="toast"></div>
 
 <script>
-let DATA=[];
-let user="";
-let role="";
-let mode="active";
 
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1500);
-}
-
-// 🔐 LOGIN (แก้บัคแล้ว)
-function login(){
-  const u=document.getElementById("user").value.trim();
-  const p=document.getElementById("pass").value.trim();
+function login() {
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
 
   google.script.run.withSuccessHandler(res=>{
-    if(res.status==="success"){
-      user=res.user;
-      role=res.role;
+    if(res.status=="success"){
       document.getElementById("loginBox").style.display="none";
       document.getElementById("app").style.display="block";
       load();
     }else{
-      alert("❌ รหัสผิด");
+      alert("รหัสผิด");
     }
   }).login(u,p);
 }
 
-// 📥 โหลดข้อมูล
 function load(){
-  google.script.run.withSuccessHandler(res=>{
-    DATA=res.slice(1);
-    render();
-  }).getData();
+  google.script.run.withSuccessHandler(data=>{
+    let html="";
+
+    data.forEach((row,i)=>{
+      const text = row[1].replace(/'/g, "\\'"); // กันพัง
+
+      html+=`
+      <div class="card">
+        <b>${row[0]}</b><br>
+        <div onclick="copy('${text}')">${row[1]}</div><br>
+        <button class="copy" onclick="copy('${text}')">Copy</button>
+      </div>`;
+    });
+
+    document.getElementById("list").innerHTML=html;
+  }).getMessages();
 }
 
-// 🧠 render
-function render(){
-  const kw=document.getElementById("search").value.toLowerCase();
+function add(){
+  const cat=document.getElementById("cat").value;
+  const text=document.getElementById("text").value;
 
-  let list=DATA.filter(d=>{
-    if(mode==="active" && d[2]!=="active") return false;
-    if(mode==="trash" && d[2]!=="deleted") return false;
-    return d[1].toLowerCase().includes(kw);
-  });
+  if(!cat || !text){
+    alert("กรอกให้ครบ");
+    return;
+  }
 
-  const div=document.getElementById("list");
-  div.innerHTML="";
-
-  list.forEach((d,i)=>{
-    div.innerHTML+=`
-    <div class="card">
-      <input class="edit" value="${d[1]}" 
-        onchange="edit(${i},this.value)">
-      <div>
-        <button class="btn copy" onclick="copy('${d[1]}')">📋</button>
-
-        ${role==="admin" ? `
-          ${mode==="active" 
-            ? `<button class="btn del" onclick="del(${i})">ลบ</button>`
-            : `<button class="btn restore" onclick="restore(${i})">กู้คืน</button>`
-          }
-        ` : ""}
-      </div>
-    </div>`;
-  });
+  google.script.run.withSuccessHandler(()=>{
+    document.getElementById("cat").value="";
+    document.getElementById("text").value="";
+    load();
+  }).addMessage(cat,text);
 }
 
-// 📋 copy
-function copy(t){
-  navigator.clipboard.writeText(t);
-  toast("คัดลอกแล้ว");
+function copy(text){
+  navigator.clipboard.writeText(text);
+  alert("คัดลอกแล้ว");
 }
 
-// ✏️ edit
-function edit(i,text){
-  const row=i+2;
-  google.script.run.updateRow(row,text);
-  google.script.run.addLog(user,"edit",text);
-  toast("แก้ไขแล้ว");
-}
-
-// 🗑 delete
-function del(i){
-  const row=i+2;
-  google.script.run.deleteRow(row);
-  google.script.run.addLog(user,"delete",DATA[i][1]);
-  load();
-}
-
-// ♻️ restore
-function restore(i){
-  const row=i+2;
-  google.script.run.restoreRow(row);
-  google.script.run.addLog(user,"restore",DATA[i][1]);
-  load();
-}
 </script>
 
 </body>
