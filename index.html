@@ -2,88 +2,124 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>zap789 Tool</title>
+<title>Zap789 Admin Dashboard</title>
 
 <style>
 body {
-  font-family: sans-serif;
-  background: #fff;
-  margin: 0;
+  margin:0;
+  font-family: system-ui;
+  background:#f5f6fa;
 }
 
-/* LOGIN */
-#loginPage {
+/* Layout */
+.container {
   display:flex;
-  justify-content:center;
-  align-items:center;
   height:100vh;
 }
-.login-box {
-  background:#fff;
-  border:1px solid #eee;
-  padding:30px;
-  border-radius:12px;
-  width:300px;
-  text-align:center;
+
+/* Sidebar */
+.sidebar {
+  width:230px;
+  background:#ffffff;
+  border-right:1px solid #eee;
+  padding:20px;
 }
-input {
+
+.sidebar h2 {
+  color:#ff7a00;
+  font-size:18px;
+}
+
+.menu button {
+  display:block;
   width:100%;
+  margin:6px 0;
   padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ddd;
-}
-button {
-  background:#ff7a00;
-  color:white;
   border:none;
-  padding:10px;
+  background:#f3f4f6;
   border-radius:8px;
   cursor:pointer;
 }
 
-/* APP */
-#app {
-  display:none;
-}
-
-header {
+.menu button.active {
   background:#ff7a00;
   color:white;
-  padding:15px;
-  text-align:center;
-  font-weight:bold;
-  font-size:20px;
 }
 
-.container {
+/* Main */
+.main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Topbar */
+.topbar {
+  background:white;
   padding:10px;
+  border-bottom:1px solid #eee;
 }
 
 .search {
   width:100%;
   padding:10px;
-  border-radius:8px;
   border:1px solid #ddd;
-  margin-bottom:10px;
+  border-radius:8px;
+}
+
+/* Chat */
+.chat {
+  flex:1;
+  overflow:auto;
+  padding:20px;
 }
 
 .card {
-  background:#fff;
-  border:1px solid #eee;
+  background:white;
   padding:12px;
   border-radius:10px;
-  margin-bottom:8px;
+  margin-bottom:10px;
+  border:1px solid #eee;
 }
 
 .admin {
-  color:#ff7a00;
-  font-weight:bold;
+  border-left:5px solid #ff7a00;
 }
 
 .pin {
   float:right;
-  color:red;
+  cursor:pointer;
+}
+
+/* Login */
+.login {
+  display:flex;
+  height:100vh;
+  align-items:center;
+  justify-content:center;
+}
+
+.login-box {
+  background:white;
+  padding:30px;
+  border-radius:12px;
+  width:300px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+input {
+  width:100%;
+  margin:10px 0;
+  padding:10px;
+}
+
+button.login-btn {
+  width:100%;
+  padding:10px;
+  background:#ff7a00;
+  color:white;
+  border:none;
+  border-radius:8px;
 }
 </style>
 </head>
@@ -91,94 +127,141 @@ header {
 <body>
 
 <!-- LOGIN -->
-<div id="loginPage">
+<div id="loginPage" class="login">
   <div class="login-box">
-    <h2>🔐 Login</h2>
+    <h3>🔐 Admin Login</h3>
     <input id="user" placeholder="Username">
     <input id="pass" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app">
-  <header>🔥 zap789 Team Tool</header>
+<div id="app" class="container" style="display:none">
 
-  <div class="container">
-    <input class="search" placeholder="🔍 ค้นหา..." oninput="searchMsg(this.value)">
-
-    <div id="list"></div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>🔥 Zap789</h2>
+    <div class="menu">
+      <button onclick="filter('ทั้งหมด')" class="active">ทั้งหมด</button>
+      <button onclick="filter('สมัคร')">สมัคร</button>
+      <button onclick="filter('ฝากถอน')">ฝากถอน</button>
+      <button onclick="filter('โปร')">โปร</button>
+      <button onclick="filter('ปัญหา')">ปัญหา</button>
+    </div>
   </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <input class="search" placeholder="🔍 ค้นหา..." oninput="search(this.value)">
+    </div>
+
+    <div class="chat" id="chat"></div>
+  </div>
+
 </div>
 
 <script>
+// ====== CONFIG ======
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?output=csv";
 const USER_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
 
-let users = {};
-let messages = [
-  {admin:"น้องแอดมิน", text:"🙏 สวัสดีค่ะ ยินดีให้บริการค่ะ 💕"},
-  {admin:"น้องฟ้า", text:"📌 สมัครแจ้งชื่อ-เบอร์-ไลน์นะคะ"},
-  {admin:"น้องมิ้นท์", text:"💰 ฝากขั้นต่ำ 50 บาท"},
-  {admin:"น้องแป้ง", text:"🎁 มีโปรโมชั่นตลอดนะคะ"},
-];
+let data = [];
+let users = [];
+let current = "ทั้งหมด";
 
+// ====== LOAD USERS ======
 async function loadUsers(){
   const res = await fetch(USER_SHEET);
   const text = await res.text();
   const rows = text.split("\n").slice(1);
 
-  rows.forEach(r=>{
-    const [u,p]=r.split(",");
-    if(u && p){
-      users[u.trim()] = p.trim();
-    }
+  users = rows.map(r=>{
+    let c=r.split(",");
+    return {u:c[0], p:c[1]};
   });
 }
 
-async function login(){
-  await loadUsers();
+// ====== LOGIN ======
+function login(){
+  let u=document.getElementById("user").value;
+  let p=document.getElementById("pass").value;
 
-  const u = document.getElementById("user").value;
-  const p = document.getElementById("pass").value;
+  let ok = users.find(x=>x.u===u && x.p===p);
 
-  if(users[u] && users[u]===p){
-    localStorage.setItem("user", u);
-    showApp();
-  }else{
+  if(ok){
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("app").style.display="flex";
+  } else {
     alert("❌ รหัสผิด");
   }
 }
 
-function showApp(){
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("app").style.display="block";
-  render(messages);
+// ====== LOAD DATA ======
+async function load(){
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const rows = text.split("\n").slice(1);
+
+  data = rows.map(r=>{
+    let c=r.split(",");
+    return {
+      name:c[0],
+      msg:c[1],
+      type:c[2],
+      role:c[3]
+    }
+  });
+
+  render();
 }
 
-function render(data){
-  const list = document.getElementById("list");
-  list.innerHTML="";
+// ====== RENDER ======
+function render(){
+  let html="";
 
-  data.forEach(m=>{
-    list.innerHTML += `
-      <div class="card">
-        <span class="admin">${m.admin}</span>
-        <span class="pin">📌</span>
-        <div>${m.text}</div>
-      </div>
+  data
+  .filter(x=> current==="ทั้งหมด" || x.type===current)
+  .forEach(x=>{
+    html+=`
+    <div class="card ${x.role==='admin'?'admin':''}">
+      <b>${x.name}</b>
+      <span class="pin">📌</span>
+      <div>${x.msg}</div>
+    </div>
     `;
   });
+
+  document.getElementById("chat").innerHTML=html;
 }
 
-function searchMsg(keyword){
-  const filtered = messages.filter(m=>m.text.includes(keyword));
-  render(filtered);
+// ====== FILTER ======
+function filter(t){
+  current=t;
+  render();
 }
 
-// auto login
-if(localStorage.getItem("user")){
-  showApp();
+// ====== SEARCH ======
+function search(v){
+  let html="";
+  data
+  .filter(x=> x.msg.includes(v))
+  .forEach(x=>{
+    html+=`
+    <div class="card">
+      <b>${x.name}</b>
+      <div>${x.msg}</div>
+    </div>
+    `;
+  });
+
+  document.getElementById("chat").innerHTML=html;
 }
+
+// INIT
+loadUsers();
+load();
 </script>
 
 </body>
