@@ -3,107 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <title>zap789 Tool</title>
+
 <style>
 body {
-  font-family:sans-serif;
-  background:#1e1e1e;
-  color:#fff;
-  padding:20px;
+  font-family: sans-serif;
+  background: #fff;
+  margin: 0;
 }
-h2 { text-align:center; color:#ff7a00; }
-button {
-  margin:5px;
+
+/* LOGIN */
+#loginPage {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.login-box {
+  background:#fff;
+  border:1px solid #eee;
+  padding:30px;
+  border-radius:12px;
+  width:300px;
+  text-align:center;
+}
+input {
+  width:100%;
   padding:10px;
-  border:none;
-  border-radius:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+button {
   background:#ff7a00;
   color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
 }
+
+/* APP */
+#app {
+  display:none;
+}
+
+header {
+  background:#ff7a00;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-weight:bold;
+  font-size:20px;
+}
+
+.container {
+  padding:10px;
+}
+
+.search {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  margin-bottom:10px;
+}
+
 .card {
-  background:#2a2a2a;
+  background:#fff;
+  border:1px solid #eee;
   padding:12px;
   border-radius:10px;
-  margin-bottom:10px;
-  cursor:pointer;
-  white-space:pre-line;
+  margin-bottom:8px;
+}
+
+.admin {
+  color:#ff7a00;
+  font-weight:bold;
+}
+
+.pin {
+  float:right;
+  color:red;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🔥 zap789 ทีมงานแอดมิน</h2>
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-box">
+    <h2>🔐 Login</h2>
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
 
-<div id="tabs"></div>
-<div id="list"></div>
+<!-- APP -->
+<div id="app">
+  <header>🔥 zap789 Team Tool</header>
+
+  <div class="container">
+    <input class="search" placeholder="🔍 ค้นหา..." oninput="searchMsg(this.value)">
+
+    <div id="list"></div>
+  </div>
+</div>
 
 <script>
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?output=csv";
+const USER_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
 
-const admins = ["น้องมิ้นท์ 💖","น้องแป้ง 🍰","น้องฟ้า ☁️","น้องมายด์ 🌸"];
+let users = {};
+let messages = [
+  {admin:"น้องแอดมิน", text:"🙏 สวัสดีค่ะ ยินดีให้บริการค่ะ 💕"},
+  {admin:"น้องฟ้า", text:"📌 สมัครแจ้งชื่อ-เบอร์-ไลน์นะคะ"},
+  {admin:"น้องมิ้นท์", text:"💰 ฝากขั้นต่ำ 50 บาท"},
+  {admin:"น้องแป้ง", text:"🎁 มีโปรโมชั่นตลอดนะคะ"},
+];
 
-function randomAdmin(){
-  return admins[Math.floor(Math.random()*admins.length)];
-}
-
-let data=[];
-let currentTab="ทั้งหมด";
-
-async function loadData(){
-  const res = await fetch(SHEET_URL);
+async function loadUsers(){
+  const res = await fetch(USER_SHEET);
   const text = await res.text();
-
   const rows = text.split("\n").slice(1);
 
-  data = rows.map(r=>{
-    const [cat,text] = r.split(",");
-    return {cat,text};
-  });
-
-  createTabs();
-  render();
-}
-
-function createTabs(){
-  const tabsDiv=document.getElementById("tabs");
-  tabsDiv.innerHTML="";
-
-  const cats=["ทั้งหมด",...new Set(data.map(d=>d.cat))];
-
-  cats.forEach(cat=>{
-    const btn=document.createElement("button");
-    btn.innerText=cat;
-    btn.onclick=()=>{
-      currentTab=cat;
-      render();
-    };
-    tabsDiv.appendChild(btn);
+  rows.forEach(r=>{
+    const [u,p]=r.split(",");
+    if(u && p){
+      users[u.trim()] = p.trim();
+    }
   });
 }
 
-function render(){
-  const list=document.getElementById("list");
+async function login(){
+  await loadUsers();
+
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+
+  if(users[u] && users[u]===p){
+    localStorage.setItem("user", u);
+    showApp();
+  }else{
+    alert("❌ รหัสผิด");
+  }
+}
+
+function showApp(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").style.display="block";
+  render(messages);
+}
+
+function render(data){
+  const list = document.getElementById("list");
   list.innerHTML="";
 
-  data
-  .filter(d=> currentTab==="ทั้งหมด" || d.cat===currentTab)
-  .forEach(d=>{
-    if(!d.text) return;
-
-    const div=document.createElement("div");
-    div.className="card";
-    div.innerText=d.text.replaceAll("{name}","น้องแอดมิน");
-
-    div.onclick=()=>{
-      const finalText=d.text.replaceAll("{name}",randomAdmin());
-      navigator.clipboard.writeText(finalText);
-    };
-
-    list.appendChild(div);
+  data.forEach(m=>{
+    list.innerHTML += `
+      <div class="card">
+        <span class="admin">${m.admin}</span>
+        <span class="pin">📌</span>
+        <div>${m.text}</div>
+      </div>
+    `;
   });
 }
 
-loadData();
+function searchMsg(keyword){
+  const filtered = messages.filter(m=>m.text.includes(keyword));
+  render(filtered);
+}
+
+// auto login
+if(localStorage.getItem("user")){
+  showApp();
+}
 </script>
 
 </body>
