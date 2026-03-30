@@ -8,19 +8,23 @@
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
-/* HEADER (Sticky) */
+/* HEADER */
 .header{
   position:sticky;
   top:0;
-  z-index:10;
   background:#ff7a00;
+  color:#fff;
   padding:10px;
   display:flex;
-  gap:10px;
+  justify-content:space-between;
   align-items:center;
 }
 
-/* SEARCH */
+.logo{
+  font-weight:bold;
+  font-size:18px;
+}
+
 .search{
   padding:8px;
   border-radius:8px;
@@ -28,84 +32,44 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   width:240px;
 }
 
-/* CATEGORY */
-.categories{
-  display:flex;
-  gap:8px;
-  overflow:auto;
-}
-.cat{
-  background:#fff;
-  padding:6px 10px;
-  border-radius:20px;
-  cursor:pointer;
-  white-space:nowrap;
-  font-size:13px;
-}
-.cat.active{background:#000;color:#fff}
-
-/* GRID (4 columns) */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:20px;
-  padding:20px;
+  gap:18px;
+  padding:18px;
 }
 
 /* CARD */
 .card{
   background:#fff;
-  padding:16px;
+  padding:14px;
   border-radius:12px;
   cursor:pointer;
   position:relative;
   line-height:1.5;
-  font-size:14px;
 }
 .dark .card{background:#1e1e1e}
 
-.card:hover{transform:scale(1.02)}
-
-/* COLOR BAR */
+/* COLOR */
 .card::before{
   content:"";
   position:absolute;
   left:0;
   top:0;
-  width:6px;
+  width:5px;
   height:100%;
 }
 .green::before{background:#22c55e}
 .red::before{background:#ef4444}
 .pink::before{background:#ec4899}
 .blue::before{background:#3b82f6}
-.orange::before{background:#f97316}
-
-/* CATEGORY TEXT (จาง) */
-.cat-label{
-  font-size:11px;
-  color:#888;
-  margin-bottom:6px;
-}
-
-/* VARIABLE */
-.var{
-  background:#eee;
-  border-radius:6px;
-  padding:2px 6px;
-  border:1px solid #ddd;
-}
-.dark .var{
-  background:#2a2f3a;
-  color:#fff;
-  border:1px solid #444;
-}
 
 /* ACTION */
 .actions{
   position:absolute;
-  top:6px;
-  right:6px;
+  top:5px;
+  right:5px;
   display:none;
 }
 .card:hover .actions{display:block}
@@ -113,9 +77,17 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 /* STAR */
 .star{
   position:absolute;
-  top:6px;
-  left:6px;
+  top:5px;
+  left:5px;
 }
+
+/* VARIABLE */
+.var{
+  background:#eee;
+  padding:2px 6px;
+  border-radius:5px;
+}
+.dark .var{background:#333;color:#fff}
 
 /* TOAST */
 .toast{
@@ -124,74 +96,50 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   right:20px;
   background:#000;
   color:#fff;
-  padding:10px 14px;
+  padding:10px;
   border-radius:8px;
   opacity:0;
-  transition:.3s;
 }
-
-/* MODAL */
-.modal{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  display:none;
-  justify-content:center;
-  align-items:center;
-}
-.modal-box{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-}
-.dark .modal-box{background:#222;color:#fff}
 </style>
 </head>
 
 <body>
 
 <div class="header">
+  <div class="logo">🔥 Zap789 OWNER</div>
+
   <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
 
-  <div id="cats" class="categories"></div>
-
   <button onclick="toggleDark()">🌙</button>
-  <button onclick="openHelp()">❓</button>
 </div>
 
 <div id="grid" class="grid"></div>
-
 <div id="toast" class="toast">✅ คัดลอกแล้ว</div>
-
-<div id="help" class="modal">
-  <div class="modal-box">
-    <h3>⚡ วิธีใช้งาน</h3>
-    <p>คลิกการ์ด = คัดลอก</p>
-    <p>Alt+1-4 = ข้อความด่วน</p>
-    <p>{name} = ระบบใส่ให้</p>
-    <button onclick="closeHelp()">ปิด</button>
-  </div>
-</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[], ADMINS=[];
+let DATA=[];
+let ADMINS=[];
 let favorites=new Set();
-let currentCat="ทั้งหมด";
 
-/* INIT */
+/* 🚀 โหลดครั้งเดียว (เร็วขึ้นโคตรๆ) */
 async function init(){
-  DATA=await fetch(`${API}?action=get`).then(r=>r.json());
-  ADMINS=(await fetch(`${API}?action=admins`).then(r=>r.json())).map(x=>x[0]);
+  const [data, admins] = await Promise.all([
+    fetch(`${API}?action=get`).then(r=>r.json()),
+    fetch(`${API}?action=admins`).then(r=>r.json())
+  ]);
+
+  DATA=data;
+  ADMINS=admins.map(x=>x[0]);
+
   render();
 }
 init();
 
 /* RANDOM NAME */
 function randomName(){
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน";
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
 }
 
 /* COPY */
@@ -204,12 +152,7 @@ function copy(text){
 function showToast(){
   const t=document.getElementById("toast");
   t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1200);
-}
-
-/* DARK */
-function toggleDark(){
-  document.body.classList.toggle("dark");
+  setTimeout(()=>t.style.opacity=0,800);
 }
 
 /* COLOR */
@@ -217,8 +160,7 @@ function getColor(cat){
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
-  if(cat.includes("สมัคร")) return "blue";
-  return "orange";
+  return "blue";
 }
 
 /* PIN */
@@ -227,30 +169,21 @@ function toggleFav(i){
   render();
 }
 
-/* HIGHLIGHT */
-function highlight(text){
-  return text.replaceAll("{name}", `<span class="var">{name}</span>`);
-}
-
 /* SORT */
 function sorted(){
   return [...DATA.keys()].sort((a,b)=>favorites.has(b)-favorites.has(a));
 }
 
-/* RENDER */
+/* RENDER (เร็ว ไม่มี fetch ซ้ำ) */
 function render(){
-  let html="";
-  let cats=new Set(["ทั้งหมด"]);
   const s=(search.value||"").toLowerCase();
+  let html="";
 
   sorted().forEach(i=>{
-    const [cat,text,status,tags]=DATA[i];
+    const [cat,text,status]=DATA[i];
     if(status==="deleted") return;
 
-    cats.add(cat);
-
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-    if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
+    if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
     <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
@@ -259,54 +192,34 @@ function render(){
         ${favorites.has(i)?"⭐":"☆"}
       </div>
 
-      <div class="cat-label">${cat}</div>
-
-      ${highlight(text)}
+      ${text.replaceAll("{name}",'<span class="var">{name}</span>')}
 
       <div class="actions">
         <button onclick="event.stopPropagation();edit(${i})">✏️</button>
-        <button onclick="event.stopPropagation();del(${i})">🗑</button>
       </div>
 
     </div>`;
   });
 
   grid.innerHTML=html;
-
-  let cHTML="";
-  cats.forEach(c=>{
-    const count=DATA.filter(x=>x[0]===c).length;
-    cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c} (${count})</div>`;
-  });
-  cats.innerHTML=cHTML;
 }
 
-/* EDIT */
+/* EDIT (ไม่ reload หน้าแล้ว → เร็วขึ้น) */
 function edit(i){
   const t=prompt("แก้",DATA[i][1]);
   if(!t) return;
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`).then(init);
+
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
+  .then(()=>{
+    DATA[i][1]=t;
+    render();
+  });
 }
 
-/* DELETE */
-function del(i){
-  fetch(`${API}?action=delete&row=${i}`).then(init);
+/* DARK */
+function toggleDark(){
+  document.body.classList.toggle("dark");
 }
-
-/* SHORTCUT */
-document.addEventListener("keydown",e=>{
-  if(e.altKey){
-    let n=parseInt(e.key);
-    if(n>=1 && n<=4){
-      let i=sorted()[n-1];
-      if(i!==undefined) copy(DATA[i][1]);
-    }
-  }
-});
-
-/* HELP */
-function openHelp(){help.style.display="flex"}
-function closeHelp(){help.style.display="none"}
 </script>
 
 </body>
