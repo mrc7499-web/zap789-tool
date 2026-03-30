@@ -2,176 +2,222 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Pro</title>
+<title>Zap789 Dashboard</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f5f5f5}
-.header{background:#ff7a00;color:#fff;padding:15px;font-size:20px}
-.container{display:flex}
-.sidebar{width:200px;background:#fff;padding:10px}
-.menu{padding:10px;margin:5px 0;border-radius:8px;cursor:pointer}
-.menu.active{background:#ff7a00;color:#fff}
-.main{flex:1;padding:20px}
+body { margin:0; font-family:sans-serif; background:#f5f6fa; }
 
-.card{background:#fff;padding:15px;margin-bottom:10px;border-radius:10px}
-.text{margin-bottom:10px}
-input.inline{width:100%;padding:5px}
+/* HEADER */
+.header {
+  background:#ff7a00;
+  color:#fff;
+  padding:12px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-.actions button{margin-right:5px}
+.search {
+  width:300px;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+}
 
-.toast{position:fixed;bottom:20px;right:20px;background:#000;color:#fff;padding:10px;border-radius:8px;opacity:0}
+.toggle {
+  background:#fff;
+  padding:5px 10px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+/* CATEGORY */
+.categories {
+  padding:10px;
+  display:flex;
+  gap:10px;
+  overflow:auto;
+}
+
+.cat-btn {
+  background:#fff;
+  padding:8px 12px;
+  border-radius:20px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.cat-btn.active {
+  background:#ff7a00;
+  color:#fff;
+}
+
+/* GRID */
+.grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+  gap:12px;
+  padding:15px;
+}
+
+/* CARD */
+.card {
+  background:#fff;
+  padding:15px;
+  border-radius:12px;
+  cursor:pointer;
+  position:relative;
+  transition:.2s;
+}
+
+.card:hover { transform:scale(1.02); }
+
+/* COLOR BAR */
+.card::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:6px;
+  height:100%;
+  border-radius:12px 0 0 12px;
+}
+
+/* COLORS */
+.green::before { background:#22c55e; }
+.red::before { background:#ef4444; }
+.pink::before { background:#ec4899; }
+.blue::before { background:#3b82f6; }
+.orange::before { background:#f97316; }
+
+/* EDIT MODE */
+.actions {
+  margin-top:10px;
+}
+
+.actions button {
+  margin-right:5px;
+}
 </style>
 </head>
 
 <body>
 
-<div id="loginPage" style="text-align:center;margin-top:120px">
-<h2>Login</h2>
-<input id="u"><br><br>
-<input id="p" type="password"><br><br>
-<button onclick="login()">เข้า</button>
+<div class="header">
+  <div>🔥 Zap789 PRO</div>
+
+  <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+
+  <div class="toggle" onclick="toggleMode()">
+    ⚙️ <span id="modeText">โหมดตอบแชท</span>
+  </div>
 </div>
 
-<div id="app" style="display:none">
+<div id="categories" class="categories"></div>
 
-<div class="header">🔥 Zap789 PRO</div>
-
-<div class="container">
-
-<div class="sidebar" id="menu"></div>
-
-<div class="main">
-
-<input id="search" placeholder="ค้นหา..." oninput="render()"><br><br>
-
-<input id="cat" placeholder="หมวด">
-<input id="text" placeholder="ข้อความ">
-<button onclick="add()">+ เพิ่ม</button>
-
-<hr>
-
-<button onclick="viewMode='normal';render()">📋 ปกติ</button>
-<button onclick="viewMode='trash';render()">🗑 Trash</button>
-<button onclick="showLogs()">📜 Log</button>
-
-<div id="list"></div>
-
-</div>
-</div>
-</div>
-
-<div id="toast" class="toast">Copied</div>
+<div id="grid" class="grid"></div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[], ADMINS=[], role="", user="", currentCat="ทั้งหมด", viewMode="normal";
+let DATA=[];
+let ADMINS=[];
+let currentCat="ทั้งหมด";
+let editMode=false;
 
-window.onload=()=>{
-  const u=localStorage.getItem("user");
-  const r=localStorage.getItem("role");
-  if(u){ user=u; role=r; start(); }
-};
+/* LOAD */
+fetch(`${API}?action=get`)
+.then(r=>r.json())
+.then(d=>{
+  DATA=d;
+  render();
+});
 
-function login(){
-  fetch(`${API}?action=login&username=${u.value}&password=${p.value}`)
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.success){
-      user=d.user; role=d.role;
-      localStorage.setItem("user",user);
-      localStorage.setItem("role",role);
-      start();
-    } else alert("ผิด");
-  });
-}
+fetch(`${API}?action=admins`)
+.then(r=>r.json())
+.then(d=>{
+  ADMINS=d.map(x=>x[0]);
+});
 
-function start(){
-  loginPage.style.display="none";
-  app.style.display="block";
-  load(); loadAdmins();
-}
-
-function load(){
-  fetch(`${API}?action=get`).then(r=>r.json()).then(d=>{DATA=d;render();});
-}
-
-function loadAdmins(){
-  fetch(`${API}?action=admins`).then(r=>r.json()).then(d=>{ADMINS=d.map(x=>x[0]);});
-}
-
+/* RANDOM NAME */
 function randomName(){
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน";
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
 }
 
-function copyText(t){
-  navigator.clipboard.writeText(t.replaceAll("{name}",randomName()));
-  toast.style.opacity=1; setTimeout(()=>toast.style.opacity=0,1000);
+/* COPY */
+function copy(text){
+  const final=text.replaceAll("{name}",randomName());
+  navigator.clipboard.writeText(final);
 }
 
+/* MODE */
+function toggleMode(){
+  editMode=!editMode;
+  modeText.innerText = editMode ? "โหมดแก้ไข" : "โหมดตอบแชท";
+  render();
+}
+
+/* COLOR BY CAT */
+function getColor(cat){
+  if(cat.includes("ฝาก")) return "green";
+  if(cat.includes("ปัญหา")) return "red";
+  if(cat.includes("ทัก")) return "pink";
+  if(cat.includes("สมัคร")) return "blue";
+  return "orange";
+}
+
+/* RENDER */
 function render(){
-  let html=""; let cats=new Set(["ทั้งหมด"]);
+  let html="";
+  let cats=new Set(["ทั้งหมด"]);
   const s=search.value.toLowerCase();
 
   DATA.forEach((r,i)=>{
     const [cat,text,status]=r;
+
+    if(status==="deleted") return;
+
     cats.add(cat);
 
-    if(viewMode==="normal" && status==="deleted") return;
-    if(viewMode==="trash" && status!=="deleted") return;
     if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
-    <div class="card">
+    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+      <b>${cat}</b><br><br>
+      ${text}
 
-      <div onclick="copyText(\`${text}\`)">
-        <b>${cat}</b>
-      </div>
-
-      <input class="inline" value="${text}" onchange="edit(${i},this.value)">
-
+      ${editMode ? `
       <div class="actions">
-        ${viewMode==="normal" && role==="admin" ? `<button onclick="del(${i})">🗑</button>`:""}
-        ${viewMode==="trash" ? `<button onclick="restore(${i})">♻️</button>`:""}
+        <button onclick="event.stopPropagation(); edit(${i},\`${text}\`)">✏️</button>
+        <button onclick="event.stopPropagation(); del(${i})">🗑</button>
       </div>
-
+      `:""}
     </div>`;
   });
 
-  list.innerHTML=html;
+  grid.innerHTML=html;
 
-  let m="";
+  let cHTML="";
   cats.forEach(c=>{
-    m+=`<div class="menu ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+    cHTML+=`<div class="cat-btn ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
   });
-  menu.innerHTML=m;
+  categories.innerHTML=cHTML;
 }
 
-function add(){
-  fetch(`${API}?action=add&cat=${cat.value}&text=${text.value}&user=${user}`).then(()=>load());
+/* EDIT */
+function edit(i,old){
+  const t=prompt("แก้ไข",old);
+  if(!t) return;
+
+  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
+  .then(()=>location.reload());
 }
 
-function edit(i,val){
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(val)}&user=${user}`);
-}
-
+/* DELETE */
 function del(i){
-  fetch(`${API}?action=delete&row=${i}&user=${user}`).then(()=>load());
-}
-
-function restore(i){
-  fetch(`${API}?action=restore&row=${i}&user=${user}`).then(()=>load());
-}
-
-function showLogs(){
-  fetch(`${API}?action=logs`).then(r=>r.json()).then(d=>{
-    let html="";
-    d.reverse().forEach(r=>{
-      html+=`<div class="card">${r.join(" | ")}</div>`;
-    });
-    list.innerHTML=html;
-  });
+  fetch(`${API}?action=delete&row=${i}`)
+  .then(()=>location.reload());
 }
 </script>
 
