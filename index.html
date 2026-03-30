@@ -2,17 +2,26 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Zap789 PRO | Perfect Edition</title>
+    <title>Zap789 PRO | Admin Dashboard</title>
     <style>
         :root { --primary: #ff7a00; --bg: #f4f4f4; --card-bg: #ffffff; --text: #333; --var-bg: #eee; }
         body.dark { --bg: #121212; --card-bg: #1e1e1e; --text: #efefef; --var-bg: #333; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
+        
+        /* LOGIN UI */
+        #login-page { position: fixed; inset: 0; background: #ff7a00; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .login-btn { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* DASHBOARD UI */
         .header { position: sticky; top: 0; background: var(--primary); padding: 10px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .top { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
         .search { padding: 8px 15px; border-radius: 8px; border: none; width: 250px; outline: none; }
         .categories { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; max-width: 1400px; margin: 0 auto; padding-bottom: 5px; }
-        .cat { background: #fff; padding: 6px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 1px solid #ddd; }
+        .cat { background: #fff; padding: 6px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 1px solid #ddd; color: #333; }
         .cat.active { background: #000; color: #fff; border-color: #000; }
+        
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
         .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; display: flex; flex-direction: column; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -22,42 +31,55 @@
         .actions { position: absolute; top: 8px; left: 12px; display: none; gap: 5px; z-index: 10; }
         .card:hover .actions { display: flex; }
         .btn-action { background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        
         .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .content { padding: 12px; line-height: 1.5; font-size: 14px; flex-grow: 1; }
         .var { background: var(--var-bg); padding: 2px 5px; border-radius: 4px; color: var(--primary); font-weight: bold; }
+        
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; z-index: 1000; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .modal-box { background: #fff; padding: 20px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; color: #333; }
-        .input-ui { padding: 10px; border-radius: 6px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="top">
-        <div style="font-weight: bold; color: white;">🔥 Zap789 PRO</div>
-        <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-        <div style="display: flex; gap: 10px;">
-            <button onclick="openModal()" style="cursor:pointer; border-radius:5px; border:none; padding:5px 15px; background:#fff;">+ เพิ่ม</button>
-            <button onclick="toggleDark()" style="background:none; border:none; cursor:pointer; font-size: 18px;">🌙</button>
-        </div>
+<div id="login-page">
+    <div class="login-box">
+        <h2 style="color: #ff7a00; margin-top: 0;">Zap789 Login</h2>
+        <input type="text" id="userIn" placeholder="Username">
+        <input type="password" id="passIn" placeholder="Password">
+        <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
+        <p id="errorMsg" style="color: red; font-size: 12px; margin-top: 10px; display: none;">❌ ข้อมูลไม่ถูกต้อง</p>
     </div>
-    <div id="cats" class="categories"></div>
 </div>
 
-<div id="grid" class="grid"></div>
+<div id="main-content" style="display: none;">
+    <div class="header">
+        <div class="top">
+            <div style="font-weight: bold; color: white;">🔥 Zap789 PRO</div>
+            <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+            <div style="display: flex; gap: 10px;">
+                <button id="addBtn" onclick="openModal()" style="cursor:pointer; border-radius:5px; border:none; padding:5px 15px; background:#fff;">+ เพิ่ม</button>
+                <button onclick="toggleDark()" style="background:none; border:none; cursor:pointer; font-size: 18px;">🌙</button>
+                <button onclick="logout()" style="background:none; border:none; color:white; cursor:pointer; font-size: 12px;">ออกจากระบบ</button>
+            </div>
+        </div>
+        <div id="cats" class="categories"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+</div>
+
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
 <div id="modal" class="modal">
     <div class="modal-box">
         <h3 style="margin:0;">📝 จัดการข้อมูล</h3>
-        <input id="catInput" class="input-ui" placeholder="หมวดหมู่ (เช่น ฝากถอน, สมัคร)">
-        <textarea id="textInput" class="input-ui" style="height: 80px;" placeholder="ข้อความ..."></textarea>
-        <label style="font-size: 12px;">🖼️ รูปภาพ (1040x1040):</label>
+        <input id="catInput" style="padding:10px; border-radius:6px; border:1px solid #ddd;" placeholder="หมวดหมู่">
+        <textarea id="textInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; height:80px;" placeholder="ข้อความ..."></textarea>
         <input type="file" id="imgInput" accept="image/*">
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeModal()" style="padding: 8px 15px; border:none; border-radius:5px; cursor:pointer;">ยกเลิก</button>
-            <button onclick="save()" style="background: #ff7a00; color:white; padding: 8px 15px; border:none; border-radius:5px; cursor:pointer;">บันทึก</button>
+            <button onclick="closeModal()">ยกเลิก</button>
+            <button onclick="save()" style="background: #ff7a00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">บันทึก</button>
         </div>
     </div>
 </div>
@@ -65,17 +87,65 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 let DATA = [];
+let USERS = []; // เก็บข้อมูล user จากชีท
 let currentCat = "ทั้งหมด";
 let editIndex = null;
+let currentUser = null;
 
 async function init() {
     try {
         const res = await fetch(API_URL + "?action=get");
-        DATA = await res.json();
-    } catch(e) { console.log("Fetch Error"); }
+        const json = await res.json();
+        DATA = json.data || json; // รับข้อมูลแผ่นหลัก
+        
+        // ดึงข้อมูล User จากแผ่น users (สมมติว่า API ส่งแผ่น users มาด้วย หรือต้องดึงแยก)
+        const resUser = await fetch(API_URL + "?action=getUsers"); 
+        USERS = await resUser.json();
+
+        // เช็คว่าเคยล็อคอินค้างไว้ไหม
+        const savedUser = localStorage.getItem('zapUser');
+        if(savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showDashboard();
+        }
+    } catch(e) { console.log("Init Error"); }
+}
+
+function login() {
+    const u = document.getElementById('userIn').value;
+    const p = document.getElementById('passIn').value;
+    const found = USERS.find(item => item[0] == u && item[1] == p);
+
+    if(found) {
+        currentUser = { name: found[0], role: found[2] };
+        localStorage.setItem('zapUser', JSON.stringify(currentUser));
+        showDashboard();
+    } else {
+        document.getElementById('errorMsg').style.display = "block";
+    }
+}
+
+function showDashboard() {
+    document.getElementById('login-page').style.display = "none";
+    document.getElementById('main-content').style.display = "block";
+    
+    // ถ้าไม่ใช่ admin ห้ามเห็นปุ่มเพิ่ม/แก้ไข
+    if(currentUser.role !== 'admin') {
+        document.getElementById('addBtn').style.display = "none";
+        // ใส่ CSS ซ่อนปุ่มแก้ไขในการ์ดด้วย
+        const style = document.createElement('style');
+        style.innerHTML = '.actions { display: none !important; }';
+        document.head.appendChild(style);
+    }
     render();
 }
 
+function logout() {
+    localStorage.removeItem('zapUser');
+    location.reload();
+}
+
+/* --- ระบบเดิมที่ทำงานได้ดีอยู่แล้ว --- */
 function getColor(cat) {
     if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
     if (cat.includes("ปัญหา")) return "red";
@@ -152,7 +222,6 @@ function edit(i) {
     editIndex = i;
     document.getElementById('catInput').value = DATA[i][0];
     document.getElementById('textInput').value = DATA[i][1];
-    document.getElementById('imgInput').value = "";
     document.getElementById('modal').style.display = "flex";
 }
 
@@ -188,6 +257,7 @@ function executeSave(imgData) {
 }
 
 function toggleDark() { document.body.classList.toggle("dark"); }
+
 init();
 </script>
 </body>
