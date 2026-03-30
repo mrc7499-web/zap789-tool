@@ -2,259 +2,167 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>🔥 Zap789 Admin Tool</title>
+<title>Zap789 Admin</title>
 
 <style>
-body {
-  margin:0;
-  font-family: sans-serif;
-  background:#f5f6fa;
-}
-
-header {
-  background:#ff7a00;
-  color:#fff;
-  padding:15px;
-  text-align:center;
-  font-size:20px;
-  font-weight:bold;
-}
-
-.container {
-  display:flex;
-}
-
-/* sidebar */
-.sidebar {
-  width:220px;
-  background:#fff;
-  padding:10px;
-}
-
-.sidebar button {
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-  border:none;
-  border-radius:8px;
-  background:#eee;
-  cursor:pointer;
-}
-
-.sidebar button.active {
-  background:#ff7a00;
-  color:#fff;
-}
-
-/* main */
-.main {
-  flex:1;
-  padding:20px;
-}
-
-.topbar {
-  display:flex;
-  gap:10px;
-  margin-bottom:15px;
-}
-
-input, select {
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-button.add {
-  background:#ff7a00;
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-/* card */
-.card {
-  background:#fff;
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.actions button {
-  margin-left:5px;
-  border:none;
-  padding:5px 8px;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.copy { background:#2ecc71; color:#fff; }
-.edit { background:#3498db; color:#fff; }
-.delete { background:#e74c3c; color:#fff; }
-
-/* toast */
-#toast {
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#333;
-  color:#fff;
-  padding:10px 15px;
-  border-radius:8px;
-  opacity:0;
-  transition:0.3s;
-}
-#toast.show { opacity:1; }
+body {margin:0;font-family:sans-serif;background:#f5f6fa;}
+header {background:#ff7a00;color:#fff;padding:15px;text-align:center;}
+.container {display:flex;}
+.sidebar {width:220px;background:#fff;padding:10px;}
+.sidebar button {width:100%;padding:10px;margin-bottom:8px;border:none;border-radius:8px;background:#eee;}
+.sidebar button.active {background:#ff7a00;color:#fff;}
+.main {flex:1;padding:15px;}
+.topbar {display:flex;gap:10px;margin-bottom:10px;}
+input,select{padding:8px;border-radius:8px;border:1px solid #ccc;}
+.card{background:#fff;padding:10px;margin-bottom:10px;border-radius:10px;display:flex;justify-content:space-between;}
+.actions button{margin-left:5px;border:none;padding:5px 8px;border-radius:6px;}
+.copy{background:#2ecc71;color:#fff;}
+.edit{background:#3498db;color:#fff;}
+.delete{background:#e74c3c;color:#fff;}
+.pin{background:#f1c40f;color:#fff;}
+#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px;border-radius:8px;opacity:0;}
+#toast.show{opacity:1;}
 </style>
 </head>
 
 <body>
 
-<header>🔥 Zap789 Admin Tool</header>
+<script>
+// 🔐 PASSWORD
+const PASSWORD="zap789";
+if(prompt("ใส่รหัสเข้าใช้งาน")!==PASSWORD){
+  document.body.innerHTML="❌ เข้าไม่ได้";
+  throw new Error();
+}
+</script>
+
+<header>🔥 Zap789 Tool</header>
 
 <div class="container">
-
-<div class="sidebar" id="categories"></div>
+<div class="sidebar" id="cats"></div>
 
 <div class="main">
-
 <div class="topbar">
 <input id="search" placeholder="ค้นหา..." oninput="render()">
 <input id="newText" placeholder="ข้อความใหม่">
 <select id="newCat"></select>
-<button class="add" onclick="addItem()">+ เพิ่ม</button>
+<button onclick="add()">➕</button>
 </div>
 
 <div id="list"></div>
-
 </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let data = [];
-let currentCat = "ทั้งหมด";
+let data=[];
+let current="ทั้งหมด";
+let pinned=[];
 
-const names = ["น้องแอดมิน","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
+const names=["น้องแอด","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
 
-function getRandomName(){
-  return names[Math.floor(Math.random()*names.length)];
+function toast(t){
+const el=document.getElementById("toast");
+el.innerText=t;
+el.classList.add("show");
+setTimeout(()=>el.classList.remove("show"),1500);
 }
 
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2000);
+function rand(){return names[Math.floor(Math.random()*names.length)];}
+
+async function load(){
+const res=await fetch(API);
+const json=await res.json();
+
+data=json.slice(1).map(r=>({cat:r[0],text:r[1]}));
+
+renderCats();
+render();
 }
 
-/* โหลดข้อมูล */
-async function loadData(){
-  const res = await fetch(API);
-  const json = await res.json();
+function renderCats(){
+const box=document.getElementById("cats");
+const cats=["ทั้งหมด",...new Set(data.map(i=>i.cat))];
 
-  data = json.slice(1).map(r => ({
-    cat: r[0],
-    text: r[1]
-  }));
+box.innerHTML=cats.map(c=>{
+const count=data.filter(i=>i.cat===c).length;
+return `<button onclick="select('${c}')" class="${c===current?'active':''}">
+${c} (${count})
+</button>`;
+}).join("");
 
-  render();
-  renderCategories();
+const sel=document.getElementById("newCat");
+sel.innerHTML=cats.filter(c=>c!=="ทั้งหมด").map(c=>`<option>${c}</option>`).join("");
 }
 
-/* แสดงหมวด */
-function renderCategories(){
-  const cats = ["ทั้งหมด", ...new Set(data.map(i=>i.cat))];
-  const box = document.getElementById("categories");
+function select(c){current=c;render();renderCats();}
 
-  box.innerHTML = cats.map(c=>{
-    const count = data.filter(i=>i.cat===c).length;
-    return `<button onclick="selectCat('${c}')" class="${c===currentCat?'active':''}">
-      ${c} (${count})
-    </button>`;
-  }).join("");
-
-  const select = document.getElementById("newCat");
-  select.innerHTML = cats.filter(c=>c!=="ทั้งหมด").map(c=>`<option>${c}</option>`).join("");
-}
-
-function selectCat(c){
-  currentCat = c;
-  render();
-  renderCategories();
-}
-
-/* render list */
 function render(){
-  const q = document.getElementById("search").value.toLowerCase();
+const q=document.getElementById("search").value.toLowerCase();
 
-  let list = data.filter(i =>
-    (currentCat==="ทั้งหมด" || i.cat===currentCat) &&
-    i.text.toLowerCase().includes(q)
-  );
+let list=data.filter(i=>
+(current==="ทั้งหมด"||i.cat===current)&&
+i.text.toLowerCase().includes(q)
+);
 
-  const el = document.getElementById("list");
+// ⭐ pinned
+list=[...pinned,...list];
 
-  el.innerHTML = list.map((i,idx)=>`
-    <div class="card">
-      <div>${i.text}</div>
-      <div class="actions">
-        <button class="copy" onclick="copyText('${i.text}')">📋</button>
-        <button class="edit" onclick="editItem(${idx})">✏️</button>
-        <button class="delete" onclick="deleteItem(${idx})">🗑</button>
-      </div>
-    </div>
-  `).join("");
+const el=document.getElementById("list");
+
+el.innerHTML=list.map((i,idx)=>{
+const t=i.text.replace("{name}",rand());
+
+return `
+<div class="card">
+<div>${t}</div>
+<div class="actions">
+<button class="copy" onclick="copy('${i.text}')">📋</button>
+<button class="pin" onclick="pin(${idx})">⭐</button>
+<button class="edit" onclick="edit(${idx})">✏️</button>
+<button class="delete" onclick="del(${idx})">🗑</button>
+</div>
+</div>
+`;
+}).join("");
 }
 
-/* copy */
-function copyText(t){
-  const final = t.replace("{name}", getRandomName());
-  navigator.clipboard.writeText(final);
-  showToast("คัดลอกแล้ว ✅");
+function copy(t){
+navigator.clipboard.writeText(t.replace("{name}",rand()));
+toast("คัดลอกแล้ว");
 }
 
-/* เพิ่ม */
-async function addItem(){
-  const text = document.getElementById("newText").value;
-  const cat = document.getElementById("newCat").value;
+function add(){
+const t=newText.value;
+const c=newCat.value;
+if(!t)return;
 
-  if(!text) return;
-
-  await fetch(API,{
-    method:"POST",
-    body: JSON.stringify({ id: cat, text: text, type:"", role:"" })
-  });
-
-  showToast("เพิ่มแล้ว");
-  loadData();
+data.push({cat:c,text:t});
+render();
+toast("เพิ่มแล้ว");
 }
 
-/* ลบ */
-function deleteItem(index){
-  data.splice(index,1);
-  render();
-  showToast("ลบแล้ว (refresh จะหายถาวร)");
+function del(i){
+data.splice(i,1);
+render();
+toast("ลบแล้ว");
 }
 
-/* แก้ไข */
-function editItem(index){
-  const newText = prompt("แก้ข้อความ:", data[index].text);
-  if(newText){
-    data[index].text = newText;
-    render();
-    showToast("แก้ไขแล้ว");
-  }
+function edit(i){
+const t=prompt("แก้ข้อความ",data[i].text);
+if(t){data[i].text=t;render();toast("แก้แล้ว");}
 }
 
-loadData();
+function pin(i){
+pinned.unshift(data[i]);
+toast("ปักหมุดแล้ว");
+render();
+}
+
+load();
 </script>
 
 </body>
