@@ -7,6 +7,41 @@
 <style>
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 
+/* HEADER */
+.header{
+  position:sticky;
+  top:0;
+  background:#ff7a00;
+  padding:10px;
+  color:#fff;
+}
+
+/* SEARCH */
+.search{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  width:200px;
+}
+
+/* CATEGORY */
+.categories{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  overflow:auto;
+}
+.cat{
+  background:#fff;
+  padding:5px 10px;
+  border-radius:20px;
+  cursor:pointer;
+}
+.cat.active{
+  background:#000;
+  color:#fff;
+}
+
 /* GRID */
 .grid{
   display:grid;
@@ -21,40 +56,31 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   padding:12px;
   border-radius:10px;
   position:relative;
+  cursor:pointer;
+  line-height:1.5;
+}
+
+/* STAR */
+.star{
+  position:absolute;
+  top:8px;
+  right:8px;
+}
+
+/* VARIABLE */
+.var{
+  background:#eee;
+  padding:2px 6px;
+  border-radius:6px;
 }
 
 /* IMAGE */
-.img-box{
-  position:relative;
-  margin-bottom:8px;
-}
-
-.img-box img{
+.img{
   width:100%;
-  height:150px;
+  height:140px;
   object-fit:cover;
   border-radius:8px;
-}
-
-/* IMAGE TOOLS */
-.img-tools{
-  position:absolute;
-  top:5px;
-  right:5px;
-  display:none;
-}
-
-.img-box:hover .img-tools{
-  display:block;
-}
-
-.img-tools button{
-  margin-left:4px;
-}
-
-/* TEXT */
-.text{
-  cursor:pointer;
+  margin-bottom:6px;
 }
 
 /* TOAST */
@@ -68,25 +94,53 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   border-radius:8px;
   opacity:0;
 }
+
+/* ERROR */
+.error{
+  padding:20px;
+  color:red;
+}
 </style>
 </head>
 
 <body>
 
-<input id="search" placeholder="ค้นหา..." oninput="render()">
+<div class="header">
+  🔥 Zap789 PRO
+  <br>
+  <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+  <div id="cats" class="categories"></div>
+</div>
 
 <div id="grid" class="grid"></div>
-
 <div id="toast" class="toast"></div>
 
 <script>
-const API="YOUR_API_HERE";
+/* 🔥 ใส่ API ของคุณตรงนี้ */
+const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA=[];
+let currentCat="ทั้งหมด";
+let favorites=new Set();
 
-/* LOAD */
+/* 🔥 LOAD SAFE */
 async function init(){
-  DATA=await fetch(`${API}?action=get`).then(r=>r.json());
+  try{
+    const res=await fetch(API+"?action=get");
+    DATA=await res.json();
+
+    if(!Array.isArray(DATA)) throw "bad data";
+
+  }catch(e){
+    console.error(e);
+
+    /* 🔥 fallback กันหน้าโล่ง */
+    DATA=[
+      ["ทดสอบ","🙏 {name} ระบบพร้อมใช้งาน","active",""],
+      ["ทดสอบ","📢 ถ้าเห็นอันนี้ แปลว่า API ยังไม่ทำงาน","active",""]
+    ];
+  }
+
   render();
 }
 init();
@@ -94,31 +148,28 @@ init();
 /* COPY TEXT */
 function copyText(text){
   navigator.clipboard.writeText(text);
-  showToast("✅ คัดลอกข้อความแล้ว");
+  toast("✅ คัดลอกข้อความ");
 }
 
 /* COPY IMAGE */
 async function copyImage(url){
-  const res=await fetch(url);
-  const blob=await res.blob();
+  try{
+    const res=await fetch(url);
+    const blob=await res.blob();
 
-  await navigator.clipboard.write([
-    new ClipboardItem({[blob.type]: blob})
-  ]);
+    await navigator.clipboard.write([
+      new ClipboardItem({[blob.type]: blob})
+    ]);
 
-  showToast("✅ คัดลอกรูปภาพแล้ว");
-}
+    toast("✅ คัดลอกรูป");
 
-/* DOWNLOAD */
-function downloadImage(url){
-  const a=document.createElement("a");
-  a.href=url;
-  a.download="image";
-  a.click();
+  }catch(e){
+    alert("เบราว์เซอร์ไม่รองรับ copy รูป");
+  }
 }
 
 /* TOAST */
-function showToast(msg){
+function toast(msg){
   const t=document.getElementById("toast");
   t.innerText=msg;
   t.style.opacity=1;
@@ -127,38 +178,45 @@ function showToast(msg){
 
 /* RENDER */
 function render(){
-  let html="";
   const s=(search.value||"").toLowerCase();
 
+  let html="";
+  let cats=new Set(["ทั้งหมด"]);
+
   DATA.forEach((r,i)=>{
-    const [cat,text,status,image]=r;
+    const [cat,text,status,img]=r;
+
     if(status==="deleted") return;
+
+    cats.add(cat);
+
+    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
     <div class="card">
 
-      ${image ? `
-      <div class="img-box">
+      <div class="star">${favorites.has(i)?"⭐":"☆"}</div>
 
-        <img src="${image}" onclick="copyImage('${image}')">
+      ${img ? `<img src="${img}" class="img" onclick="copyImage('${img}')">`:""}
 
-        <div class="img-tools">
-          <button onclick="event.stopPropagation();copyImage('${image}')">📋</button>
-          <button onclick="event.stopPropagation();downloadImage('${image}')">⬇️</button>
-        </div>
-
-      </div>
-      `:""}
-
-      <div class="text" onclick="copyText(\`${text}\`)">
-        ${text}
+      <div onclick="copyText(\`${text}\`)">
+        ${text.replaceAll("{name}",'<span class="var">{name}</span>')}
       </div>
 
     </div>`;
   });
 
   grid.innerHTML=html;
+
+  /* CATEGORY */
+  let cHTML="";
+  cats.forEach(c=>{
+    cHTML+=`<div class="cat ${c===currentCat?"active":""}"
+      onclick="currentCat='${c}';render()">${c}</div>`;
+  });
+
+  document.getElementById("cats").innerHTML=cHTML;
 }
 </script>
 
