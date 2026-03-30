@@ -1,266 +1,220 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Zap789 Tool</title>
 
 <style>
-body {
-  margin:0;
-  font-family:system-ui;
-  display:flex;
-  height:100vh;
-  background:#f3f4f6;
-}
+body { font-family:sans-serif; margin:0; background:#f5f5f5; }
 
-/* SIDEBAR */
-.sidebar {
-  width:220px;
-  background:#fff;
+.header{
+  background:#ff7a00;
+  color:white;
   padding:15px;
-  border-right:1px solid #eee;
-}
-.logo {
-  font-weight:bold;
-  color:#ff6a00;
-  margin-bottom:15px;
-}
-.menu div {
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-.menu div.active,
-.menu div:hover {
-  background:#ff6a00;
-  color:#fff;
+  font-size:20px;
 }
 
-/* MAIN */
-.main {
+.container{ display:flex; }
+
+.sidebar{
+  width:200px;
+  background:#fff;
+  padding:10px;
+}
+
+.menu{
+  padding:10px;
+  margin:5px 0;
+  cursor:pointer;
+  border-radius:8px;
+}
+
+.menu.active{
+  background:#ff7a00;
+  color:white;
+}
+
+.main{
   flex:1;
   padding:20px;
 }
 
-/* SEARCH */
-.search {
-  margin-bottom:15px;
-}
-.search input {
-  width:100%;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #ddd;
-}
-
-/* CARD */
-.card {
-  background:#fff;
+.card{
+  background:white;
   padding:15px;
   margin-bottom:10px;
-  border-radius:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  border-radius:10px;
 }
 
-.text {
-  flex:1;
-  cursor:pointer;
+.actions button{
+  margin-right:5px;
 }
 
-.text:hover {
-  opacity:0.7;
+.login{
+  text-align:center;
+  margin-top:100px;
 }
 
-/* RIGHT ACTION */
-.actions button {
-  margin-left:5px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.edit { background:#3b82f6; color:#fff; }
-.del { background:#ef4444; color:#fff; }
-
-/* ADD */
-.add {
-  display:flex;
-  gap:10px;
-  margin-bottom:15px;
-}
-.add input {
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #ddd;
-}
-.add button {
-  background:#ff6a00;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:8px 12px;
-}
-
-/* TOAST */
-.toast {
+.toast{
   position:fixed;
   bottom:20px;
   right:20px;
-  background:#111;
-  color:#fff;
-  padding:8px 12px;
-  border-radius:6px;
+  background:black;
+  color:white;
+  padding:10px;
+  border-radius:8px;
   opacity:0;
   transition:.3s;
 }
-.toast.show { opacity:1; }
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-  <div class="logo">🔥 Zap789</div>
-  <div id="menu" class="menu"></div>
+<div id="loginPage" class="login">
+<h2>Login</h2>
+<input id="u" placeholder="username"><br><br>
+<input id="p" type="password" placeholder="password"><br><br>
+<button onclick="login()">เข้า</button>
 </div>
+
+<div id="app" style="display:none">
+<div class="header">🔥 Zap789</div>
+
+<div class="container">
+
+<div class="sidebar" id="menu"></div>
 
 <div class="main">
+<input id="search" placeholder="ค้นหา..." oninput="render()"><br><br>
 
-  <div class="add">
-    <input id="cat" placeholder="หมวด">
-    <input id="text" placeholder="ข้อความ">
-    <button onclick="add()">+ เพิ่ม</button>
-  </div>
+<input id="cat" placeholder="หมวด">
+<input id="text" placeholder="ข้อความ">
+<button onclick="add()">+ เพิ่ม</button>
 
-  <div class="search">
-    <input id="search" placeholder="ค้นหา..." oninput="load()">
-  </div>
-
-  <div id="list"></div>
-
+<div id="list"></div>
 </div>
 
-<div id="toast" class="toast">คัดลอกแล้ว</div>
+</div>
+</div>
+
+<div id="toast" class="toast">Copied</div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API="YOUR_SCRIPT_URL";
 
-let user = localStorage.getItem("user") || "";
-let role = localStorage.getItem("role") || "";
-let currentCat = "ทั้งหมด";
+let DATA=[];
+let ADMINS=[];
+let role="";
+let user="";
+let currentCat="ทั้งหมด";
 
-/* LOGIN */
-if(!user){
-  const u = prompt("username");
-  const p = prompt("password");
-
-  fetch(`${API}?action=login&username=${u}&password=${p}`)
+function login(){
+  fetch(`${API}?action=login&username=${u.value}&password=${p.value}`)
   .then(r=>r.json())
-  .then(res=>{
-    if(res.status==="success"){
-      localStorage.setItem("user", u);
-      localStorage.setItem("role", res.role);
-      location.reload();
-    } else {
-      alert("รหัสผิด");
-    }
+  .then(d=>{
+    if(d.success){
+      role=d.role;
+      user=d.user;
+      localStorage.setItem("user",user);
+      start();
+    }else alert("ผิด");
   });
 }
 
-/* TOAST */
-function toast(){
-  const t = document.getElementById("toast");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1000);
+function start(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").style.display="block";
+  load();
+  loadAdmins();
 }
 
-/* LOAD */
 function load(){
   fetch(`${API}?action=get`)
   .then(r=>r.json())
-  .then(data=>{
-    let html="";
-    let cats = new Set(["ทั้งหมด"]);
-    const search = document.getElementById("search").value.toLowerCase();
-
-    data.forEach((row,i)=>{
-      const cat = row[0];
-      const text = row[1];
-
-      cats.add(cat);
-
-      if(currentCat !== "ทั้งหมด" && cat !== currentCat) return;
-      if(search && !text.toLowerCase().includes(search)) return;
-
-      html+=`
-      <div class="card">
-        <div class="text" onclick="copyText(\`${text}\`)">
-          <b>${cat}</b><br>${text}
-        </div>
-
-        <div class="actions">
-          <button class="edit" onclick="editPrompt(${i}, \`${text}\`)">แก้</button>
-          ${role==="admin" ? `<button class="del" onclick="del(${i})">ลบ</button>` : ""}
-        </div>
-      </div>`;
-    });
-
-    document.getElementById("list").innerHTML = html;
-    renderMenu([...cats]);
+  .then(d=>{
+    DATA=d;
+    render();
   });
 }
 
-/* MENU */
-function renderMenu(cats){
-  let html="";
-  cats.forEach(c=>{
-    html+=`<div onclick="selectCat('${c}')">${c}</div>`;
+function loadAdmins(){
+  fetch(`${API}?action=admins`)
+  .then(r=>r.json())
+  .then(d=>{
+    ADMINS=d.map(x=>x[0]);
   });
-  document.getElementById("menu").innerHTML = html;
 }
 
-function selectCat(c){
-  currentCat = c;
-  load();
+function randomName(){
+  if(ADMINS.length===0) return "แอดมิน";
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)];
 }
 
-/* COPY */
 function copyText(text){
-  navigator.clipboard.writeText(text);
-  toast();
+  const final = text.replaceAll("{name}", randomName());
+  navigator.clipboard.writeText(final);
+  showToast();
 }
 
-/* ADD */
+function showToast(){
+  const t=document.getElementById("toast");
+  t.style.opacity=1;
+  setTimeout(()=>t.style.opacity=0,1000);
+}
+
+function render(){
+  let html="";
+  let cats=new Set(["ทั้งหมด"]);
+
+  DATA.forEach((r,i)=>{
+    if(r[2]==="deleted") return;
+
+    cats.add(r[0]);
+
+    if(currentCat!=="ทั้งหมด" && r[0]!==currentCat) return;
+    if(search.value && !r[1].includes(search.value)) return;
+
+    html+=`
+    <div class="card">
+      <div onclick="copyText(\`${r[1]}\`)">
+        <b>${r[0]}</b><br>${r[1]}
+      </div>
+
+      <div class="actions">
+        <button onclick="edit(${i},\`${r[1]}\`)">✏️</button>
+        ${role==="admin" ? `<button onclick="del(${i})">🗑</button>`:""}
+      </div>
+    </div>`;
+  });
+
+  list.innerHTML=html;
+
+  let m="";
+  cats.forEach(c=>{
+    m+=`<div class="menu ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+  });
+  menu.innerHTML=m;
+}
+
 function add(){
-  const cat = document.getElementById("cat").value;
-  const text = document.getElementById("text").value;
-
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({cat,text,user})
-  }).then(()=>load());
-}
-
-/* EDIT */
-function editPrompt(i,oldText){
-  const val = prompt("แก้ข้อความ", oldText);
-  if(!val) return;
-
-  fetch(`${API}?action=edit&index=${i}&text=${encodeURIComponent(val)}&user=${user}`)
+  fetch(`${API}?action=add&cat=${cat.value}&text=${text.value}&user=${user}`)
   .then(()=>load());
 }
 
-/* DELETE */
+function edit(i,old){
+  const t=prompt("แก้ไข",old);
+  if(!t) return;
+  fetch(`${API}?action=edit&row=${i}&text=${t}&user=${user}`)
+  .then(()=>load());
+}
+
 function del(i){
-  if(!confirm("ลบ?")) return;
-
-  fetch(`${API}?action=delete&index=${i}&user=${user}`)
+  fetch(`${API}?action=delete&row=${i}&user=${user}`)
   .then(()=>load());
 }
 
-load();
+start();
 </script>
 
 </body>
