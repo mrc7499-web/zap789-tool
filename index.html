@@ -1,232 +1,102 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Zap789 Admin Tool</title>
+<title>Zap789 Admin</title>
 
 <style>
 body {
-  margin:0;
-  font-family:sans-serif;
-  background:#f5f6fa;
+  margin: 0;
+  font-family: sans-serif;
+  background: #f5f6fa;
 }
 
-.header {
-  background:#ff7a00;
-  color:#fff;
-  padding:15px;
-  text-align:center;
-  font-size:20px;
-  font-weight:bold;
+header {
+  background: #ff7a00;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 20px;
 }
 
 .container {
-  display:flex;
+  padding: 20px;
 }
 
-.sidebar {
-  width:200px;
-  background:#fff;
-  padding:10px;
-  border-right:1px solid #ddd;
-}
-
-.sidebar button {
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-  border:none;
-  border-radius:8px;
-  background:#eee;
-  cursor:pointer;
-}
-
-.sidebar button.active {
-  background:#ff7a00;
-  color:#fff;
-}
-
-.main {
-  flex:1;
-  padding:15px;
-}
-
-.topbar {
-  display:flex;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-input, select {
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-button {
-  cursor:pointer;
+input {
+  padding: 10px;
+  width: 300px;
 }
 
 .card {
-  background:#fff;
-  padding:12px;
-  border-radius:10px;
-  margin-bottom:10px;
-  box-shadow:0 2px 5px rgba(0,0,0,0.05);
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  cursor: pointer;
 }
-
-.actions {
-  margin-top:8px;
-}
-
-.actions button {
-  margin-right:5px;
-  border:none;
-  padding:5px 8px;
-  border-radius:6px;
-}
-
-.edit { background:#3498db; color:#fff; }
-.delete { background:#e74c3c; color:#fff; }
-
 </style>
 </head>
 
 <body>
 
-<div class="header">🔥 Zap789 Admin Tool</div>
+<header>🔥 Zap789 Tool</header>
 
 <div class="container">
-
-<div class="sidebar" id="sidebar"></div>
-
-<div class="main">
-
-<div class="topbar">
-  <input id="search" placeholder="🔍 ค้นหา..." oninput="render()">
-  <input id="input" placeholder="ข้อความใหม่">
-  <select id="cat"></select>
-  <button onclick="addItem()">➕ เพิ่ม</button>
-</div>
-
-<div id="list"></div>
-
-</div>
+  <input type="text" id="search" placeholder="ค้นหา..." onkeyup="search()">
+  <div id="list"></div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlkr3XpU1tsvsaTXvoo7gb4VmQy7QBTK6rcAc4bzh1dcqgsfHnfeb7SOHoeo-ns92IOyrIhh5z-Ejb/pub?gid=1998216884&single=true&output=csv";
 
-let data = [];
-let currentCat = "ทั้งหมด";
+let DATA = [];
 
-const names = ["น้องแอดมิน 💕","น้องมิ้นท์ 🌸","น้องฟ้า ☁️","น้องมายด์ 🌼"];
+async function load() {
+  const res = await fetch(API);
+  const text = await res.text();
 
-function randomName() {
-  return names[Math.floor(Math.random()*names.length)];
-}
-
-async function loadData() {
-  const res = await fetch(API_URL);
-  data = await res.json();
-  render();
-}
-
-function getCats() {
-  const cats = [...new Set(data.slice(1).map(r=>r[0]))];
-  return ["ทั้งหมด", ...cats];
-}
-
-function renderSidebar() {
-  const cats = getCats();
-  const el = document.getElementById("sidebar");
-  el.innerHTML = "";
-
-  cats.forEach(c=>{
-    el.innerHTML += `<button class="${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</button>`;
+  DATA = text.split("\n").slice(1).map(row => {
+    const [cat, msg] = row.split(",");
+    return { cat, msg };
   });
 
-  const select = document.getElementById("cat");
-  select.innerHTML = cats.filter(c=>c!="ทั้งหมด").map(c=>`<option>${c}</option>`).join("");
+  render(DATA);
 }
 
-function render() {
-  renderSidebar();
+function render(data) {
+  const box = document.getElementById("list");
+  box.innerHTML = "";
 
-  const list = document.getElementById("list");
-  const search = document.getElementById("search").value;
+  data.forEach(d => {
+    const names = ["น้องแอดมิน","น้องฟ้า","น้องมิ้นท์","น้องแป้ง"];
+    const name = names[Math.floor(Math.random()*names.length)];
 
-  let rows = data.slice(1);
+    let text = d.msg.replaceAll("{name}", name);
 
-  if (currentCat !== "ทั้งหมด") {
-    rows = rows.filter(r => r[0] === currentCat);
-  }
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `<b>${d.cat}</b><br>${text}`;
 
-  if (search) {
-    rows = rows.filter(r => r[1].includes(search));
-  }
+    div.onclick = () => {
+      navigator.clipboard.writeText(text);
+      alert("คัดลอกแล้ว!");
+    };
 
-  list.innerHTML = rows.map(r=>{
-    let text = r[1].replace("{name}", randomName());
-
-    return `
-    <div class="card">
-      ${text}
-      <div class="actions">
-        <button class="edit" onclick="editItem('${r[0]}','${r[1]}')">✏️</button>
-        <button class="delete" onclick="deleteItem('${r[0]}','${r[1]}')">🗑</button>
-      </div>
-    </div>
-    `;
-  }).join("");
+    box.appendChild(div);
+  });
 }
 
-function addItem() {
-  const text = document.getElementById("input").value;
-  const cat = document.getElementById("cat").value;
-
-  if (!text) return alert("ใส่ข้อความก่อน");
-
-  fetch(API_URL, {
-    method:"POST",
-    body: JSON.stringify({
-      action:"add",
-      cat,
-      text
-    })
-  }).then(()=>location.reload());
+function search() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const filtered = DATA.filter(d =>
+    d.cat.toLowerCase().includes(q) ||
+    d.msg.toLowerCase().includes(q)
+  );
+  render(filtered);
 }
 
-function deleteItem(cat, text) {
-  if (!confirm("ลบข้อความนี้?")) return;
-
-  fetch(API_URL, {
-    method:"POST",
-    body: JSON.stringify({
-      action:"delete",
-      cat,
-      text
-    })
-  }).then(()=>location.reload());
-}
-
-function editItem(cat, text) {
-  const newText = prompt("แก้ข้อความ:", text);
-  if (!newText) return;
-
-  fetch(API_URL, {
-    method:"POST",
-    body: JSON.stringify({
-      action:"edit",
-      oldCat:cat,
-      oldText:text,
-      newCat:cat,
-      newText:newText
-    })
-  }).then(()=>location.reload());
-}
-
-loadData();
+load();
 </script>
 
 </body>
