@@ -5,15 +5,30 @@
 <title>Zap789 PRO</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f5f6fa}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f4f4;
+}
+.dark{
+  background:#121212;
+  color:#fff;
+}
 
 /* HEADER */
 .header{
   position:sticky;
   top:0;
+  z-index:100;
   background:#ff7a00;
   padding:10px;
-  color:#fff;
+}
+
+/* TOP BAR */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 .search{
@@ -32,9 +47,10 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 }
 .cat{
   background:#fff;
-  padding:5px 10px;
+  padding:6px 12px;
   border-radius:20px;
   cursor:pointer;
+  font-size:13px;
 }
 .cat.active{
   background:#000;
@@ -52,27 +68,51 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 /* CARD */
 .card{
   background:#fff;
-  padding:12px;
   border-radius:10px;
-  cursor:pointer;
-  line-height:1.5;
+  overflow:hidden;
   position:relative;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+.dark .card{
+  background:#1e1e1e;
 }
 
-/* STAR */
+/* COLOR BAR */
+.card::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:4px;
+  height:100%;
+}
+.green::before{background:#22c55e}
+.red::before{background:#ef4444}
+.pink::before{background:#ec4899}
+.blue::before{background:#3b82f6}
+
+/* ⭐ STAR */
 .star{
   position:absolute;
-  top:8px;
-  right:8px;
+  top:10px;
+  right:10px;
+  z-index:2;
 }
 
-/* IMAGE */
+/* IMAGE (SQUARE) */
 .img{
   width:100%;
-  height:140px;
+  aspect-ratio:1/1;
   object-fit:cover;
-  border-radius:8px;
-  margin-bottom:6px;
+  border-radius:8px 8px 0 0;
+  cursor:pointer;
+}
+
+/* CONTENT */
+.content{
+  padding:12px;
+  line-height:1.5;
+  cursor:pointer;
 }
 
 /* VARIABLE */
@@ -80,6 +120,10 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   background:#eee;
   padding:2px 6px;
   border-radius:6px;
+}
+.dark .var{
+  background:#2a2a2a;
+  color:#fff;
 }
 
 /* TOAST */
@@ -89,9 +133,10 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   right:20px;
   background:#000;
   color:#fff;
-  padding:10px;
+  padding:10px 14px;
   border-radius:8px;
   opacity:0;
+  transition:.3s;
 }
 </style>
 </head>
@@ -99,8 +144,14 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 <body>
 
 <div class="header">
-  🔥 Zap789 PRO<br>
-  <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+  <div class="top">
+    <div>🔥 Zap789 PRO</div>
+
+    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+
+    <button onclick="toggleDark()">🌙</button>
+  </div>
+
   <div id="cats" class="categories"></div>
 </div>
 
@@ -113,40 +164,30 @@ const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshg
 let DATA=[];
 let currentCat="ทั้งหมด";
 
-/* 🚀 โหลดจาก cache ก่อน (เร็วทันที) */
-function loadCache(){
-  const cache=localStorage.getItem("zap_data");
-  if(cache){
-    DATA=JSON.parse(cache);
-    render();
-  }
-}
-
-/* 🚀 โหลด API แบบ background */
-async function loadAPI(){
+/* LOAD */
+async function init(){
   try{
     const res=await fetch(API+"?action=get");
-    const data=await res.json();
-
-    if(Array.isArray(data)){
-      DATA=data;
-      localStorage.setItem("zap_data", JSON.stringify(data));
-      render();
-    }
-
-  }catch(e){
-    console.log("API fail ใช้ cache");
+    DATA=await res.json();
+  }catch{
+    DATA=[];
   }
+  render();
 }
+init();
 
-/* INIT */
-loadCache();   // แสดงทันที
-loadAPI();     // อัปเดตทีหลัง
+/* COLOR */
+function getColor(cat){
+  if(cat.includes("ฝาก")) return "green";
+  if(cat.includes("ปัญหา")) return "red";
+  if(cat.includes("ทัก")) return "pink";
+  return "blue";
+}
 
 /* COPY TEXT */
 function copyText(text){
   navigator.clipboard.writeText(text);
-  toast("✅ คัดลอกข้อความ");
+  toast("✅ คัดลอกสำเร็จ");
 }
 
 /* COPY IMAGE */
@@ -159,8 +200,7 @@ async function copyImage(url){
       new ClipboardItem({[blob.type]: blob})
     ]);
 
-    toast("✅ คัดลอกรูป");
-
+    toast("✅ คัดลอกสำเร็จ");
   }catch{
     alert("ไม่รองรับ copy รูป");
   }
@@ -171,7 +211,12 @@ function toast(msg){
   const t=document.getElementById("toast");
   t.innerText=msg;
   t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1000);
+  setTimeout(()=>t.style.opacity=0,1200);
+}
+
+/* HIGHLIGHT */
+function highlight(text){
+  return text.replaceAll("{name}",'<span class="var">{name}</span>');
 }
 
 /* RENDER */
@@ -190,14 +235,14 @@ function render(){
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
-    <div class="card">
+    <div class="card ${getColor(cat)}">
 
       <div class="star">⭐</div>
 
       ${img ? `<img src="${img}" class="img" onclick="copyImage('${img}')">`:""}
 
-      <div onclick="copyText(\`${text}\`)">
-        ${text.replaceAll("{name}",'<span class="var">{name}</span>')}
+      <div class="content" onclick="copyText(\`${text}\`)">
+        ${highlight(text)}
       </div>
 
     </div>`;
@@ -209,11 +254,18 @@ function render(){
   let cHTML="";
   cats.forEach(c=>{
     cHTML+=`
-    <div class="cat ${c===currentCat?"active":""}"
-    onclick="currentCat='${c}';render()">${c}</div>`;
+      <div class="cat ${c===currentCat?"active":""}"
+      onclick="currentCat='${c}';render()">
+        ${c}
+      </div>`;
   });
 
   document.getElementById("cats").innerHTML=cHTML;
+}
+
+/* DARK MODE */
+function toggleDark(){
+  document.body.classList.toggle("dark");
 }
 </script>
 
