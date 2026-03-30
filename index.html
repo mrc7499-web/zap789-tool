@@ -2,189 +2,257 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔥 Zap789 Admin Tool</title>
 
 <style>
 body {
-  margin: 0;
+  margin:0;
   font-family: sans-serif;
-  background: #f5f5f5;
+  background:#f5f6fa;
 }
 
-/* Header */
-.header {
-  background: #ff6a00;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
+header {
+  background:#ff7a00;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
 }
 
-/* Layout */
 .container {
-  display: flex;
-  height: calc(100vh - 60px);
+  display:flex;
 }
 
-/* Sidebar */
+/* sidebar */
 .sidebar {
-  width: 200px;
-  background: #fff;
-  border-right: 1px solid #ddd;
-  padding: 10px;
+  width:220px;
+  background:#fff;
+  padding:10px;
 }
 
 .sidebar button {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: #eee;
+  width:100%;
+  padding:10px;
+  margin-bottom:8px;
+  border:none;
+  border-radius:8px;
+  background:#eee;
+  cursor:pointer;
 }
 
 .sidebar button.active {
-  background: #ff6a00;
-  color: white;
+  background:#ff7a00;
+  color:#fff;
 }
 
-/* Main */
+/* main */
 .main {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
+  flex:1;
+  padding:20px;
 }
 
-/* Search */
-.search {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+.topbar {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
 }
 
-/* Card */
+input, select {
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+button.add {
+  background:#ff7a00;
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* card */
 .card {
-  background: white;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  cursor: pointer;
+  background:#fff;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.card:hover {
-  background: #fff3e6;
+.actions button {
+  margin-left:5px;
+  border:none;
+  padding:5px 8px;
+  border-radius:6px;
+  cursor:pointer;
 }
+
+.copy { background:#2ecc71; color:#fff; }
+.edit { background:#3498db; color:#fff; }
+.delete { background:#e74c3c; color:#fff; }
+
+/* toast */
+#toast {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#333;
+  color:#fff;
+  padding:10px 15px;
+  border-radius:8px;
+  opacity:0;
+  transition:0.3s;
+}
+#toast.show { opacity:1; }
 </style>
 </head>
 
 <body>
 
-<div class="header">🔥 Zap789 Admin Tool</div>
+<header>🔥 Zap789 Admin Tool</header>
 
 <div class="container">
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="menu"></div>
+<div class="sidebar" id="categories"></div>
 
-  <!-- Main -->
-  <div class="main">
-    <input type="text" class="search" placeholder="🔍 ค้นหา..." id="search">
-    <div id="list"></div>
-  </div>
+<div class="main">
 
+<div class="topbar">
+<input id="search" placeholder="ค้นหา..." oninput="render()">
+<input id="newText" placeholder="ข้อความใหม่">
+<select id="newCat"></select>
+<button class="add" onclick="addItem()">+ เพิ่ม</button>
 </div>
 
+<div id="list"></div>
+
+</div>
+</div>
+
+<div id="toast"></div>
+
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-const nameList = ["น้องแอดมิน","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
-
-let allData = [];
+let data = [];
 let currentCat = "ทั้งหมด";
 
-function randomName() {
-  return nameList[Math.floor(Math.random() * nameList.length)];
+const names = ["น้องแอดมิน","น้องฟ้า","น้องมิ้น","น้องแป้ง"];
+
+function getRandomName(){
+  return names[Math.floor(Math.random()*names.length)];
 }
 
-async function loadData() {
-  const res = await fetch(API_URL);
-  const raw = await res.json();
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
 
-  allData = raw.slice(1).map(row => ({
-    cat: row[0],
-    text: row[1]
+/* โหลดข้อมูล */
+async function loadData(){
+  const res = await fetch(API);
+  const json = await res.json();
+
+  data = json.slice(1).map(r => ({
+    cat: r[0],
+    text: r[1]
   }));
 
-  renderMenu();
   render();
+  renderCategories();
 }
 
-/* เมนูซ้าย */
-function renderMenu() {
-  const menu = document.getElementById("menu");
+/* แสดงหมวด */
+function renderCategories(){
+  const cats = ["ทั้งหมด", ...new Set(data.map(i=>i.cat))];
+  const box = document.getElementById("categories");
 
-  const cats = ["ทั้งหมด", ...new Set(allData.map(d => d.cat))];
+  box.innerHTML = cats.map(c=>{
+    const count = data.filter(i=>i.cat===c).length;
+    return `<button onclick="selectCat('${c}')" class="${c===currentCat?'active':''}">
+      ${c} (${count})
+    </button>`;
+  }).join("");
 
-  menu.innerHTML = "";
+  const select = document.getElementById("newCat");
+  select.innerHTML = cats.filter(c=>c!=="ทั้งหมด").map(c=>`<option>${c}</option>`).join("");
+}
 
-  cats.forEach(cat => {
-    const btn = document.createElement("button");
-    btn.innerText = cat;
+function selectCat(c){
+  currentCat = c;
+  render();
+  renderCategories();
+}
 
-    if (cat === currentCat) btn.classList.add("active");
+/* render list */
+function render(){
+  const q = document.getElementById("search").value.toLowerCase();
 
-    btn.onclick = () => {
-      currentCat = cat;
-      renderMenu();
-      render();
-    };
+  let list = data.filter(i =>
+    (currentCat==="ทั้งหมด" || i.cat===currentCat) &&
+    i.text.toLowerCase().includes(q)
+  );
 
-    menu.appendChild(btn);
+  const el = document.getElementById("list");
+
+  el.innerHTML = list.map((i,idx)=>`
+    <div class="card">
+      <div>${i.text}</div>
+      <div class="actions">
+        <button class="copy" onclick="copyText('${i.text}')">📋</button>
+        <button class="edit" onclick="editItem(${idx})">✏️</button>
+        <button class="delete" onclick="deleteItem(${idx})">🗑</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+/* copy */
+function copyText(t){
+  const final = t.replace("{name}", getRandomName());
+  navigator.clipboard.writeText(final);
+  showToast("คัดลอกแล้ว ✅");
+}
+
+/* เพิ่ม */
+async function addItem(){
+  const text = document.getElementById("newText").value;
+  const cat = document.getElementById("newCat").value;
+
+  if(!text) return;
+
+  await fetch(API,{
+    method:"POST",
+    body: JSON.stringify({ id: cat, text: text, type:"", role:"" })
   });
+
+  showToast("เพิ่มแล้ว");
+  loadData();
 }
 
-/* แสดงรายการ */
-function render() {
-  const list = document.getElementById("list");
-  const keyword = document.getElementById("search").value;
-
-  list.innerHTML = "";
-
-  let data = allData;
-
-  if (currentCat !== "ทั้งหมด") {
-    data = data.filter(d => d.cat === currentCat);
-  }
-
-  if (keyword) {
-    data = data.filter(d => d.text.includes(keyword));
-  }
-
-  data.forEach(item => {
-    const name = randomName();
-    const text = item.text.replace("{name}", name);
-
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `<b>${item.cat}</b><br>${text}`;
-
-    div.onclick = () => {
-      navigator.clipboard.writeText(text);
-      alert("คัดลอกแล้ว!");
-    };
-
-    list.appendChild(div);
-  });
+/* ลบ */
+function deleteItem(index){
+  data.splice(index,1);
+  render();
+  showToast("ลบแล้ว (refresh จะหายถาวร)");
 }
 
-/* ค้นหา */
-document.getElementById("search").addEventListener("input", render);
+/* แก้ไข */
+function editItem(index){
+  const newText = prompt("แก้ข้อความ:", data[index].text);
+  if(newText){
+    data[index].text = newText;
+    render();
+    showToast("แก้ไขแล้ว");
+  }
+}
 
 loadData();
 </script>
