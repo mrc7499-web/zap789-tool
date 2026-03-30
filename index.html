@@ -6,116 +6,55 @@
 
 <style>
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
-.dark{background:#111;color:#eee}
-
-/* HEADER (Sticky ทั้งก้อน) */
-.header{
-  position:sticky;
-  top:0;
-  z-index:100;
-  background:#ff7a00;
-  padding:10px;
-}
-
-/* TOP */
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.logo{color:#fff;font-weight:bold}
-
-.search{
-  padding:8px;
-  border-radius:8px;
-  border:none;
-  width:240px;
-}
-
-/* 🔥 FILTER BAR (กลับมาแล้ว + sticky) */
-.categories{
-  margin-top:8px;
-  display:flex;
-  gap:8px;
-  overflow:auto;
-}
-
-.cat{
-  background:#fff;
-  padding:6px 10px;
-  border-radius:20px;
-  cursor:pointer;
-  font-size:13px;
-  white-space:nowrap;
-}
-
-.cat.active{
-  background:#000;
-  color:#fff;
-}
 
 /* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:18px;
-  padding:18px;
+  gap:16px;
+  padding:16px;
 }
 
 /* CARD */
 .card{
   background:#fff;
-  padding:16px;
-  border-radius:12px;
+  padding:12px;
+  border-radius:10px;
   position:relative;
-  cursor:pointer;
-  line-height:1.5;
-}
-.dark .card{background:#1e1e1e}
-
-/* COLOR BAR */
-.card::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:5px;
-  height:100%;
-}
-.green::before{background:#22c55e}
-.red::before{background:#ef4444}
-.pink::before{background:#ec4899}
-.blue::before{background:#3b82f6}
-
-/* ⭐ STAR (แก้ตำแหน่งแล้วจริง) */
-.star{
-  position:absolute;
-  top:10px;
-  right:10px;
-  cursor:pointer;
-  z-index:2;
 }
 
-/* ACTION */
-.actions{
+/* IMAGE */
+.img-box{
+  position:relative;
+  margin-bottom:8px;
+}
+
+.img-box img{
+  width:100%;
+  height:150px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+/* IMAGE TOOLS */
+.img-tools{
   position:absolute;
-  top:10px;
-  right:40px;
+  top:5px;
+  right:5px;
   display:none;
 }
-.card:hover .actions{display:block}
 
-/* VARIABLE */
-.var{
-  background:#eaeaea;
-  color:#222;
-  padding:2px 6px;
-  border-radius:6px;
+.img-box:hover .img-tools{
+  display:block;
 }
-.dark .var{
-  background:#2a2f3a;
-  color:#fff;
+
+.img-tools button{
+  margin-left:4px;
+}
+
+/* TEXT */
+.text{
+  cursor:pointer;
 }
 
 /* TOAST */
@@ -134,148 +73,92 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 
 <body>
 
-<div class="header">
-  <div class="topbar">
-    <div class="logo">🔥 Zap789</div>
-
-    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-
-    <button onclick="toggleDark()">🌙</button>
-  </div>
-
-  <!-- 🔥 FILTER BAR -->
-  <div id="cats" class="categories"></div>
-</div>
+<input id="search" placeholder="ค้นหา..." oninput="render()">
 
 <div id="grid" class="grid"></div>
-<div id="toast" class="toast">✅ คัดลอกแล้ว</div>
+
+<div id="toast" class="toast"></div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API="YOUR_API_HERE";
 
-let DATA=[], ADMINS=[];
-let favorites=new Set();
-let currentCat="ทั้งหมด";
+let DATA=[];
 
 /* LOAD */
 async function init(){
-  const [data, admins] = await Promise.all([
-    fetch(`${API}?action=get`).then(r=>r.json()),
-    fetch(`${API}?action=admins`).then(r=>r.json())
-  ]);
-
-  DATA=data;
-  ADMINS=admins.map(x=>x[0]);
-
+  DATA=await fetch(`${API}?action=get`).then(r=>r.json());
   render();
 }
 init();
 
-/* RANDOM NAME */
-function randomName(){
-  return ADMINS[Math.floor(Math.random()*ADMINS.length)] || "แอดมิน";
+/* COPY TEXT */
+function copyText(text){
+  navigator.clipboard.writeText(text);
+  showToast("✅ คัดลอกข้อความแล้ว");
 }
 
-/* COPY */
-function copy(text){
-  navigator.clipboard.writeText(text.replaceAll("{name}",randomName()));
-  showToast();
+/* COPY IMAGE */
+async function copyImage(url){
+  const res=await fetch(url);
+  const blob=await res.blob();
+
+  await navigator.clipboard.write([
+    new ClipboardItem({[blob.type]: blob})
+  ]);
+
+  showToast("✅ คัดลอกรูปภาพแล้ว");
+}
+
+/* DOWNLOAD */
+function downloadImage(url){
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="image";
+  a.click();
 }
 
 /* TOAST */
-function showToast(){
+function showToast(msg){
   const t=document.getElementById("toast");
+  t.innerText=msg;
   t.style.opacity=1;
   setTimeout(()=>t.style.opacity=0,1000);
 }
 
-/* COLOR */
-function getColor(cat){
-  if(cat.includes("ฝาก")) return "green";
-  if(cat.includes("ปัญหา")) return "red";
-  if(cat.includes("ทัก")) return "pink";
-  return "blue";
-}
-
-/* PIN */
-function toggleFav(i){
-  favorites.has(i)?favorites.delete(i):favorites.add(i);
-  render();
-}
-
-/* SORT */
-function sorted(){
-  return [...DATA.keys()].sort((a,b)=>favorites.has(b)-favorites.has(a));
-}
-
-/* HIGHLIGHT */
-function highlight(text){
-  return text.replaceAll("{name}",'<span class="var">{name}</span>');
-}
-
 /* RENDER */
 function render(){
-  const s=(search.value||"").toLowerCase();
   let html="";
-  let cats=new Set(["ทั้งหมด"]);
+  const s=(search.value||"").toLowerCase();
 
-  sorted().forEach(i=>{
-    const [cat,text,status]=DATA[i];
+  DATA.forEach((r,i)=>{
+    const [cat,text,status,image]=r;
     if(status==="deleted") return;
-
-    cats.add(cat);
-
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+    <div class="card">
 
-      <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
-        ${favorites.has(i)?"⭐":"☆"}
+      ${image ? `
+      <div class="img-box">
+
+        <img src="${image}" onclick="copyImage('${image}')">
+
+        <div class="img-tools">
+          <button onclick="event.stopPropagation();copyImage('${image}')">📋</button>
+          <button onclick="event.stopPropagation();downloadImage('${image}')">⬇️</button>
+        </div>
+
       </div>
+      `:""}
 
-      ${highlight(text)}
-
-      <div class="actions">
-        <button onclick="event.stopPropagation();edit(${i})">✏️</button>
+      <div class="text" onclick="copyText(\`${text}\`)">
+        ${text}
       </div>
 
     </div>`;
   });
 
   grid.innerHTML=html;
-
-  /* 🔥 FILTER BAR GENERATE */
-  let cHTML="";
-  cats.forEach(c=>{
-    const count=DATA.filter(x=>x[0]===c).length;
-
-    cHTML+=`
-      <div class="cat ${c===currentCat?"active":""}"
-        onclick="currentCat='${c}';render()">
-        ${c} (${count})
-      </div>`;
-  });
-
-  document.getElementById("cats").innerHTML=cHTML;
-}
-
-/* EDIT */
-function edit(i){
-  const t=prompt("แก้",DATA[i][1]);
-  if(!t) return;
-
-  fetch(`${API}?action=edit&row=${i}&text=${encodeURIComponent(t)}`)
-  .then(()=>{
-    DATA[i][1]=t;
-    render();
-  });
-}
-
-/* DARK */
-function toggleDark(){
-  document.body.classList.toggle("dark");
 }
 </script>
 
