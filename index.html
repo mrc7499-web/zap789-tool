@@ -8,7 +8,7 @@
 body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .dark{background:#111;color:#eee}
 
-/* HEADER (STICKY) */
+/* HEADER (Sticky) */
 .header{
   position:sticky;
   top:0;
@@ -20,7 +20,13 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   align-items:center;
 }
 
-.search{padding:8px;border-radius:8px;border:none;width:220px}
+/* SEARCH */
+.search{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  width:240px;
+}
 
 /* CATEGORY */
 .categories{
@@ -34,33 +40,40 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   border-radius:20px;
   cursor:pointer;
   white-space:nowrap;
+  font-size:13px;
 }
 .cat.active{background:#000;color:#fff}
 
-/* GRID */
+/* GRID (4 columns) */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  padding:16px;
+  gap:20px;
+  padding:20px;
 }
 
 /* CARD */
 .card{
   background:#fff;
-  padding:14px;
+  padding:16px;
   border-radius:12px;
-  position:relative;
   cursor:pointer;
+  position:relative;
   line-height:1.5;
+  font-size:14px;
 }
 .dark .card{background:#1e1e1e}
+
+.card:hover{transform:scale(1.02)}
 
 /* COLOR BAR */
 .card::before{
   content:"";
   position:absolute;
-  left:0;top:0;width:5px;height:100%;
+  left:0;
+  top:0;
+  width:6px;
+  height:100%;
 }
 .green::before{background:#22c55e}
 .red::before{background:#ef4444}
@@ -68,29 +81,31 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 .blue::before{background:#3b82f6}
 .orange::before{background:#f97316}
 
-/* CATEGORY TEXT (MUTED) */
+/* CATEGORY TEXT (จาง) */
 .cat-label{
   font-size:11px;
-  color:#999;
-  margin-bottom:4px;
+  color:#888;
+  margin-bottom:6px;
 }
 
 /* VARIABLE */
 .var{
   background:#eee;
-  border-radius:5px;
+  border-radius:6px;
   padding:2px 6px;
+  border:1px solid #ddd;
 }
 .dark .var{
   background:#2a2f3a;
   color:#fff;
+  border:1px solid #444;
 }
 
-/* ACTIONS */
+/* ACTION */
 .actions{
   position:absolute;
-  top:5px;
-  right:5px;
+  top:6px;
+  right:6px;
   display:none;
 }
 .card:hover .actions{display:block}
@@ -98,8 +113,8 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 /* STAR */
 .star{
   position:absolute;
-  top:5px;
-  left:5px;
+  top:6px;
+  left:6px;
 }
 
 /* TOAST */
@@ -109,9 +124,10 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   right:20px;
   background:#000;
   color:#fff;
-  padding:10px;
+  padding:10px 14px;
   border-radius:8px;
   opacity:0;
+  transition:.3s;
 }
 
 /* MODAL */
@@ -124,13 +140,12 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
   justify-content:center;
   align-items:center;
 }
-.modal-content{
+.modal-box{
   background:#fff;
   padding:20px;
   border-radius:10px;
-  max-width:400px;
 }
-.dark .modal-content{background:#222;color:#fff}
+.dark .modal-box{background:#222;color:#fff}
 </style>
 </head>
 
@@ -138,37 +153,35 @@ body{margin:0;font-family:sans-serif;background:#f5f6fa}
 
 <div class="header">
   <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-  
+
   <div id="cats" class="categories"></div>
 
   <button onclick="toggleDark()">🌙</button>
-  <button onclick="showHelp()">❓</button>
+  <button onclick="openHelp()">❓</button>
 </div>
 
 <div id="grid" class="grid"></div>
 
 <div id="toast" class="toast">✅ คัดลอกแล้ว</div>
 
-<!-- HELP -->
 <div id="help" class="modal">
-  <div class="modal-content">
+  <div class="modal-box">
     <h3>⚡ วิธีใช้งาน</h3>
     <p>คลิกการ์ด = คัดลอก</p>
     <p>Alt+1-4 = ข้อความด่วน</p>
-    <p>{name} = ระบบใส่ให้เอง</p>
-    <button onclick="hideHelp()">ปิด</button>
+    <p>{name} = ระบบใส่ให้</p>
+    <button onclick="closeHelp()">ปิด</button>
   </div>
 </div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[], ADMINS=[], CONFIG={};
+let DATA=[], ADMINS=[];
 let favorites=new Set();
 let currentCat="ทั้งหมด";
-let focusIndex=0;
 
-/* LOAD */
+/* INIT */
 async function init(){
   DATA=await fetch(`${API}?action=get`).then(r=>r.json());
   ADMINS=(await fetch(`${API}?action=admins`).then(r=>r.json())).map(x=>x[0]);
@@ -176,27 +189,23 @@ async function init(){
 }
 init();
 
-/* VARIABLES */
-function applyVars(text){
-  text=text.replaceAll("{name}", ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน");
-  Object.keys(CONFIG).forEach(k=>{
-    text=text.replaceAll(`{${k}}`,CONFIG[k]);
-  });
-  return text;
+/* RANDOM NAME */
+function randomName(){
+  return ADMINS[Math.floor(Math.random()*ADMINS.length)]||"แอดมิน";
 }
 
 /* COPY */
 function copy(text){
-  navigator.clipboard.writeText(applyVars(text));
-  toast();
+  navigator.clipboard.writeText(text.replaceAll("{name}",randomName()));
+  showToast();
 }
 
 /* TOAST */
-function toast(){
-  toastEl.style.opacity=1;
-  setTimeout(()=>toastEl.style.opacity=0,1000);
+function showToast(){
+  const t=document.getElementById("toast");
+  t.style.opacity=1;
+  setTimeout(()=>t.style.opacity=0,1200);
 }
-const toastEl=document.getElementById("toast");
 
 /* DARK */
 function toggleDark(){
@@ -204,7 +213,7 @@ function toggleDark(){
 }
 
 /* COLOR */
-function color(cat){
+function getColor(cat){
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
@@ -212,26 +221,30 @@ function color(cat){
   return "orange";
 }
 
+/* PIN */
+function toggleFav(i){
+  favorites.has(i)?favorites.delete(i):favorites.add(i);
+  render();
+}
+
 /* HIGHLIGHT */
 function highlight(text){
-  return text.replaceAll("{name}",'<span class="var">{name}</span>');
+  return text.replaceAll("{name}", `<span class="var">{name}</span>`);
 }
 
 /* SORT */
 function sorted(){
-  return [...DATA.keys()].sort((a,b)=>{
-    return favorites.has(b)-favorites.has(a);
-  });
+  return [...DATA.keys()].sort((a,b)=>favorites.has(b)-favorites.has(a));
 }
 
 /* RENDER */
 function render(){
   let html="";
   let cats=new Set(["ทั้งหมด"]);
-  const s=search.value.toLowerCase();
+  const s=(search.value||"").toLowerCase();
 
   sorted().forEach(i=>{
-    const [cat,text,status,tags,type]=DATA[i];
+    const [cat,text,status,tags]=DATA[i];
     if(status==="deleted") return;
 
     cats.add(cat);
@@ -240,8 +253,8 @@ function render(){
     if(s && !text.toLowerCase().includes(s) && !(tags||"").includes(s)) return;
 
     html+=`
-    <div class="card ${color(cat)}" onclick="copy(\`${text}\`)">
-      
+    <div class="card ${getColor(cat)}" onclick="copy(\`${text}\`)">
+
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${favorites.has(i)?"⭐":"☆"}
       </div>
@@ -260,20 +273,12 @@ function render(){
 
   grid.innerHTML=html;
 
-  let catHTML="";
+  let cHTML="";
   cats.forEach(c=>{
-    catHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c} (${DATA.filter(x=>x[0]===c).length})</div>`;
+    const count=DATA.filter(x=>x[0]===c).length;
+    cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c} (${count})</div>`;
   });
-  catsEl.innerHTML=catHTML;
-}
-
-const grid=document.getElementById("grid");
-const catsEl=document.getElementById("cats");
-
-/* PIN */
-function toggleFav(i){
-  favorites.has(i)?favorites.delete(i):favorites.add(i);
-  render();
+  cats.innerHTML=cHTML;
 }
 
 /* EDIT */
@@ -288,11 +293,11 @@ function del(i){
   fetch(`${API}?action=delete&row=${i}`).then(init);
 }
 
-/* KEYBOARD */
+/* SHORTCUT */
 document.addEventListener("keydown",e=>{
   if(e.altKey){
     let n=parseInt(e.key);
-    if(n>=1&&n<=4){
+    if(n>=1 && n<=4){
       let i=sorted()[n-1];
       if(i!==undefined) copy(DATA[i][1]);
     }
@@ -300,8 +305,8 @@ document.addEventListener("keydown",e=>{
 });
 
 /* HELP */
-function showHelp(){help.style.display="flex"}
-function hideHelp(){help.style.display="none"}
+function openHelp(){help.style.display="flex"}
+function closeHelp(){help.style.display="none"}
 </script>
 
 </body>
