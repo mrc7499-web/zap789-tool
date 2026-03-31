@@ -21,22 +21,29 @@ function render(){
     if(s && !text.toLowerCase().includes(s)) return;
 
     html += `
-    <div class="card ${getColor(cat)}">
+    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
 
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${fav==="1" ? "⭐" : "☆"}
       </div>
 
-      ${img ? `<img src="${img}" class="img">` : ""}
+      ${img ? `<img src="${img}" class="img" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
 
       <div class="content">
-        ${text}
+        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
       </div>
 
     </div>`;
   });
 
   grid.innerHTML = html;
+
+  let cHTML="";
+  catsSet.forEach(c=>{
+    cHTML += `<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+  });
+
+  cats.innerHTML = cHTML;
 }
 
 </script>
