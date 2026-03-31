@@ -5,22 +5,86 @@
 <title>Zap789 PRO | Perfect Edition</title>
 
 <style>
-:root { --primary:#ff7a00; --bg:#f4f4f4; --card-bg:#ffffff; --text:#333; --var-bg:#eee; }
-body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
+:root {
+  --primary:#ff7a00;
+  --bg:#f4f4f4;
+  --card-bg:#ffffff;
+  --text:#333;
+  --var-bg:#eee;
+}
 
-body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
+body.dark {
+  --bg:#121212;
+  --card-bg:#1e1e1e;
+  --text:#efefef;
+  --var-bg:#333;
+}
 
-.header { position:sticky; top:0; background:var(--primary); padding:10px; z-index:100; }
-.top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
+body {
+  margin:0;
+  font-family:sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-.search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
+/* header */
+.header {
+  position:sticky;
+  top:0;
+  background:var(--primary);
+  padding:10px;
+  z-index:100;
+}
 
-.categories { display:flex; gap:8px; margin-top:10px; overflow-x:auto; max-width:1400px; margin:0 auto; }
-.cat { background:#fff; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:13px; border:1px solid #ddd; }
-.cat.active { background:#000; color:#fff; }
+.top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  max-width:1400px;
+  margin:0 auto;
+}
 
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
+.search {
+  padding:8px 15px;
+  border-radius:8px;
+  border:none;
+  width:250px;
+}
 
+/* categories */
+.categories {
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+.cat {
+  background:#fff;
+  padding:6px 15px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:13px;
+  border:1px solid #ddd;
+}
+
+.cat.active {
+  background:#000;
+  color:#fff;
+}
+
+/* grid */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+  padding:15px;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+/* card */
 .card {
   background:var(--card-bg);
   border-radius:10px;
@@ -38,20 +102,13 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   width:4px;
   height:100%;
 }
+
 .green::before { background:#22c55e; }
 .red::before { background:#ef4444; }
 .pink::before { background:#ec4899; }
 .blue::before { background:#3b82f6; }
 
-/* star */
-.star {
-  position:absolute;
-  top:8px;
-  right:8px;
-  z-index:5;
-}
-
-/* hover action */
+/* actions */
 .actions {
   position:absolute;
   top:8px;
@@ -60,7 +117,10 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   gap:5px;
   z-index:10;
 }
-.card:hover .actions { display:flex; }
+
+.card:hover .actions {
+  display:flex;
+}
 
 .btn-action {
   background:rgba(0,0,0,0.7);
@@ -71,7 +131,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   cursor:pointer;
 }
 
-/* image 1:1 */
+/* image */
 .img-box {
   width:100%;
   aspect-ratio:1/1;
@@ -84,7 +144,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   font-size:14px;
 }
 
-/* name tag */
+/* variable */
 .var {
   background:var(--var-bg);
   padding:2px 5px;
@@ -139,12 +199,15 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 <div class="header">
   <div class="top">
     <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
+
     <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+
     <div>
       <button onclick="openModal()">+ เพิ่ม</button>
       <button onclick="toggleDark()">🌙</button>
     </div>
   </div>
+
   <div id="cats" class="categories"></div>
 </div>
 
@@ -162,7 +225,6 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 </div>
 
 <script>
-
 const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA=[];
@@ -192,7 +254,7 @@ function getColor(cat){
   return "blue";
 }
 
-/* copy text (🔥 name system) */
+/* copy text */
 async function copyText(text){
   const res=await fetch(API_URL+"?action=name");
   const data=await res.json();
@@ -229,8 +291,6 @@ function render(){
         <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
         <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
       </div>
-
-      <div class="star">⭐</div>
 
       ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
 
@@ -308,7 +368,6 @@ function toggleDark(){
 }
 
 init();
-
 </script>
 
 </body>
