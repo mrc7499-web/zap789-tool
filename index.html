@@ -4,9 +4,11 @@ function render(){
   let catsSet = new Set(["ทั้งหมด","⭐ ปักหมุด"]);
 
   DATA.forEach((r,i)=>{
-    // 🔥 FIX ตรงนี้
-    const [cat,text,status,img,fav] = r;
-    const id = i;
+    const cat = r[0];
+    const text = r[1];
+    const status = r[2];
+    const img = r[3];
+    const fav = r[4] || "0";
 
     if(status==="deleted") return;
 
@@ -19,12 +21,7 @@ function render(){
     html+=`
     <div class="card ${getColor(cat)}">
 
-      <div class="actions">
-        <div class="btn">✏️</div>
-        <div class="btn">🗑️</div>
-      </div>
-
-      <div class="star" onclick="event.stopPropagation();toggleFav('${id}')">
+      <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${fav==="1" ? "⭐" : "☆"}
       </div>
 
