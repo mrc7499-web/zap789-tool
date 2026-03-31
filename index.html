@@ -1,40 +1,83 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Zap789 Tool</title>
+
+<style>
+body { margin:0; font-family:sans-serif; background:#f4f4f4; }
+.header { background:#ff7a00; padding:10px; color:#fff; }
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:10px; }
+.card { background:#fff; padding:12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.card:hover { transform:translateY(-2px); }
+.var { color:#ff7a00; font-weight:bold; }
+</style>
+
+</head>
+<body>
+
+<div class="header">🔥 Zap789</div>
+<div id="grid" class="grid"></div>
+
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA = [];
-let currentCat = "ทั้งหมด";
 
 // โหลดข้อมูล
-async function init() {
-    try {
+async function init(){
+    try{
         const res = await fetch(API_URL + "?action=get");
         DATA = await res.json();
 
-        if (!Array.isArray(DATA)) {
+        if(!Array.isArray(DATA)){
             console.error("API ERROR:", DATA);
-            alert("❌ ดึงข้อมูลไม่ได้ (ดู console)");
+            alert("API error");
             return;
         }
 
         render();
-    } catch(e) {
-        console.error("Fetch Error:", e);
-        alert("❌ โหลดข้อมูลไม่สำเร็จ");
+
+    }catch(e){
+        console.error("FETCH ERROR:", e);
+        alert("โหลดข้อมูลไม่สำเร็จ");
     }
 }
 
-// 🎲 copy + สุ่มชื่อ
-async function copyText(index) {
-    try {
-        const row = DATA[index];
-        const [cat, text] = row;
+// render (ไม่ใช้ innerHTML string เสี่ยงพัง)
+function render(){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    DATA.forEach((row, i) => {
+        const [cat, text, status] = row;
+
+        if(status === "deleted") return;
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        // ใส่ text แบบปลอดภัย
+        const safeHTML = text.replace(/{name}/g, '<span class="var">{name}</span>');
+        card.innerHTML = safeHTML;
+
+        card.onclick = () => copyText(i);
+
+        grid.appendChild(card);
+    });
+}
+
+// copy + สุ่มชื่อ
+async function copyText(index){
+    try{
+        const [cat, text] = DATA[index];
 
         // สุ่มชื่อ
         const res = await fetch(API_URL + "?action=randomName");
         const data = await res.json();
         const name = data.name || "ลูกค้า";
 
-        // แทน {name}
+        // แทนค่า
         const finalText = text.replace(/{name}/g, name);
 
         // copy
@@ -47,76 +90,16 @@ async function copyText(index) {
             + "&cat=" + encodeURIComponent(cat)
         );
 
-        showToast("✅ " + name);
+        alert("คัดลอก: " + name);
 
-    } catch(e) {
-        console.error(e);
-        showToast("❌ error");
+    }catch(e){
+        console.error("COPY ERROR:", e);
+        alert("error");
     }
-}
-
-// toast
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg;
-    t.style.opacity = 1;
-    setTimeout(() => t.style.opacity = 0, 1200);
-}
-
-// render
-function render() {
-    const s = document.getElementById('search').value.toLowerCase();
-    let html = "";
-    let catsSet = new Set(["ทั้งหมด"]);
-
-    DATA.forEach((r, i) => {
-        const [cat, text, status, img] = r;
-
-        if (status === "deleted") return;
-
-        catsSet.add(cat);
-
-        if (currentCat !== "ทั้งหมด" && cat !== currentCat) return;
-        if (s && !text.toLowerCase().includes(s)) return;
-
-        html += `
-        <div class="card ${getColor(cat)}">
-            <div class="content" onclick="copyText(${i})">
-                ${escapeHTML(text).replace(/{name}/g, '<span class="var">{name}</span>')}
-            </div>
-        </div>`;
-    });
-
-    document.getElementById('grid').innerHTML = html;
-
-    let cHTML = "";
-    catsSet.forEach(c => {
-        cHTML += `<div class="cat ${c === currentCat ? "active" : ""}" onclick="setCat('${escapeHTML(c)}')">${c}</div>`;
-    });
-
-    document.getElementById('cats').innerHTML = cHTML;
-}
-
-// กัน HTML พัง
-function escapeHTML(str) {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-
-function setCat(c) {
-    currentCat = c;
-    render();
-}
-
-// สี
-function getColor(cat) {
-    if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
-    if (cat.includes("ปัญหา")) return "red";
-    if (cat.includes("ทัก")) return "pink";
-    return "blue";
 }
 
 init();
 </script>
+
+</body>
+</html>
