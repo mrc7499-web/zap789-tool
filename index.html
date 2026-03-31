@@ -2,161 +2,88 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Zap789 PRO | Admin Dashboard</title>
+    <title>Zap789 PRO | Fast Response</title>
     <style>
-        :root { --primary: #ff7a00; --bg: #f4f4f4; --card-bg: #ffffff; --text: #333; --var-bg: #eee; }
-        body.dark { --bg: #121212; --card-bg: #1e1e1e; --text: #efefef; --var-bg: #333; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
+        :root { --primary: #ff7a00; --bg: #f4f4f4; --card-bg: #ffffff; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: #333; }
         
-        /* LOGIN UI */
-        #login-page { position: fixed; inset: 0; background: #ff7a00; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; outline: none; }
-        .login-btn { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        /* HEADER */
+        .header { position: sticky; top: 0; background: var(--primary); padding: 12px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .logo { font-size: 20px; font-weight: bold; }
+        .search-box { padding: 8px 15px; border-radius: 20px; border: none; width: 250px; outline: none; font-size: 14px; }
+        
+        /* CATEGORY BAR */
+        .cat-bar { display: flex; gap: 8px; padding: 10px; background: white; overflow-x: auto; border-bottom: 1px solid #ddd; }
+        .cat-btn { padding: 6px 15px; border-radius: 20px; background: #f0f0f0; cursor: pointer; white-space: nowrap; font-size: 13px; transition: 0.2s; border: 1px solid #ddd; }
+        .cat-btn.active { background: #333; color: white; border-color: #333; }
 
-        /* DASHBOARD UI */
-        .header { position: sticky; top: 0; background: var(--primary); padding: 10px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .top { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-        .search { padding: 8px 15px; border-radius: 8px; border: none; width: 250px; outline: none; }
-        .categories { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; max-width: 1400px; margin: 0 auto; padding-bottom: 5px; }
-        .cat { background: #fff; padding: 6px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 1px solid #ddd; color: #333; }
-        .cat.active { background: #000; color: #fff; border-color: #000; }
-        
+        /* GRID SYSTEM */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
-        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; display: flex; flex-direction: column; min-height: 100px; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .card::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; z-index: 2; }
-        .green::before { background: #22c55e; } .red::before { background: #ef4444; } .pink::before { background: #ec4899; } .blue::before { background: #3b82f6; }
         
-        .star { position: absolute; top: 8px; right: 8px; z-index: 3; font-size: 18px; color: #ffca28; }
-        .actions { position: absolute; top: 8px; left: 12px; display: none; gap: 5px; z-index: 10; }
-        .card:hover .actions { display: flex; }
-        .btn-action { background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        /* CARD DESIGN */
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; border-left: 5px solid #3b82f6; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
         
-        .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .content { padding: 12px; line-height: 1.5; font-size: 14px; flex-grow: 1; }
-        .var { background: var(--var-bg); padding: 2px 5px; border-radius: 4px; color: var(--primary); font-weight: bold; }
+        /* COLORS BY CATEGORY */
+        .green { border-left-color: #22c55e; }
+        .red { border-left-color: #ef4444; }
+        .pink { border-left-color: #ec4899; }
+
+        /* IMAGE 1:1 */
+        .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid #eee; }
         
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; z-index: 1000; pointer-events: none; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-box { background: #fff; padding: 20px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; color: #333; }
+        /* CONTENT */
+        .content { padding: 15px; font-size: 14px; line-height: 1.6; color: #444; flex-grow: 1; }
+        .var { background: #fff3e0; padding: 2px 6px; border-radius: 4px; color: #ff7a00; font-weight: bold; border: 1px solid #ffe0b2; }
+        
+        /* TOAST NOTIFICATION */
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 25px; border-radius: 50px; opacity: 0; transition: .3s; pointer-events: none; z-index: 1000; }
+        
+        .loading { text-align: center; margin-top: 50px; color: #ff7a00; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="login-page">
-    <div class="login-box">
-        <h2 style="color: #ff7a00; margin-top: 0;">Zap789 Login</h2>
-        <input type="text" id="userIn" placeholder="Username">
-        <input type="password" id="passIn" placeholder="Password">
-        <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
-        <p id="errorMsg" style="color: red; font-size: 12px; margin-top: 15px; display: none;">❌ ข้อมูลไม่ถูกต้อง</p>
-    </div>
+<div class="header">
+    <div class="logo">🔥 Zap789 PRO</div>
+    <input type="text" id="search" class="search-box" placeholder="🔍 ค้นหาข้อความ..." oninput="render()">
 </div>
 
-<div id="main-content" style="display: none;">
-    <div class="header">
-        <div class="top">
-            <div style="font-weight: bold; color: white;">🔥 Zap789 PRO</div>
-            <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-            <div style="display: flex; gap: 10px;">
-                <button id="addBtn" onclick="openModal()" style="cursor:pointer; border-radius:5px; border:none; padding:5px 15px; background:#fff;">+ เพิ่ม</button>
-                <button onclick="toggleDark()" style="background:none; border:none; cursor:pointer; font-size: 18px;">🌙</button>
-                <button onclick="logout()" style="background:none; border:none; color:white; cursor:pointer; font-size: 12px;">ออกจากระบบ</button>
-            </div>
-        </div>
-        <div id="cats" class="categories"></div>
-    </div>
-    <div id="grid" class="grid"></div>
-</div>
+<div id="catBar" class="cat-bar"></div>
+
+<div id="loading" class="loading">⏳ กำลังโหลดข้อมูล...</div>
+<div id="grid" class="grid"></div>
 
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
-<div id="modal" class="modal">
-    <div class="modal-box">
-        <h3 id="modalTitle" style="margin:0;">📝 จัดการข้อมูล</h3>
-        <input id="catInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; width:100%; box-sizing:border-box;" placeholder="หมวดหมู่">
-        <textarea id="textInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; height:80px; width:100%; box-sizing:border-box;" placeholder="ข้อความ..."></textarea>
-        <input type="file" id="imgInput" accept="image/*">
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeModal()" style="cursor:pointer; padding: 8px 15px; border-radius:5px; border:none;">ยกเลิก</button>
-            <button id="saveBtn" onclick="save()" style="background: #ff7a00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">บันทึก</button>
-        </div>
-    </div>
-</div>
-
 <script>
+// ใส่ URL API ของคุณตรงนี้
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+
 let DATA = [];
 let currentCat = "ทั้งหมด";
-let editIndex = null;
-let currentUser = null;
 
-async function init() {
-    const savedUser = localStorage.getItem('zapUser');
-    if(savedUser) {
-        currentUser = JSON.parse(savedUser);
-        showDashboard();
-    }
-}
-
-async function login() {
-    const u = document.getElementById('userIn').value;
-    const p = document.getElementById('passIn').value;
-    const err = document.getElementById('errorMsg');
-    if(!u || !p) return;
-    err.style.display = "block";
-    err.innerText = "⌛ กำลังตรวจสอบ...";
-
-    try {
-        const res = await fetch(`${API_URL}?action=login&username=${u}&password=${p}`);
-        const result = await res.json();
-        if(result.success) {
-            currentUser = { name: result.user, role: result.role };
-            localStorage.setItem('zapUser', JSON.stringify(currentUser));
-            showDashboard();
-        } else {
-            err.innerText = "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
-        }
-    } catch(e) {
-        err.innerText = "⚠️ เชื่อมต่อระบบไม่ได้";
-    }
-}
-
-async function showDashboard() {
-    document.getElementById('login-page').style.display = "none";
-    document.getElementById('main-content').style.display = "block";
-    if(currentUser.role !== 'admin') {
-        document.getElementById('addBtn').style.display = "none";
-        const style = document.createElement('style');
-        style.innerHTML = '.actions { display: none !important; }';
-        document.head.appendChild(style);
-    }
-    fetchCards();
-}
-
-async function fetchCards() {
+// ดึงข้อมูลทันทีที่เปิดเว็บ
+async function loadData() {
     try {
         const res = await fetch(API_URL + "?action=get");
         DATA = await res.json();
+        document.getElementById('loading').style.display = 'none';
         render();
-    } catch(e) { console.log("Load Data Error"); }
+    } catch (e) {
+        document.getElementById('loading').innerText = "⚠️ เชื่อมต่อไม่ได้ กรุณาตรวจสอบลิงก์ API หรือสิทธิ์การเข้าถึง";
+    }
 }
 
-function logout() {
-    localStorage.removeItem('zapUser');
-    location.reload();
-}
-
-function getColor(cat) {
+function getColorClass(cat) {
     if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
     if (cat.includes("ปัญหา")) return "red";
     if (cat.includes("ทัก")) return "pink";
-    return "blue";
+    return "";
 }
 
-async function copyText(text) {
-    await navigator.clipboard.writeText(text);
+async function copyText(t) {
+    await navigator.clipboard.writeText(t);
     showToast("✅ คัดลอกข้อความแล้ว");
 }
 
@@ -166,130 +93,58 @@ async function copyImage(url) {
         const blob = await res.blob();
         await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
         showToast("🖼️ คัดลอกรูปภาพแล้ว");
-    } catch(e) { showToast("❌ ก๊อปปี้รูปไม่ได้"); }
+    } catch(e) { 
+        window.open(url, '_blank');
+        showToast("⚠️ เปิดรูปในแท็บใหม่แทน");
+    }
 }
 
-function showToast(msg) {
+function showToast(m) {
     const t = document.getElementById('toast');
-    t.innerText = msg; t.style.opacity = 1;
-    setTimeout(() => t.style.opacity = 0, 1200);
+    t.innerText = m; t.style.opacity = 1;
+    setTimeout(() => t.style.opacity = 0, 1000);
 }
 
 function render() {
-    const s = document.getElementById('search').value.toLowerCase();
+    const searchTerm = document.getElementById('search').value.toLowerCase();
     const grid = document.getElementById('grid');
+    const catBar = document.getElementById('catBar');
+    
     let html = "";
-    let catsSet = new Set(["ทั้งหมด"]);
+    let cats = new Set(["ทั้งหมด"]);
 
-    DATA.forEach((r, i) => {
-        const [cat, text, status, img] = r;
+    DATA.forEach(row => {
+        const [cat, text, status, img] = row;
         if (status === "deleted") return;
-        catsSet.add(cat);
+        cats.add(cat);
+
         if (currentCat !== "ทั้งหมด" && cat !== currentCat) return;
-        if (s && !text.toLowerCase().includes(s)) return;
+        if (searchTerm && !text.toLowerCase().includes(searchTerm)) return;
 
         html += `
-        <div class="card ${getColor(cat)}">
-            <div class="actions">
-                <div class="btn-action" onclick="event.stopPropagation(); edit(${i})">✏️</div>
-                <div class="btn-action" onclick="event.stopPropagation(); remove(${i})">🗑️</div>
-            </div>
-            <div class="star">⭐</div>
-            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyImage('${img}')">` : ""}
-            <div class="content" onclick="copyText(\`${text}\`)">
+        <div class="card ${getColorClass(cat)}" onclick="copyText(\`${text}\`)">
+            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyImage('${img}')" title="คลิกเพื่อก๊อปปี้รูป">` : ""}
+            <div class="content">
                 ${text.replace(/{name}/g, '<span class="var">{name}</span>')}
             </div>
         </div>`;
     });
     grid.innerHTML = html;
 
-    let cHTML = "";
-    catsSet.forEach(c => {
-        cHTML += `<div class="cat ${c === currentCat ? "active" : ""}" onclick="currentCat='${c}'; render()">${c}</div>`;
+    // สร้างหมวดหมู่
+    let catHtml = "";
+    cats.forEach(c => {
+        catHtml += `<div class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</div>`;
     });
-    document.getElementById('cats').innerHTML = cHTML;
+    catBar.innerHTML = catHtml;
 }
 
-function openModal() {
-    editIndex = null;
-    document.getElementById('modalTitle').innerText = "📝 เพิ่มข้อมูลใหม่";
-    document.getElementById('catInput').value = "";
-    document.getElementById('textInput').value = "";
-    document.getElementById('imgInput').value = "";
-    document.getElementById('modal').style.display = "flex";
+function filterCat(c) {
+    currentCat = c;
+    render();
 }
 
-function closeModal() { document.getElementById('modal').style.display = "none"; }
-
-function edit(i) {
-    editIndex = i;
-    document.getElementById('modalTitle').innerText = "✏️ แก้ไขข้อมูล";
-    document.getElementById('catInput').value = DATA[i][0];
-    document.getElementById('textInput').value = DATA[i][1];
-    document.getElementById('imgInput').value = "";
-    document.getElementById('modal').style.display = "flex";
-}
-
-async function remove(i) {
-    if(confirm("ลบข้อมูลนี้ใช่หรือไม่?")) {
-        const res = await fetch(`${API_URL}?action=delete&row=${i}&user=${currentUser.name}`);
-        const result = await res.json();
-        if(result.success) {
-            DATA[i][2] = "deleted";
-            render();
-            showToast("🗑️ ลบสำเร็จ");
-        }
-    }
-}
-
-function save() {
-    const file = document.getElementById('imgInput').files[0];
-    const saveBtn = document.getElementById('saveBtn');
-    saveBtn.innerText = "⏳ กำลังบันทึก...";
-    saveBtn.disabled = true;
-
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = e => executeSave(e.target.result);
-        reader.readAsDataURL(file);
-    } else {
-        executeSave(editIndex !== null ? DATA[editIndex][3] : "");
-    }
-}
-
-async function executeSave(imgData) {
-    const cat = document.getElementById('catInput').value;
-    const text = document.getElementById('textInput').value;
-    const action = editIndex !== null ? "edit" : "add";
-    const rowParam = editIndex !== null ? `&row=${editIndex}` : "";
-    
-    try {
-        const formData = new FormData();
-        formData.append('img', imgData);
-
-        const res = await fetch(`${API_URL}?action=${action}${rowParam}&cat=${encodeURIComponent(cat)}&text=${encodeURIComponent(text)}&user=${currentUser.name}`, {
-            method: 'POST',
-            body: imgData
-        });
-        
-        const result = await res.json();
-        if(result.success) {
-            fetchCards();
-            closeModal();
-            showToast("💾 บันทึกสำเร็จ");
-        }
-    } catch(e) {
-        alert("บันทึกไม่สำเร็จ");
-    } finally {
-        const saveBtn = document.getElementById('saveBtn');
-        saveBtn.innerText = "บันทึก";
-        saveBtn.disabled = false;
-    }
-}
-
-function toggleDark() { document.body.classList.toggle("dark"); }
-
-init();
+loadData();
 </script>
 </body>
 </html>
