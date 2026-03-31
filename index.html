@@ -1,88 +1,191 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Zap789 PRO | Stable Version</title>
-    <style>
-        :root { --primary: #ff7a00; --bg: #f4f4f4; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); }
-        .header { position: sticky; top: 0; background: var(--primary); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .search { padding: 8px 15px; border-radius: 20px; border: none; width: 200px; outline: none; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
-        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; border-left: 5px solid #3b82f6; }
-        .card:hover { transform: translateY(-3px); }
-        .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid #eee; }
-        .content { padding: 12px; font-size: 14px; line-height: 1.5; color: #333; }
-        .var { background: #fff3e0; padding: 2px 5px; border-radius: 4px; color: #ff7a00; font-weight: bold; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; pointer-events: none; }
-    </style>
+<meta charset="UTF-8">
+<title>Zap789 PRO</title>
+
+<style>
+body{margin:0;font-family:sans-serif;background:#f4f4f4}
+.dark{background:#121212;color:#fff}
+
+/* HEADER */
+.header{
+position:sticky;top:0;background:#ff7a00;padding:10px;z-index:100
+}
+.top{display:flex;justify-content:space-between;align-items:center}
+.search{padding:8px;border-radius:8px;border:none}
+
+/* CATEGORY */
+.categories{display:flex;gap:8px;margin-top:8px;overflow:auto}
+.cat{background:#fff;padding:6px 12px;border-radius:20px;cursor:pointer}
+.cat.active{background:#000;color:#fff}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:16px}
+
+/* CARD */
+.card{background:#fff;border-radius:10px;overflow:hidden;position:relative}
+.dark .card{background:#1e1e1e}
+
+/* COLOR BAR */
+.card::before{content:"";position:absolute;left:0;top:0;width:4px;height:100%}
+.green::before{background:#22c55e}
+.red::before{background:#ef4444}
+.pink::before{background:#ec4899}
+.blue::before{background:#3b82f6}
+
+/* STAR */
+.star{position:absolute;top:10px;right:10px}
+
+/* ACTION */
+.actions{
+position:absolute;top:10px;left:10px;display:none;gap:6px
+}
+.card:hover .actions{display:flex}
+.btn{background:#000;color:#fff;padding:4px 6px;border-radius:6px}
+
+/* IMAGE */
+.img{
+width:100%;
+aspect-ratio:1/1;
+object-fit:cover;
+cursor:pointer;
+}
+
+/* CONTENT */
+.content{padding:12px;line-height:1.5;cursor:pointer}
+
+/* VAR */
+.var{background:#eee;padding:2px 6px;border-radius:6px}
+.dark .var{background:#2a2a2a}
+
+/* TOAST */
+.toast{
+position:fixed;bottom:20px;right:20px;
+background:#000;color:#fff;padding:10px;border-radius:8px;
+opacity:0;transition:.3s
+}
+</style>
 </head>
+
 <body>
 
 <div class="header">
-    <b style="font-size: 20px;">🔥 Zap789 PRO</b>
-    <input type="text" id="search" class="search" placeholder="🔍 ค้นหา..." oninput="render()">
+<div class="top">
+🔥 Zap789 PRO
+<input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+<button onclick="toggleDark()">🌙</button>
+</div>
+<div id="cats" class="categories"></div>
 </div>
 
-<div id="loading" style="text-align:center; padding:50px; color:#ff7a00;">⏳ กำลังโหลดข้อมูล...</div>
 <div id="grid" class="grid"></div>
-<div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
+<div id="toast" class="toast"></div>
 
 <script>
-// --- วาง URL ที่ได้จากการ Deploy ตรงนี้ ---
-const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+const API="PASTE_URL_HERE"; // ใส่ของคุณ
 
-let DATA = [];
+let DATA=[];
+let currentCat="ทั้งหมด";
 
-async function init() {
-    try {
-        const res = await fetch(API_URL + "?action=get");
-        const json = await res.json();
-        DATA = json;
-        document.getElementById('loading').style.display = 'none';
-        render();
-    } catch(e) {
-        document.getElementById('loading').innerHTML = "⚠️ เชื่อมต่อไม่ได้! <br><small>กรุณาตรวจสอบว่าเลือก 'Anyone' ตอน Deploy หรือยัง</small>";
-    }
+/* LOAD */
+async function init(){
+const res=await fetch(API);
+DATA=await res.json();
+render();
 }
-
-function render() {
-    const s = document.getElementById('search').value.toLowerCase();
-    let html = "";
-    DATA.forEach(r => {
-        const [cat, text, status, img] = r;
-        if (status === "deleted") return;
-        if (s && !text.toLowerCase().includes(s)) return;
-        html += `
-        <div class="card" onclick="copyT(\`${text}\`)">
-            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyI('${img}')">` : ""}
-            <div class="content">${text.replace(/{name}/g, '<span class="var">{name}</span>')}</div>
-        </div>`;
-    });
-    document.getElementById('grid').innerHTML = html;
-}
-
-async function copyT(t) {
-    await navigator.clipboard.writeText(t);
-    toast("✅ คัดลอกข้อความแล้ว");
-}
-
-async function copyI(url) {
-    try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
-        toast("🖼️ คัดลอกรูปภาพแล้ว");
-    } catch(e) { window.open(url, '_blank'); }
-}
-
-function toast(m) {
-    const t = document.getElementById('toast');
-    t.innerText = m; t.style.opacity = 1;
-    setTimeout(() => t.style.opacity = 0, 1000);
-}
-
 init();
+
+/* COLOR */
+function getColor(cat){
+if(cat.includes("ฝาก")) return "green";
+if(cat.includes("ปัญหา")) return "red";
+if(cat.includes("ทัก")) return "pink";
+return "blue";
+}
+
+/* COPY TEXT */
+function copyText(text){
+navigator.clipboard.writeText(text);
+toast("✅ คัดลอกสำเร็จ");
+}
+
+/* COPY IMAGE */
+async function copyImage(url){
+const res=await fetch(url);
+const blob=await res.blob();
+await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
+toast("✅ คัดลอกสำเร็จ");
+}
+
+/* TOAST */
+function toast(msg){
+const t=document.getElementById("toast");
+t.innerText=msg;
+t.style.opacity=1;
+setTimeout(()=>t.style.opacity=0,1000);
+}
+
+/* RENDER */
+function render(){
+const s=(search.value||"").toLowerCase();
+let html="";
+let catSet=new Set(["ทั้งหมด"]);
+
+DATA.forEach((r,i)=>{
+const [cat,text,status,img]=r;
+if(status==="deleted") return;
+
+catSet.add(cat);
+
+if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
+if(s && !text.toLowerCase().includes(s)) return;
+
+html+=`
+<div class="card ${getColor(cat)}">
+
+<div class="actions">
+<div class="btn" onclick="event.stopPropagation();remove(${i})">🗑️</div>
+</div>
+
+<div class="star">⭐</div>
+
+${img?`<img src="${img}" class="img" onclick="event.stopPropagation();copyImage('${img}')">`:""}
+
+<div class="content" onclick="copyText(\`${text}\`)">
+${text.replaceAll("{name}",'<span class="var">{name}</span>')}
+</div>
+
+</div>`;
+});
+
+grid.innerHTML=html;
+
+/* CATEGORY */
+let cHTML="";
+catSet.forEach(c=>{
+cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+});
+document.getElementById("cats").innerHTML=cHTML;
+}
+
+/* DELETE */
+async function remove(i){
+await fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"delete",
+row:i+2
+})
+});
+init();
+}
+
+/* DARK */
+function toggleDark(){
+document.body.classList.toggle("dark");
+}
 </script>
+
 </body>
 </html>
