@@ -2,149 +2,87 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Zap789 PRO | Fast Response</title>
+    <title>Zap789 PRO | Stable Version</title>
     <style>
-        :root { --primary: #ff7a00; --bg: #f4f4f4; --card-bg: #ffffff; }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: #333; }
-        
-        /* HEADER */
-        .header { position: sticky; top: 0; background: var(--primary); padding: 12px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .logo { font-size: 20px; font-weight: bold; }
-        .search-box { padding: 8px 15px; border-radius: 20px; border: none; width: 250px; outline: none; font-size: 14px; }
-        
-        /* CATEGORY BAR */
-        .cat-bar { display: flex; gap: 8px; padding: 10px; background: white; overflow-x: auto; border-bottom: 1px solid #ddd; }
-        .cat-btn { padding: 6px 15px; border-radius: 20px; background: #f0f0f0; cursor: pointer; white-space: nowrap; font-size: 13px; transition: 0.2s; border: 1px solid #ddd; }
-        .cat-btn.active { background: #333; color: white; border-color: #333; }
-
-        /* GRID SYSTEM */
+        :root { --primary: #ff7a00; --bg: #f4f4f4; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); }
+        .header { position: sticky; top: 0; background: var(--primary); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .search { padding: 8px 15px; border-radius: 20px; border: none; width: 200px; outline: none; }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
-        
-        /* CARD DESIGN */
-        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; border-left: 5px solid #3b82f6; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        
-        /* COLORS BY CATEGORY */
-        .green { border-left-color: #22c55e; }
-        .red { border-left-color: #ef4444; }
-        .pink { border-left-color: #ec4899; }
-
-        /* IMAGE 1:1 */
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; border-left: 5px solid #3b82f6; }
+        .card:hover { transform: translateY(-3px); }
         .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid #eee; }
-        
-        /* CONTENT */
-        .content { padding: 15px; font-size: 14px; line-height: 1.6; color: #444; flex-grow: 1; }
-        .var { background: #fff3e0; padding: 2px 6px; border-radius: 4px; color: #ff7a00; font-weight: bold; border: 1px solid #ffe0b2; }
-        
-        /* TOAST NOTIFICATION */
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 25px; border-radius: 50px; opacity: 0; transition: .3s; pointer-events: none; z-index: 1000; }
-        
-        .loading { text-align: center; margin-top: 50px; color: #ff7a00; font-weight: bold; }
+        .content { padding: 12px; font-size: 14px; line-height: 1.5; color: #333; }
+        .var { background: #fff3e0; padding: 2px 5px; border-radius: 4px; color: #ff7a00; font-weight: bold; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="logo">🔥 Zap789 PRO</div>
-    <input type="text" id="search" class="search-box" placeholder="🔍 ค้นหาข้อความ..." oninput="render()">
+    <b style="font-size: 20px;">🔥 Zap789 PRO</b>
+    <input type="text" id="search" class="search" placeholder="🔍 ค้นหา..." oninput="render()">
 </div>
 
-<div id="catBar" class="cat-bar"></div>
-
-<div id="loading" class="loading">⏳ กำลังโหลดข้อมูล...</div>
+<div id="loading" style="text-align:center; padding:50px; color:#ff7a00;">⏳ กำลังโหลดข้อมูล...</div>
 <div id="grid" class="grid"></div>
-
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
 <script>
-// ใส่ URL API ของคุณตรงนี้
+// --- วาง URL ที่ได้จากการ Deploy ตรงนี้ ---
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA = [];
-let currentCat = "ทั้งหมด";
 
-// ดึงข้อมูลทันทีที่เปิดเว็บ
-async function loadData() {
+async function init() {
     try {
         const res = await fetch(API_URL + "?action=get");
-        DATA = await res.json();
+        const json = await res.json();
+        DATA = json;
         document.getElementById('loading').style.display = 'none';
         render();
-    } catch (e) {
-        document.getElementById('loading').innerText = "⚠️ เชื่อมต่อไม่ได้ กรุณาตรวจสอบลิงก์ API หรือสิทธิ์การเข้าถึง";
+    } catch(e) {
+        document.getElementById('loading').innerHTML = "⚠️ เชื่อมต่อไม่ได้! <br><small>กรุณาตรวจสอบว่าเลือก 'Anyone' ตอน Deploy หรือยัง</small>";
     }
 }
 
-function getColorClass(cat) {
-    if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
-    if (cat.includes("ปัญหา")) return "red";
-    if (cat.includes("ทัก")) return "pink";
-    return "";
+function render() {
+    const s = document.getElementById('search').value.toLowerCase();
+    let html = "";
+    DATA.forEach(r => {
+        const [cat, text, status, img] = r;
+        if (status === "deleted") return;
+        if (s && !text.toLowerCase().includes(s)) return;
+        html += `
+        <div class="card" onclick="copyT(\`${text}\`)">
+            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyI('${img}')">` : ""}
+            <div class="content">${text.replace(/{name}/g, '<span class="var">{name}</span>')}</div>
+        </div>`;
+    });
+    document.getElementById('grid').innerHTML = html;
 }
 
-async function copyText(t) {
+async function copyT(t) {
     await navigator.clipboard.writeText(t);
-    showToast("✅ คัดลอกข้อความแล้ว");
+    toast("✅ คัดลอกข้อความแล้ว");
 }
 
-async function copyImage(url) {
+async function copyI(url) {
     try {
         const res = await fetch(url);
         const blob = await res.blob();
         await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
-        showToast("🖼️ คัดลอกรูปภาพแล้ว");
-    } catch(e) { 
-        window.open(url, '_blank');
-        showToast("⚠️ เปิดรูปในแท็บใหม่แทน");
-    }
+        toast("🖼️ คัดลอกรูปภาพแล้ว");
+    } catch(e) { window.open(url, '_blank'); }
 }
 
-function showToast(m) {
+function toast(m) {
     const t = document.getElementById('toast');
     t.innerText = m; t.style.opacity = 1;
     setTimeout(() => t.style.opacity = 0, 1000);
 }
 
-function render() {
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const grid = document.getElementById('grid');
-    const catBar = document.getElementById('catBar');
-    
-    let html = "";
-    let cats = new Set(["ทั้งหมด"]);
-
-    DATA.forEach(row => {
-        const [cat, text, status, img] = row;
-        if (status === "deleted") return;
-        cats.add(cat);
-
-        if (currentCat !== "ทั้งหมด" && cat !== currentCat) return;
-        if (searchTerm && !text.toLowerCase().includes(searchTerm)) return;
-
-        html += `
-        <div class="card ${getColorClass(cat)}" onclick="copyText(\`${text}\`)">
-            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyImage('${img}')" title="คลิกเพื่อก๊อปปี้รูป">` : ""}
-            <div class="content">
-                ${text.replace(/{name}/g, '<span class="var">{name}</span>')}
-            </div>
-        </div>`;
-    });
-    grid.innerHTML = html;
-
-    // สร้างหมวดหมู่
-    let catHtml = "";
-    cats.forEach(c => {
-        catHtml += `<div class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</div>`;
-    });
-    catBar.innerHTML = catHtml;
-}
-
-function filterCat(c) {
-    currentCat = c;
-    render();
-}
-
-loadData();
+init();
 </script>
 </body>
 </html>
