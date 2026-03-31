@@ -29,7 +29,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   cursor:pointer;
   transition:.15s;
 }
-.card:active { transform:scale(0.97); opacity:0.85; }
+.card:active { transform:scale(0.96); opacity:0.85; }
 
 .card::before {
   content:"";
@@ -178,12 +178,9 @@ function getColor(cat){
   return "blue";
 }
 
-/* copy text */
+/* ✅ copy ตรง ๆ ไม่มี replace แล้ว */
 async function copyText(text){
-  const res=await fetch(API_URL+"?action=name");
-  const data=await res.json();
-  const final=text.replace(/{name}/g,data.name);
-  await navigator.clipboard.writeText(final);
+  await navigator.clipboard.writeText(text);
   showToast("✅ คัดลอกสำเร็จ");
 }
 
