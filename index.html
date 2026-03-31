@@ -1,3 +1,5 @@
+<script>
+
 function render(){
   const s = search.value.toLowerCase();
   let html = "";
@@ -21,30 +23,20 @@ function render(){
     html += `
     <div class="card ${getColor(cat)}">
 
-      <div class="actions">
-        <div class="btn" onclick="event.stopPropagation()">✏️</div>
-        <div class="btn" onclick="event.stopPropagation()">🗑️</div>
-      </div>
-
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${fav==="1" ? "⭐" : "☆"}
       </div>
 
-      ${img ? `<img src="${img}" class="img" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
+      ${img ? `<img src="${img}" class="img">` : ""}
 
-      <div class="content" onclick="copyText(\`${text}\`)">
-        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
+      <div class="content">
+        ${text}
       </div>
 
     </div>`;
   });
 
   grid.innerHTML = html;
-
-  let cHTML="";
-  catsSet.forEach(c=>{
-    cHTML += `<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
-  });
-
-  cats.innerHTML = cHTML;
 }
+
+</script>
