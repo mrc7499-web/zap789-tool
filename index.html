@@ -1,44 +1,61 @@
 <script>
-const API_URL = "PUT_YOUR_WEBAPP_URL_HERE";
+const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
 let DATA = [];
 let currentCat = "ทั้งหมด";
-let editIndex = null;
 
 // โหลดข้อมูล
 async function init() {
     try {
         const res = await fetch(API_URL + "?action=get");
         DATA = await res.json();
+
+        if (!Array.isArray(DATA)) {
+            console.error("API ERROR:", DATA);
+            alert("❌ ดึงข้อมูลไม่ได้ (ดู console)");
+            return;
+        }
+
         render();
     } catch(e) {
-        console.log("Fetch Error");
+        console.error("Fetch Error:", e);
+        alert("❌ โหลดข้อมูลไม่สำเร็จ");
     }
 }
 
-// 🎲 copy + สุ่มชื่อ + log
-async function copyText(text, cat) {
+// 🎲 copy + สุ่มชื่อ
+async function copyText(index) {
     try {
-        // 1. สุ่มชื่อ
+        const row = DATA[index];
+        const [cat, text] = row;
+
+        // สุ่มชื่อ
         const res = await fetch(API_URL + "?action=randomName");
         const data = await res.json();
-        const name = data.name;
+        const name = data.name || "ลูกค้า";
 
-        // 2. แทน {name}
+        // แทน {name}
         const finalText = text.replace(/{name}/g, name);
 
-        // 3. copy
+        // copy
         await navigator.clipboard.writeText(finalText);
 
-        // 4. log
-        fetch(API_URL + `?action=log&name=${encodeURIComponent(name)}&text=${encodeURIComponent(text)}&cat=${encodeURIComponent(cat)}`);
+        // log
+        fetch(API_URL + "?action=log"
+            + "&name=" + encodeURIComponent(name)
+            + "&text=" + encodeURIComponent(text)
+            + "&cat=" + encodeURIComponent(cat)
+        );
 
-        showToast("✅ คัดลอก: " + name);
+        showToast("✅ " + name);
+
     } catch(e) {
+        console.error(e);
         showToast("❌ error");
     }
 }
 
+// toast
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.innerText = msg;
@@ -46,7 +63,7 @@ function showToast(msg) {
     setTimeout(() => t.style.opacity = 0, 1200);
 }
 
-// 🎨 render
+// render
 function render() {
     const s = document.getElementById('search').value.toLowerCase();
     let html = "";
@@ -54,6 +71,7 @@ function render() {
 
     DATA.forEach((r, i) => {
         const [cat, text, status, img] = r;
+
         if (status === "deleted") return;
 
         catsSet.add(cat);
@@ -63,8 +81,8 @@ function render() {
 
         html += `
         <div class="card ${getColor(cat)}">
-            <div class="content" onclick="copyText(\`${text}\`, \`${cat}\`)">
-                ${text.replace(/{name}/g, '<span class="var">{name}</span>')}
+            <div class="content" onclick="copyText(${i})">
+                ${escapeHTML(text).replace(/{name}/g, '<span class="var">{name}</span>')}
             </div>
         </div>`;
     });
@@ -73,10 +91,23 @@ function render() {
 
     let cHTML = "";
     catsSet.forEach(c => {
-        cHTML += `<div class="cat ${c === currentCat ? "active" : ""}" onclick="currentCat='${c}'; render()">${c}</div>`;
+        cHTML += `<div class="cat ${c === currentCat ? "active" : ""}" onclick="setCat('${escapeHTML(c)}')">${c}</div>`;
     });
 
     document.getElementById('cats').innerHTML = cHTML;
+}
+
+// กัน HTML พัง
+function escapeHTML(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function setCat(c) {
+    currentCat = c;
+    render();
 }
 
 // สี
