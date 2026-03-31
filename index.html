@@ -1,279 +1,194 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>Zap789 PRO</title>
-
-<style>
-:root {
-  --primary: #ff7a00;
-  --bg: #f4f4f4;
-  --card-bg: #ffffff;
-  --text: #333;
-  --var-bg: #f0f0f0;
-}
-
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-/* HEADER */
-.header {
-  background: var(--primary);
-  padding: 10px;
-  color: white;
-}
-
-.top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-}
-
-/* CATEGORY */
-.categories {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  overflow-x: auto;
-}
-
-.cat {
-  background: #fff;
-  padding: 5px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 13px;
-  border: 1px solid #ddd;
-}
-
-.cat.active {
-  background: #000;
-  color: #fff;
-}
-
-/* GRID */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  padding: 15px;
-}
-
-/* CARD */
-.card {
-  background: var(--card-bg);
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* LEFT COLOR BAR */
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;
-  height: 100%;
-}
-
-.green::before { background: #22c55e; }
-.red::before { background: #ef4444; }
-.pink::before { background: #ec4899; }
-.blue::before { background: #3b82f6; }
-
-/* STAR */
-.star {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 16px;
-  z-index: 5;
-}
-
-/* IMAGE */
-.img-box {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-}
-
-/* CONTENT */
-.content {
-  padding: 12px;
-  font-size: 14px;
-}
-
-/* NAME TAG */
-.var {
-  background: var(--var-bg);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-/* MODAL */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-box {
-  background: #fff;
-  padding: 20px;
-  width: 300px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Zap789 PRO | Perfect Edition</title>
+    <style>
+        :root { --primary: #ff7a00; --bg: #f4f4f4; --card-bg: #ffffff; --text: #333; --var-bg: #eee; }
+        body.dark { --bg: #121212; --card-bg: #1e1e1e; --text: #efefef; --var-bg: #333; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
+        .header { position: sticky; top: 0; background: var(--primary); padding: 10px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .top { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .search { padding: 8px 15px; border-radius: 8px; border: none; width: 250px; outline: none; }
+        .categories { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; max-width: 1400px; margin: 0 auto; padding-bottom: 5px; }
+        .cat { background: #fff; padding: 6px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 1px solid #ddd; }
+        .cat.active { background: #000; color: #fff; border-color: #000; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .card::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; z-index: 2; }
+        .green::before { background: #22c55e; } .red::before { background: #ef4444; } .pink::before { background: #ec4899; } .blue::before { background: #3b82f6; }
+        .star { position: absolute; top: 8px; right: 8px; z-index: 3; font-size: 18px; color: #ffca28; }
+        .actions { position: absolute; top: 8px; left: 12px; display: none; gap: 5px; z-index: 10; }
+        .card:hover .actions { display: flex; }
+        .btn-action { background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        .img-box { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .content { padding: 12px; line-height: 1.5; font-size: 14px; flex-grow: 1; }
+        .var { background: var(--var-bg); padding: 2px 5px; border-radius: 4px; color: var(--primary); font-weight: bold; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 50px; opacity: 0; transition: .3s; z-index: 1000; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-box { background: #fff; padding: 20px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; color: #333; }
+        .input-ui { padding: 10px; border-radius: 6px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
+    </style>
 </head>
-
 <body>
 
 <div class="header">
-  <div class="top">
-    <b>🔥 Zap789 PRO</b>
-    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-    <button onclick="openModal()">+ เพิ่ม</button>
-  </div>
-  <div id="cats" class="categories"></div>
+    <div class="top">
+        <div style="font-weight: bold; color: white;">🔥 Zap789 PRO</div>
+        <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="openModal()" style="cursor:pointer; border-radius:5px; border:none; padding:5px 15px; background:#fff;">+ เพิ่ม</button>
+            <button onclick="toggleDark()" style="background:none; border:none; cursor:pointer; font-size: 18px;">🌙</button>
+        </div>
+    </div>
+    <div id="cats" class="categories"></div>
 </div>
 
 <div id="grid" class="grid"></div>
+<div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
-<!-- MODAL -->
 <div id="modal" class="modal">
-  <div class="modal-box">
-    <input id="catInput" placeholder="หมวด">
-    <textarea id="textInput" placeholder="ข้อความ"></textarea>
-    <input type="file" id="imgInput">
-    <button onclick="save()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
-  </div>
+    <div class="modal-box">
+        <h3 style="margin:0;">📝 จัดการข้อมูล</h3>
+        <input id="catInput" class="input-ui" placeholder="หมวดหมู่ (เช่น ฝากถอน, สมัคร)">
+        <textarea id="textInput" class="input-ui" style="height: 80px;" placeholder="ข้อความ..."></textarea>
+        <label style="font-size: 12px;">🖼️ รูปภาพ (1040x1040):</label>
+        <input type="file" id="imgInput" accept="image/*">
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="closeModal()" style="padding: 8px 15px; border:none; border-radius:5px; cursor:pointer;">ยกเลิก</button>
+            <button onclick="save()" style="background: #ff7a00; color:white; padding: 8px 15px; border:none; border-radius:5px; cursor:pointer;">บันทึก</button>
+        </div>
+    </div>
 </div>
 
 <script>
-
 const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
-
 let DATA = [];
 let currentCat = "ทั้งหมด";
 let editIndex = null;
 
 async function init() {
-  const res = await fetch(API_URL + "?t=" + Date.now());
-  DATA = await res.json();
-  render();
+    try {
+        const res = await fetch(API_URL + "?action=get");
+        DATA = await res.json();
+    } catch(e) { console.log("Fetch Error"); }
+    render();
 }
 
 function getColor(cat) {
-  if (cat.includes("ฝาก")) return "green";
-  if (cat.includes("ปัญหา")) return "red";
-  if (cat.includes("ทัก")) return "pink";
-  return "blue";
+    if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
+    if (cat.includes("ปัญหา")) return "red";
+    if (cat.includes("ทัก")) return "pink";
+    return "blue";
 }
 
-/* 🔥 RANDOM NAME */
 async function copyText(text) {
-  const res = await fetch(API_URL + "?action=name");
-  const data = await res.json();
-
-  const finalText = text.replace(/{name}/g, data.name);
-  navigator.clipboard.writeText(finalText);
+    await navigator.clipboard.writeText(text);
+    showToast("✅ คัดลอกข้อความแล้ว");
 }
 
-/* RENDER */
+async function copyImage(url) {
+    try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
+        showToast("🖼️ คัดลอกรูปภาพแล้ว");
+    } catch(e) { showToast("❌ ก๊อปปี้รูปไม่ได้"); }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.style.opacity = 1;
+    setTimeout(() => t.style.opacity = 0, 1200);
+}
+
 function render() {
-  const s = search.value.toLowerCase();
-  let html = "";
-  let catsSet = new Set(["ทั้งหมด"]);
+    const s = document.getElementById('search').value.toLowerCase();
+    const grid = document.getElementById('grid');
+    let html = "";
+    let catsSet = new Set(["ทั้งหมด"]);
 
-  DATA.forEach((r,i)=>{
-    const [cat,text,status,img] = r;
-    if(status==="deleted") return;
+    DATA.forEach((r, i) => {
+        const [cat, text, status, img] = r;
+        if (status === "deleted") return;
+        catsSet.add(cat);
+        if (currentCat !== "ทั้งหมด" && cat !== currentCat) return;
+        if (s && !text.toLowerCase().includes(s)) return;
 
-    catsSet.add(cat);
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-    if(s && !text.toLowerCase().includes(s)) return;
+        html += `
+        <div class="card ${getColor(cat)}">
+            <div class="actions">
+                <div class="btn-action" onclick="event.stopPropagation(); edit(${i})">✏️</div>
+                <div class="btn-action" onclick="event.stopPropagation(); remove(${i})">🗑️</div>
+            </div>
+            <div class="star">⭐</div>
+            ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation(); copyImage('${img}')">` : ""}
+            <div class="content" onclick="copyText(\`${text}\`)">
+                ${text.replace(/{name}/g, '<span class="var">{name}</span>')}
+            </div>
+        </div>`;
+    });
+    grid.innerHTML = html;
 
-    html += `
-    <div class="card ${getColor(cat)}">
-      <div class="star">⭐</div>
-      ${img ? `<img src="${img}" class="img-box">` : ""}
-      <div class="content" onclick="copyText(\`${text}\`)">
-        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
-      </div>
-    </div>`;
-  });
-
-  grid.innerHTML = html;
-
-  let cHTML = "";
-  catsSet.forEach(c=>{
-    cHTML += `<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
-  });
-
-  cats.innerHTML = cHTML;
+    let cHTML = "";
+    catsSet.forEach(c => {
+        cHTML += `<div class="cat ${c === currentCat ? "active" : ""}" onclick="currentCat='${c}'; render()">${c}</div>`;
+    });
+    document.getElementById('cats').innerHTML = cHTML;
 }
 
-/* MODAL */
-function openModal(){
-  editIndex=null;
-  modal.style.display="flex";
+function openModal() {
+    editIndex = null;
+    document.getElementById('catInput').value = "";
+    document.getElementById('textInput').value = "";
+    document.getElementById('imgInput').value = "";
+    document.getElementById('modal').style.display = "flex";
 }
 
-function closeModal(){
-  modal.style.display="none";
+function closeModal() { document.getElementById('modal').style.display = "none"; }
+
+function edit(i) {
+    editIndex = i;
+    document.getElementById('catInput').value = DATA[i][0];
+    document.getElementById('textInput').value = DATA[i][1];
+    document.getElementById('imgInput').value = "";
+    document.getElementById('modal').style.display = "flex";
 }
 
-function save(){
-  const file = imgInput.files[0];
-
-  if(file){
-    const reader = new FileReader();
-    reader.onload = e => executeSave(e.target.result);
-    reader.readAsDataURL(file);
-  }else{
-    executeSave(null);
-  }
+function remove(i) {
+    if(confirm("ลบข้อมูลนี้ใช่หรือไม่?")) {
+        DATA[i][2] = "deleted";
+        render();
+    }
 }
 
-async function executeSave(img){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"add",
-      cat:catInput.value,
-      text:textInput.value,
-      image:img
-    })
-  });
-
-  closeModal();
-  init();
+function save() {
+    const file = document.getElementById('imgInput').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => executeSave(e.target.result);
+        reader.readAsDataURL(file);
+    } else {
+        executeSave(editIndex !== null ? DATA[editIndex][3] : null);
+    }
 }
 
+function executeSave(imgData) {
+    const c = document.getElementById('catInput').value;
+    const t = document.getElementById('textInput').value;
+    if (editIndex !== null) {
+        DATA[editIndex] = [c, t, "active", imgData || DATA[editIndex][3]];
+    } else {
+        DATA.push([c, t, "active", imgData]);
+    }
+    closeModal();
+    render();
+    showToast("💾 บันทึกสำเร็จ");
+}
+
+function toggleDark() { document.body.classList.toggle("dark"); }
 init();
-
 </script>
-
 </body>
 </html>
