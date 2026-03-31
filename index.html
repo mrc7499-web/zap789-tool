@@ -74,13 +74,13 @@
 
 <div id="modal" class="modal">
     <div class="modal-box">
-        <h3 style="margin:0;">📝 จัดการข้อมูล</h3>
+        <h3 id="modalTitle" style="margin:0;">📝 จัดการข้อมูล</h3>
         <input id="catInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; width:100%; box-sizing:border-box;" placeholder="หมวดหมู่">
         <textarea id="textInput" style="padding:10px; border-radius:6px; border:1px solid #ddd; height:80px; width:100%; box-sizing:border-box;" placeholder="ข้อความ..."></textarea>
         <input type="file" id="imgInput" accept="image/*">
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button onclick="closeModal()" style="cursor:pointer; padding: 8px 15px; border-radius:5px; border:none;">ยกเลิก</button>
-            <button onclick="save()" style="background: #ff7a00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">บันทึก</button>
+            <button id="saveBtn" onclick="save()" style="background: #ff7a00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">บันทึก</button>
         </div>
     </div>
 </div>
@@ -92,7 +92,6 @@ let currentCat = "ทั้งหมด";
 let editIndex = null;
 let currentUser = null;
 
-// เริ่มต้นระบบ
 async function init() {
     const savedUser = localStorage.getItem('zapUser');
     if(savedUser) {
@@ -101,21 +100,17 @@ async function init() {
     }
 }
 
-// ฟังก์ชัน Login (เช็คผ่าน Server โดยตรง)
 async function login() {
     const u = document.getElementById('userIn').value;
     const p = document.getElementById('passIn').value;
     const err = document.getElementById('errorMsg');
-    
     if(!u || !p) return;
-
     err.style.display = "block";
     err.innerText = "⌛ กำลังตรวจสอบ...";
 
     try {
         const res = await fetch(`${API_URL}?action=login&username=${u}&password=${p}`);
         const result = await res.json();
-
         if(result.success) {
             currentUser = { name: result.user, role: result.role };
             localStorage.setItem('zapUser', JSON.stringify(currentUser));
@@ -125,26 +120,25 @@ async function login() {
         }
     } catch(e) {
         err.innerText = "⚠️ เชื่อมต่อระบบไม่ได้";
-        console.error(e);
     }
 }
 
 async function showDashboard() {
     document.getElementById('login-page').style.display = "none";
     document.getElementById('main-content').style.display = "block";
-    
     if(currentUser.role !== 'admin') {
         document.getElementById('addBtn').style.display = "none";
         const style = document.createElement('style');
         style.innerHTML = '.actions { display: none !important; }';
         document.head.appendChild(style);
     }
-    
-    // โหลดข้อมูลการ์ด
+    fetchCards();
+}
+
+async function fetchCards() {
     try {
         const res = await fetch(API_URL + "?action=get");
-        const json = await res.json();
-        DATA = json.data || json;
+        DATA = await res.json();
         render();
     } catch(e) { console.log("Load Data Error"); }
 }
@@ -218,6 +212,7 @@ function render() {
 
 function openModal() {
     editIndex = null;
+    document.getElementById('modalTitle').innerText = "📝 เพิ่มข้อมูลใหม่";
     document.getElementById('catInput').value = "";
     document.getElementById('textInput').value = "";
     document.getElementById('imgInput').value = "";
@@ -228,40 +223,68 @@ function closeModal() { document.getElementById('modal').style.display = "none";
 
 function edit(i) {
     editIndex = i;
+    document.getElementById('modalTitle').innerText = "✏️ แก้ไขข้อมูล";
     document.getElementById('catInput').value = DATA[i][0];
     document.getElementById('textInput').value = DATA[i][1];
+    document.getElementById('imgInput').value = "";
     document.getElementById('modal').style.display = "flex";
 }
 
-function remove(i) {
+async function remove(i) {
     if(confirm("ลบข้อมูลนี้ใช่หรือไม่?")) {
-        DATA[i][2] = "deleted";
-        render();
+        const res = await fetch(`${API_URL}?action=delete&row=${i}&user=${currentUser.name}`);
+        const result = await res.json();
+        if(result.success) {
+            DATA[i][2] = "deleted";
+            render();
+            showToast("🗑️ ลบสำเร็จ");
+        }
     }
 }
 
 function save() {
     const file = document.getElementById('imgInput').files[0];
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.innerText = "⏳ กำลังบันทึก...";
+    saveBtn.disabled = true;
+
     if (file) {
         const reader = new FileReader();
         reader.onload = e => executeSave(e.target.result);
         reader.readAsDataURL(file);
     } else {
-        executeSave(editIndex !== null ? DATA[editIndex][3] : null);
+        executeSave(editIndex !== null ? DATA[editIndex][3] : "");
     }
 }
 
-function executeSave(imgData) {
-    const c = document.getElementById('catInput').value;
-    const t = document.getElementById('textInput').value;
-    if (editIndex !== null) {
-        DATA[editIndex] = [c, t, "active", imgData || DATA[editIndex][3]];
-    } else {
-        DATA.push([c, t, "active", imgData]);
+async function executeSave(imgData) {
+    const cat = document.getElementById('catInput').value;
+    const text = document.getElementById('textInput').value;
+    const action = editIndex !== null ? "edit" : "add";
+    const rowParam = editIndex !== null ? `&row=${editIndex}` : "";
+    
+    try {
+        const formData = new FormData();
+        formData.append('img', imgData);
+
+        const res = await fetch(`${API_URL}?action=${action}${rowParam}&cat=${encodeURIComponent(cat)}&text=${encodeURIComponent(text)}&user=${currentUser.name}`, {
+            method: 'POST',
+            body: imgData
+        });
+        
+        const result = await res.json();
+        if(result.success) {
+            fetchCards();
+            closeModal();
+            showToast("💾 บันทึกสำเร็จ");
+        }
+    } catch(e) {
+        alert("บันทึกไม่สำเร็จ");
+    } finally {
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerText = "บันทึก";
+        saveBtn.disabled = false;
     }
-    closeModal();
-    render();
-    showToast("💾 บันทึกสำเร็จ");
 }
 
 function toggleDark() { document.body.classList.toggle("dark"); }
