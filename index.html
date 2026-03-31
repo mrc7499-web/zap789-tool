@@ -5,95 +5,32 @@
 <title>Zap789 PRO | Perfect Edition</title>
 
 <style>
-:root {
-  --primary:#ff7a00;
-  --bg:#f4f4f4;
-  --card-bg:#ffffff;
-  --text:#333;
-  --var-bg:#eee;
-}
+:root { --primary:#ff7a00; --bg:#f4f4f4; --card-bg:#ffffff; --text:#333; --var-bg:#eee; }
+body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
 
-body.dark {
-  --bg:#121212;
-  --card-bg:#1e1e1e;
-  --text:#efefef;
-  --var-bg:#333;
-}
+body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
 
-body {
-  margin:0;
-  font-family:sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
+.header { position:sticky; top:0; background:var(--primary); padding:10px; z-index:100; }
+.top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
 
-/* header */
-.header {
-  position:sticky;
-  top:0;
-  background:var(--primary);
-  padding:10px;
-  z-index:100;
-}
+.search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
 
-.top {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  max-width:1400px;
-  margin:0 auto;
-}
+.categories { display:flex; gap:8px; overflow-x:auto; max-width:1400px; margin:0 auto; }
+.cat { background:#fff; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:13px; border:1px solid #ddd; }
+.cat.active { background:#000; color:#fff; }
 
-.search {
-  padding:8px 15px;
-  border-radius:8px;
-  border:none;
-  width:250px;
-}
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
 
-/* categories */
-.categories {
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  max-width:1400px;
-  margin:0 auto;
-}
-
-.cat {
-  background:#fff;
-  padding:6px 15px;
-  border-radius:20px;
-  cursor:pointer;
-  font-size:13px;
-  border:1px solid #ddd;
-}
-
-.cat.active {
-  background:#000;
-  color:#fff;
-}
-
-/* grid */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
-  padding:15px;
-  max-width:1400px;
-  margin:0 auto;
-}
-
-/* card */
 .card {
   background:var(--card-bg);
   border-radius:10px;
   overflow:hidden;
   position:relative;
   cursor:pointer;
+  transition:.15s;
 }
+.card:active { transform:scale(0.97); opacity:0.85; }
 
-/* left color */
 .card::before {
   content:"";
   position:absolute;
@@ -102,13 +39,11 @@ body {
   width:4px;
   height:100%;
 }
-
 .green::before { background:#22c55e; }
 .red::before { background:#ef4444; }
 .pink::before { background:#ec4899; }
 .blue::before { background:#3b82f6; }
 
-/* actions */
 .actions {
   position:absolute;
   top:8px;
@@ -117,10 +52,7 @@ body {
   gap:5px;
   z-index:10;
 }
-
-.card:hover .actions {
-  display:flex;
-}
+.card:hover .actions { display:flex; }
 
 .btn-action {
   background:rgba(0,0,0,0.7);
@@ -131,20 +63,17 @@ body {
   cursor:pointer;
 }
 
-/* image */
 .img-box {
   width:100%;
   aspect-ratio:1/1;
   object-fit:cover;
 }
 
-/* content */
 .content {
   padding:12px;
   font-size:14px;
 }
 
-/* variable */
 .var {
   background:var(--var-bg);
   padding:2px 5px;
@@ -152,7 +81,6 @@ body {
   font-weight:bold;
 }
 
-/* toast */
 .toast {
   position:fixed;
   bottom:20px;
@@ -166,7 +94,6 @@ body {
   transition:.3s;
 }
 
-/* modal */
 .modal {
   position:fixed;
   inset:0;
@@ -199,15 +126,12 @@ body {
 <div class="header">
   <div class="top">
     <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
-
     <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-
     <div>
       <button onclick="openModal()">+ เพิ่ม</button>
       <button onclick="toggleDark()">🌙</button>
     </div>
   </div>
-
   <div id="cats" class="categories"></div>
 </div>
 
@@ -286,7 +210,8 @@ function render(){
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
-    <div class="card ${getColor(cat)}">
+    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
+
       <div class="actions">
         <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
         <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
@@ -294,7 +219,7 @@ function render(){
 
       ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
 
-      <div class="content" onclick="copyText(\`${text}\`)">
+      <div class="content">
         ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
       </div>
     </div>`;
