@@ -18,8 +18,13 @@ function render(){
     if(currentCat!=="ทั้งหมด" && currentCat!=="⭐ ปักหมุด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
-    html+=`
+    html += `
     <div class="card ${getColor(cat)}">
+
+      <div class="actions">
+        <div class="btn" onclick="event.stopPropagation()">✏️</div>
+        <div class="btn" onclick="event.stopPropagation()">🗑️</div>
+      </div>
 
       <div class="star" onclick="event.stopPropagation();toggleFav(${i})">
         ${fav==="1" ? "⭐" : "☆"}
@@ -30,6 +35,7 @@ function render(){
       <div class="content" onclick="copyText(\`${text}\`)">
         ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
       </div>
+
     </div>`;
   });
 
@@ -37,8 +43,8 @@ function render(){
 
   let cHTML="";
   catsSet.forEach(c=>{
-    cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+    cHTML += `<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
   });
 
-  cats.innerHTML=cHTML;
+  cats.innerHTML = cHTML;
 }
