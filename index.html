@@ -1,190 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>Zap789 PRO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zap789 PRO | Admin Dashboard</title>
+    <style>
+        :root {
+            --primary: #ff7a00;
+            --bg: #f4f4f4;
+            --card-bg: #ffffff;
+            --text: #333;
+            --var-bg: #eee;
+        }
 
-<style>
-body{margin:0;font-family:sans-serif;background:#f4f4f4}
-.dark{background:#121212;color:#fff}
+        body.dark {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #efefef;
+            --var-bg: #333;
+        }
 
-/* HEADER */
-.header{
-position:sticky;top:0;background:#ff7a00;padding:10px;z-index:100
-}
-.top{display:flex;justify-content:space-between;align-items:center}
-.search{padding:8px;border-radius:8px;border:none}
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
 
-/* CATEGORY */
-.categories{display:flex;gap:8px;margin-top:8px;overflow:auto}
-.cat{background:#fff;padding:6px 12px;border-radius:20px;cursor:pointer}
-.cat.active{background:#000;color:#fff}
+        /* HEADER & FILTER */
+        .header { position: sticky; top: 0; background: var(--primary); padding: 15px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .search-box { padding: 10px 15px; border-radius: 8px; border: none; width: 300px; outline: none; font-size: 14px; }
+        .categories { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px; max-width: 1400px; margin-left: auto; margin-right: auto; }
+        .cat-btn { background: rgba(255,255,255,0.2); color: white; padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; border: 1px solid rgba(255,255,255,0.3); }
+        .cat-btn:hover { background: rgba(255,255,255,0.4); }
+        .cat-btn.active { background: white; color: var(--primary); font-weight: bold; }
 
-/* GRID */
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:16px}
+        /* GRID SYSTEM */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; max-width: 1400px; margin: 0 auto; }
 
-/* CARD */
-.card{background:#fff;border-radius:10px;overflow:hidden;position:relative}
-.dark .card{background:#1e1e1e}
+        /* CARD DESIGN */
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        /* COLOR BARS */
+        .card::before { content: ""; position: absolute; left: 0; top: 0; width: 5px; height: 100%; z-index: 2; }
+        .pink::before { background: #ec4899; }
+        .blue::before { background: #3b82f6; }
+        .green::before { background: #22c55e; }
+        .red::before { background: #ef4444; }
+        .orange::before { background: #f59e0b; }
 
-/* COLOR BAR */
-.card::before{content:"";position:absolute;left:0;top:0;width:4px;height:100%}
-.green::before{background:#22c55e}
-.red::before{background:#ef4444}
-.pink::before{background:#ec4899}
-.blue::before{background:#3b82f6}
+        /* IMAGE 1:1 (SQUARE) */
+        .card-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.3s; }
+        .card-img:hover { opacity: 0.9; }
 
-/* STAR */
-.star{position:absolute;top:10px;right:10px}
+        /* CONTENT */
+        .content { padding: 15px; font-size: 14px; line-height: 1.6; flex-grow: 1; position: relative; }
+        .var { background: var(--var-bg); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: var(--primary); font-weight: bold; }
 
-/* ACTION */
-.actions{
-position:absolute;top:10px;left:10px;display:none;gap:6px
-}
-.card:hover .actions{display:flex}
-.btn{background:#000;color:#fff;padding:4px 6px;border-radius:6px}
+        /* STAR & ACTIONS */
+        .star { position: absolute; top: 10px; right: 10px; color: #ffca28; font-size: 18px; z-index: 10; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .actions { position: absolute; top: 10px; left: 15px; display: none; gap: 8px; z-index: 10; }
+        .card:hover .actions { display: flex; }
+        .action-btn { background: rgba(0,0,0,0.7); color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; transition: 0.2s; }
+        .action-btn:hover { background: #000; transform: scale(1.1); }
 
-/* IMAGE */
-.img{
-width:100%;
-aspect-ratio:1/1;
-object-fit:cover;
-cursor:pointer;
-}
-
-/* CONTENT */
-.content{padding:12px;line-height:1.5;cursor:pointer}
-
-/* VAR */
-.var{background:#eee;padding:2px 6px;border-radius:6px}
-.dark .var{background:#2a2a2a}
-
-/* TOAST */
-.toast{
-position:fixed;bottom:20px;right:20px;
-background:#000;color:#fff;padding:10px;border-radius:8px;
-opacity:0;transition:.3s
-}
-</style>
+        /* TOAST */
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 25px; border-radius: 50px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; }
+    </style>
 </head>
-
 <body>
 
 <div class="header">
-<div class="top">
-🔥 Zap789 PRO
-<input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-<button onclick="toggleDark()">🌙</button>
-</div>
-<div id="cats" class="categories"></div>
+    <div class="top-bar">
+        <div style="font-weight: bold; color: white; font-size: 20px;">🔥 Zap789 PRO</div>
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 ค้นหาข้อความ หรือ Tags..." oninput="render()">
+        <button onclick="toggleDark()" style="background:none; border:none; cursor:pointer; font-size: 20px;">🌙</button>
+    </div>
+    <div id="categoryBar" class="categories">
+        </div>
 </div>
 
-<div id="grid" class="grid"></div>
-<div id="toast" class="toast"></div>
+<div id="cardGrid" class="grid">
+    </div>
+
+<div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
 <script>
-const API="PASTE_URL_HERE"; // ใส่ของคุณ
+    const SHEET_API = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+    
+    let DATA = [];
+    let currentCategory = "ทั้งหมด";
 
-let DATA=[];
-let currentCat="ทั้งหมด";
+    async function fetchData() {
+        try {
+            const response = await fetch(SHEET_API + "?action=get");
+            DATA = await response.json();
+            render();
+        } catch (error) {
+            console.error("Error loading data:", error);
+        }
+    }
 
-/* LOAD */
-async function init(){
-const res=await fetch(API);
-DATA=await res.json();
-render();
-}
-init();
+    function getCatColor(cat) {
+        if (cat.includes("ฝาก") || cat.includes("ถอน")) return "green";
+        if (cat.includes("ปัญหา")) return "red";
+        if (cat.includes("ทักทาย")) return "pink";
+        if (cat.includes("สมัคร")) return "blue";
+        if (cat.includes("โปร")) return "orange";
+        return "blue";
+    }
 
-/* COLOR */
-function getColor(cat){
-if(cat.includes("ฝาก")) return "green";
-if(cat.includes("ปัญหา")) return "red";
-if(cat.includes("ทัก")) return "pink";
-return "blue";
-}
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.style.opacity = "1";
+        setTimeout(() => { toast.style.opacity = "0"; }, 1500);
+    }
 
-/* COPY TEXT */
-function copyText(text){
-navigator.clipboard.writeText(text);
-toast("✅ คัดลอกสำเร็จ");
-}
+    async function copyToClipboard(text) {
+        await navigator.clipboard.writeText(text);
+        showToast("✅ คัดลอกข้อความแล้ว");
+    }
 
-/* COPY IMAGE */
-async function copyImage(url){
-const res=await fetch(url);
-const blob=await res.blob();
-await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
-toast("✅ คัดลอกสำเร็จ");
-}
+    async function copyImgToClipboard(imgUrl) {
+        try {
+            const data = await fetch(imgUrl);
+            const blob = await data.blob();
+            await navigator.clipboard.write([
+                new ClipboardItem({ [blob.type]: blob })
+            ]);
+            showToast("🖼️ คัดลอกรูปภาพแล้ว");
+        } catch (err) {
+            showToast("❌ ก๊อปปี้รูปไม่ได้ (ต้องใช้ HTTPS)");
+        }
+    }
 
-/* TOAST */
-function toast(msg){
-const t=document.getElementById("toast");
-t.innerText=msg;
-t.style.opacity=1;
-setTimeout(()=>t.style.opacity=0,1000);
-}
+    function render() {
+        const grid = document.getElementById('cardGrid');
+        const catBar = document.getElementById('categoryBar');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        let html = "";
+        let categories = new Set(["ทั้งหมด"]);
 
-/* RENDER */
-function render(){
-const s=(search.value||"").toLowerCase();
-let html="";
-let catSet=new Set(["ทั้งหมด"]);
+        // กรองข้อมูลและสร้างการ์ด
+        DATA.forEach((item, index) => {
+            const [cat, text, status, img] = item;
+            if (status === "deleted") return;
+            categories.add(cat);
 
-DATA.forEach((r,i)=>{
-const [cat,text,status,img]=r;
-if(status==="deleted") return;
+            if (currentCategory !== "ทั้งหมด" && cat !== currentCategory) return;
+            if (searchTerm && !text.toLowerCase().includes(searchTerm)) return;
 
-catSet.add(cat);
+            const colorClass = getCatColor(cat);
+            const formattedText = text.replace(/{name}/g, '<span class="var">{name}</span>');
 
-if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-if(s && !text.toLowerCase().includes(s)) return;
+            html += `
+                <div class="card ${colorClass}">
+                    <div class="star">⭐</div>
+                    <div class="actions">
+                        <div class="action-btn" onclick="event.stopPropagation(); alert('ระบบแก้ไขกำลังพัฒนา')">✏️</div>
+                        <div class="action-btn" onclick="event.stopPropagation(); alert('ระบบลบกำลังพัฒนา')">🗑️</div>
+                    </div>
+                    ${img ? `<img src="${img}" class="card-img" onclick="event.stopPropagation(); copyImgToClipboard('${img}')" title="คลิกเพื่อก๊อปปี้รูป">` : ''}
+                    <div class="content" onclick="copyToClipboard(\`${text}\`)">
+                        ${formattedText}
+                    </div>
+                </div>
+            `;
+        });
 
-html+=`
-<div class="card ${getColor(cat)}">
+        grid.innerHTML = html;
 
-<div class="actions">
-<div class="btn" onclick="event.stopPropagation();remove(${i})">🗑️</div>
-</div>
+        // สร้างปุ่มหมวดหมู่
+        let catHtml = "";
+        categories.forEach(c => {
+            catHtml += `<div class="cat-btn ${c === currentCategory ? 'active' : ''}" onclick="filterCat('${c}')">${c}</div>`;
+        });
+        catBar.innerHTML = catHtml;
+    }
 
-<div class="star">⭐</div>
+    function filterCat(cat) {
+        currentCategory = cat;
+        render();
+    }
 
-${img?`<img src="${img}" class="img" onclick="event.stopPropagation();copyImage('${img}')">`:""}
+    function toggleDark() {
+        document.body.classList.toggle("dark");
+    }
 
-<div class="content" onclick="copyText(\`${text}\`)">
-${text.replaceAll("{name}",'<span class="var">{name}</span>')}
-</div>
-
-</div>`;
-});
-
-grid.innerHTML=html;
-
-/* CATEGORY */
-let cHTML="";
-catSet.forEach(c=>{
-cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
-});
-document.getElementById("cats").innerHTML=cHTML;
-}
-
-/* DELETE */
-async function remove(i){
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-action:"delete",
-row:i+2
-})
-});
-init();
-}
-
-/* DARK */
-function toggleDark(){
-document.body.classList.toggle("dark");
-}
+    // เริ่มต้นทำงาน
+    fetchData();
 </script>
 
 </body>
