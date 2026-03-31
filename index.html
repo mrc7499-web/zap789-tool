@@ -2,91 +2,78 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Zap789 PRO | Perfect Edition</title>
+<title>Zap789 PRO</title>
 
 <style>
-:root { --primary:#ff7a00; --bg:#f4f4f4; --card-bg:#ffffff; --text:#333; --var-bg:#eee; }
-body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
+:root { --primary:#ff7a00; --bg:#f4f4f4; --card:#fff; --text:#333; --var:#eee; }
+body.dark { --bg:#121212; --card:#1e1e1e; --text:#eee; --var:#333; }
 
 body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
 
 .header { position:sticky; top:0; background:var(--primary); padding:10px; z-index:100; }
-.top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
+.top { display:flex; justify-content:space-between; align-items:center; }
 
-.search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
+.search { padding:6px 10px; border-radius:6px; border:none; }
 
-.categories { display:flex; gap:8px; margin-top:10px; overflow-x:auto; max-width:1400px; margin:0 auto; }
-.cat { background:#fff; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:13px; border:1px solid #ddd; }
+/* categories */
+.categories { display:flex; gap:8px; margin-top:10px; overflow-x:auto; }
+.cat { background:#fff; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:13px; }
 .cat.active { background:#000; color:#fff; }
 
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
+/* grid */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; }
 
-.card {
-  background:var(--card-bg);
-  border-radius:10px;
-  overflow:hidden;
-  position:relative;
-  cursor:pointer;
-}
+/* card */
+.card { background:var(--card); border-radius:10px; overflow:hidden; position:relative; cursor:pointer; }
 
 /* left color */
 .card::before {
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:4px;
-  height:100%;
+  content:""; position:absolute; left:0; top:0; width:4px; height:100%;
 }
-.green::before { background:#22c55e; }
-.red::before { background:#ef4444; }
-.pink::before { background:#ec4899; }
-.blue::before { background:#3b82f6; }
+.green::before{background:#22c55e;}
+.red::before{background:#ef4444;}
+.pink::before{background:#ec4899;}
+.blue::before{background:#3b82f6;}
 
 /* star */
 .star {
   position:absolute;
   top:8px;
   right:8px;
-  z-index:5;
+  cursor:pointer;
 }
 
-/* hover action */
+/* hover actions */
 .actions {
   position:absolute;
   top:8px;
-  left:12px;
+  left:10px;
   display:none;
   gap:5px;
-  z-index:10;
 }
 .card:hover .actions { display:flex; }
 
-.btn-action {
-  background:rgba(0,0,0,0.7);
+.btn {
+  background:rgba(0,0,0,.7);
   color:#fff;
-  padding:4px 8px;
-  border-radius:5px;
+  padding:3px 6px;
+  border-radius:4px;
   font-size:12px;
   cursor:pointer;
 }
 
-/* image 1:1 */
-.img-box {
+/* image */
+.img {
   width:100%;
   aspect-ratio:1/1;
   object-fit:cover;
 }
 
-/* content */
-.content {
-  padding:12px;
-  font-size:14px;
-}
+/* text */
+.content { padding:12px; }
 
-/* name tag */
 .var {
-  background:var(--var-bg);
+  background:var(--var);
   padding:2px 5px;
   border-radius:4px;
   font-weight:bold;
@@ -106,42 +93,44 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   transition:.3s;
 }
 
-/* modal */
-.modal {
+/* login */
+.login {
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
+  background:#0008;
+  display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.modal-box {
+.login-box {
   background:#fff;
   padding:20px;
-  border-radius:12px;
-  width:350px;
+  border-radius:10px;
   display:flex;
   flex-direction:column;
-  gap:12px;
-}
-
-.input-ui {
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ddd;
+  gap:10px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="loginBox" class="login">
+  <div class="login-box">
+    <input id="user" placeholder="username">
+    <input id="pass" type="password" placeholder="password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- HEADER -->
 <div class="header">
   <div class="top">
-    <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
+    <b style="color:white">🔥 Zap789</b>
     <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
     <div>
-      <button onclick="openModal()">+ เพิ่ม</button>
       <button onclick="toggleDark()">🌙</button>
     </div>
   </div>
@@ -151,88 +140,129 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 <div id="grid" class="grid"></div>
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
-<div id="modal" class="modal">
-  <div class="modal-box">
-    <input id="catInput" class="input-ui" placeholder="หมวด">
-    <textarea id="textInput" class="input-ui"></textarea>
-    <input type="file" id="imgInput">
-    <button onclick="save()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
-  </div>
-</div>
-
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+let DATA = [];
+let currentCat = "ทั้งหมด";
 
-let DATA=[];
-let currentCat="ทั้งหมด";
-let editIndex=null;
+/* LOGIN */
+async function login(){
+  const res = await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"login",
+      username:user.value,
+      password:pass.value
+    })
+  });
 
-/* init */
+  const data = await res.json();
+
+  if(data.status==="ok"){
+    localStorage.setItem("login","1");
+    loginBox.style.display="none";
+    init();
+  } else {
+    alert("login failed");
+  }
+}
+
+/* INIT */
 async function init(){
-  const res=await fetch(API_URL+"?t="+Date.now());
-  DATA=await res.json();
+  const res = await fetch(API_URL);
+  DATA = await res.json();
   render();
 }
 
-/* toast */
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.style.opacity=1;
+/* AUTO LOGIN */
+if(localStorage.getItem("login")==="1"){
+  loginBox.style.display="none";
+  init();
+}
+
+/* TOAST */
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.style.opacity = 1;
   setTimeout(()=>t.style.opacity=0,1200);
 }
 
-/* color */
+/* COLOR */
 function getColor(cat){
-  if(cat.includes("ฝาก")||cat.includes("ถอน")) return "green";
+  if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ปัญหา")) return "red";
   if(cat.includes("ทัก")) return "pink";
   return "blue";
 }
 
-/* copy text (🔥 name system) */
+/* COPY TEXT + NAME */
 async function copyText(text){
-  const res=await fetch(API_URL+"?action=name");
-  const data=await res.json();
-  const final=text.replace(/{name}/g,data.name);
-  await navigator.clipboard.writeText(final);
-  showToast("✅ คัดลอกสำเร็จ");
+  const res = await fetch(API_URL+"?action=name");
+  const d = await res.json();
+
+  const final = text.replace(/{name}/g,d.name);
+  navigator.clipboard.writeText(final);
+
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({action:"log",text:final})
+  });
+
+  toast("✅ คัดลอกสำเร็จ");
 }
 
-/* copy image */
+/* COPY IMAGE */
 async function copyImage(url){
-  const res=await fetch(url);
-  const blob=await res.blob();
-  await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
-  showToast("✅ คัดลอกสำเร็จ");
+  const res = await fetch(url);
+  const blob = await res.blob();
+
+  await navigator.clipboard.write([
+    new ClipboardItem({[blob.type]:blob})
+  ]);
+
+  toast("✅ คัดลอกสำเร็จ");
 }
 
-/* render */
-function render(){
-  const s=search.value.toLowerCase();
-  let html="";
-  let catsSet=new Set(["ทั้งหมด"]);
+/* FAV */
+async function toggleFav(id){
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({action:"fav",id})
+  });
+  init();
+}
 
-  DATA.forEach((r,i)=>{
-    const [cat,text,status,img]=r;
+/* RENDER */
+function render(){
+  const s = search.value.toLowerCase();
+  let html = "";
+  let catsSet = new Set(["ทั้งหมด","⭐ ปักหมุด"]);
+
+  DATA.forEach(r=>{
+    const [id,cat,text,status,img,fav] = r;
     if(status==="deleted") return;
 
     catsSet.add(cat);
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
+
+    if(currentCat==="⭐ ปักหมุด" && fav!=="1") return;
+    if(currentCat!=="ทั้งหมด" && currentCat!=="⭐ ปักหมุด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
     html+=`
     <div class="card ${getColor(cat)}">
+
       <div class="actions">
-        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
-        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
+        <div class="btn">✏️</div>
+        <div class="btn">🗑️</div>
       </div>
 
-      <div class="star">⭐</div>
+      <div class="star" onclick="event.stopPropagation();toggleFav('${id}')">
+        ${fav==="1" ? "⭐" : "☆"}
+      </div>
 
-      ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
+      ${img ? `<img src="${img}" class="img" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
 
       <div class="content" onclick="copyText(\`${text}\`)">
         ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
@@ -240,7 +270,7 @@ function render(){
     </div>`;
   });
 
-  grid.innerHTML=html;
+  grid.innerHTML = html;
 
   let cHTML="";
   catsSet.forEach(c=>{
@@ -250,65 +280,10 @@ function render(){
   cats.innerHTML=cHTML;
 }
 
-/* modal */
-function openModal(){
-  editIndex=null;
-  modal.style.display="flex";
-}
-
-function closeModal(){
-  modal.style.display="none";
-}
-
-function edit(i){
-  editIndex=i;
-  catInput.value=DATA[i][0];
-  textInput.value=DATA[i][1];
-  modal.style.display="flex";
-}
-
-async function removeItem(i){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({action:"delete",index:i})
-  });
-  init();
-}
-
-function save(){
-  const file=imgInput.files[0];
-
-  if(file){
-    const reader=new FileReader();
-    reader.onload=e=>executeSave(e.target.result);
-    reader.readAsDataURL(file);
-  }else{
-    executeSave(null);
-  }
-}
-
-async function executeSave(img){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:editIndex!==null?"edit":"add",
-      index:editIndex,
-      cat:catInput.value,
-      text:textInput.value,
-      image:img
-    })
-  });
-
-  closeModal();
-  init();
-}
-
+/* DARK */
 function toggleDark(){
   document.body.classList.toggle("dark");
 }
-
-init();
-
 </script>
 
 </body>
