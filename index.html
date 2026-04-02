@@ -14,16 +14,12 @@
 
   --blue-soft:#e0f2fe;
   --blue-strong:#0284c7;
-
   --green-soft:#dcfce7;
   --green-strong:#16a34a;
-
   --purple-soft:#ede9fe;
   --purple-strong:#6d28d9;
-
   --pink-soft:#fce7f3;
   --pink-strong:#db2777;
-
   --red-soft:#fee2e2;
   --red-strong:#dc2626;
 }
@@ -70,17 +66,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 /* MAIN */
 .main { flex:1; overflow-y:auto; }
 
-/* SECTION */
-.section { margin-bottom:40px; }
-
-.section-title {
-  margin:10px 15px;
-  font-weight:bold;
-  border-bottom:1px solid #eee;
-  padding-bottom:6px;
-}
-
-/* GRID เดิม */
+/* GRID */
 .grid {
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -235,30 +221,59 @@ let DATA=[];
 let currentCat="ทั้งหมด";
 let editIndex=null;
 
+/* ===== FIXED COLOR MAP ===== */
+const COLOR_MAP = {
+  "ทั้งหมด":"blue",
+  "สมัคร":"blue",
+  "ขอข้อมูล / เปลี่ยนรหัส":"blue",
+  "เปลี่ยนบัญชี":"blue",
+  "ปิดแชท":"blue",
+  "ทางเข้า":"blue",
+  "ค้างเดิมพัน / เครดิต":"blue",
+
+  "ฝากเงิน":"green",
+  "QR Code":"green",
+
+  "ถอนเงิน":"purple",
+
+  "เครดิตฟรี / โปร":"pink",
+  "เกม / แนะนำ":"pink",
+  "กำลังใจ (เต็ม)":"pink",
+  "ทักหลายไลน์":"pink",
+
+  "ฝากปัญหา":"red",
+  "บัญชีไม่ตรง":"red",
+  "ถอนปัญหา":"red",
+  "เข้าเล่นไม่ได้":"red",
+  "VPN / เน็ต":"red",
+  "ลูกค้าด่า":"red"
+};
+
 /* COLOR */
 function getColor(cat){
-  if(cat.includes("ฝาก")) return "green";
-  if(cat.includes("ถอน")) return "purple";
-  if(cat.includes("ปัญหา")) return "red";
-  if(cat.includes("กำลังใจ")) return "pink";
+  if(COLOR_MAP[cat]) return COLOR_MAP[cat];
+
+  for(const key in COLOR_MAP){
+    if(cat.includes(key)){
+      return COLOR_MAP[key];
+    }
+  }
+
   return "blue";
 }
 
-function getGroupName(color){
-  if(color==="blue") return "💳 บัญชีและข้อมูล";
-  if(color==="green") return "💰 การเงิน ฝาก-ถอน";
-  if(color==="purple") return "💸 การถอนเงิน";
-  if(color==="red") return "⚠️ ปัญหาและแก้ไข";
-  if(color==="pink") return "💖 ทั่วไป / โปรโมท";
-  return "📁 อื่นๆ";
+function getCatStyle(cat){
+  return getColor(cat);
 }
 
+/* INIT */
 async function init(){
   const res=await fetch(API_URL+"?t="+Date.now());
   DATA=await res.json();
   render();
 }
 
+/* TOAST */
 function showToast(msg){
   const t=document.getElementById("toast");
   t.innerText=msg;
@@ -266,6 +281,7 @@ function showToast(msg){
   setTimeout(()=>t.style.opacity=0,1200);
 }
 
+/* COPY */
 async function copyText(text){
   await navigator.clipboard.writeText(text);
   showToast("✅ คัดลอกสำเร็จ");
@@ -278,62 +294,39 @@ async function copyImage(url){
   showToast("✅ คัดลอกสำเร็จ");
 }
 
-/* 🔥 RENDER FINAL */
+/* RENDER */
 function render(){
-  const s = search.value.toLowerCase();
-
-  let groups = {blue:[],green:[],purple:[],red:[],pink:[]};
-  let catsSet = new Set(["ทั้งหมด"]);
+  const s=search.value.toLowerCase();
+  let html="";
+  let catsSet=new Set(["ทั้งหมด"]);
 
   DATA.forEach((r,i)=>{
     const [cat,text,status,img]=r;
     if(status==="deleted") return;
 
     catsSet.add(cat);
-
     if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
-    const color = getColor(cat);
-
-    groups[color].push(`
-      <div class="card ${color}" onclick="copyText(\`${text}\`)">
-
-        <div class="actions">
-          <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
-          <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
-        </div>
-
-        ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
-
-        <div class="content">
-          ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
-        </div>
-
+    html+=`
+    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
+      <div class="actions">
+        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
+        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
       </div>
-    `);
+      ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
+      <div class="content">
+        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
+      </div>
+    </div>`;
   });
 
-  let html="";
-  Object.keys(groups).forEach(color=>{
-    if(groups[color].length){
-      html+=`
-        <div class="section">
-          <div class="section-title">${getGroupName(color)}</div>
-          <div class="grid">
-            ${groups[color].join("")}
-          </div>
-        </div>
-      `;
-    }
-  });
-
-  grid.innerHTML = html;
+  grid.innerHTML=html;
 
   let cHTML="";
   catsSet.forEach(c=>{
     cHTML+=`
-      <div class="cat ${getColor(c)} ${c===currentCat?"active":""}"
+      <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
       onclick="currentCat='${c}';render()">
       ${c}
       </div>
