@@ -15,9 +15,46 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 
 .search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
 
-.categories { display:flex; gap:8px; overflow-x:auto; max-width:1400px; margin:0 auto; }
-.cat { background:#fff; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:13px; border:1px solid #ddd; }
-.cat.active { background:#000; color:#fff; }
+/* ✅ IMPROVED CATEGORY UI */
+.categories {
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  max-width:1400px;
+  margin:0 auto;
+  padding:8px 5px;
+}
+
+.cat {
+  padding:8px 18px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  white-space:nowrap;
+  border:1px solid transparent;
+  transition:.2s;
+}
+
+.cat:hover { transform:translateY(-1px); opacity:0.9; }
+
+.cat.blue { background:#e0f2fe; color:#0369a1; border-color:#bae6fd; }
+.cat.green { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+.cat.red { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+.cat.gray { background:#f1f5f9; color:#334155; border-color:#e2e8f0; }
+
+.cat.active {
+  transform:scale(1.05);
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  font-weight:600;
+}
+
+.cat.blue.active { background:#0ea5e9; color:#fff; }
+.cat.green.active { background:#22c55e; color:#fff; }
+.cat.red.active { background:#ef4444; color:#fff; }
+.cat.gray.active { background:#64748b; color:#fff; }
+
+/* ====== ORIGINAL BELOW (UNCHANGED) ====== */
 
 .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
 
@@ -155,14 +192,12 @@ let DATA=[];
 let currentCat="ทั้งหมด";
 let editIndex=null;
 
-/* init */
 async function init(){
   const res=await fetch(API_URL+"?t="+Date.now());
   DATA=await res.json();
   render();
 }
 
-/* toast */
 function showToast(msg){
   const t=document.getElementById("toast");
   t.innerText=msg;
@@ -170,7 +205,7 @@ function showToast(msg){
   setTimeout(()=>t.style.opacity=0,1200);
 }
 
-/* color */
+/* ✅ เดิม (ห้ามแก้) */
 function getColor(cat){
   if(cat.includes("ฝาก")||cat.includes("ถอน")) return "green";
   if(cat.includes("ปัญหา")) return "red";
@@ -178,13 +213,19 @@ function getColor(cat){
   return "blue";
 }
 
-/* ✅ copy ตรง ๆ ไม่มี replace แล้ว */
+/* ✅ ใหม่ (ใช้กับปุ่มเท่านั้น) */
+function getCatStyle(cat){
+  if(cat.includes("สมัคร") || cat.includes("รหัส") || cat.includes("ข้อมูล")) return "blue";
+  if(cat.includes("ฝาก") || cat.includes("ถอน") || cat.includes("เครดิตฟรี")) return "green";
+  if(cat.includes("ปัญหา") || cat.includes("VPN") || cat.includes("เข้าไม่ได้")) return "red";
+  return "gray";
+}
+
 async function copyText(text){
   await navigator.clipboard.writeText(text);
   showToast("✅ คัดลอกสำเร็จ");
 }
 
-/* copy image */
 async function copyImage(url){
   const res=await fetch(url);
   const blob=await res.blob();
@@ -192,7 +233,6 @@ async function copyImage(url){
   showToast("✅ คัดลอกสำเร็จ");
 }
 
-/* render */
 function render(){
   const s=search.value.toLowerCase();
   let html="";
@@ -208,14 +248,11 @@ function render(){
 
     html+=`
     <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
-
       <div class="actions">
         <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
         <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
       </div>
-
       ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
-
       <div class="content">
         ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
       </div>
@@ -226,21 +263,18 @@ function render(){
 
   let cHTML="";
   catsSet.forEach(c=>{
-    cHTML+=`<div class="cat ${c===currentCat?"active":""}" onclick="currentCat='${c}';render()">${c}</div>`;
+    cHTML+=`
+    <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
+    onclick="currentCat='${c}';render()">
+    ${c}
+    </div>`;
   });
 
   cats.innerHTML=cHTML;
 }
 
-/* modal */
-function openModal(){
-  editIndex=null;
-  modal.style.display="flex";
-}
-
-function closeModal(){
-  modal.style.display="none";
-}
+function openModal(){ editIndex=null; modal.style.display="flex"; }
+function closeModal(){ modal.style.display="none"; }
 
 function edit(i){
   editIndex=i;
@@ -259,7 +293,6 @@ async function removeItem(i){
 
 function save(){
   const file=imgInput.files[0];
-
   if(file){
     const reader=new FileReader();
     reader.onload=e=>executeSave(e.target.result);
