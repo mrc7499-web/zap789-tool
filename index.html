@@ -12,27 +12,33 @@
   --text:#333;
   --var-bg:#eee;
 
+  --blue-soft:#e0f2fe;
   --blue-strong:#0284c7;
+
+  --green-soft:#dcfce7;
   --green-strong:#16a34a;
+
+  --purple-soft:#ede9fe;
   --purple-strong:#6d28d9;
+
+  --pink-soft:#fce7f3;
   --pink-strong:#db2777;
+
+  --red-soft:#fee2e2;
   --red-strong:#dc2626;
 }
 
+body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
 body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
 
-/* HEADER */
 .header { background:var(--primary); padding:10px; }
 .top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
 .search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
 
-/* LAYOUT */
 .layout { display:flex; height:calc(100vh - 60px); }
 
-/* SIDEBAR */
 .sidebar {
   width:260px;
-  min-width:260px;
   background:#fff;
   border-right:1px solid #ddd;
   padding:10px;
@@ -40,7 +46,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 }
 
 .cat {
-  padding:10px;
+  padding:10px 14px;
   cursor:pointer;
   border-left:4px solid transparent;
 }
@@ -57,34 +63,27 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   color:#fff;
 }
 
-/* MAIN */
-.main {
-  flex:1;
-  overflow-y:auto;
-  padding:15px;
-}
+.main { flex:1; overflow-y:auto; }
 
-/* SECTION */
+/* ===== เพิ่มเฉพาะ header ===== */
 .section {
   margin-bottom:40px;
 }
 
 .section-title {
+  margin:10px 15px;
   font-weight:bold;
-  margin-bottom:10px;
+  border-bottom:1px solid #eee;
+  padding-bottom:6px;
 }
 
-/* GRID FIX */
-.section-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));
-  gap:15px;
-}
+/* ===== GRID เดิม ===== */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
 
-/* CARD (ของเดิม) */
 .card {
   background:var(--card-bg);
   border-radius:10px;
+  overflow:hidden;
   position:relative;
   cursor:pointer;
 }
@@ -105,6 +104,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 .card.red::before { background:var(--red-strong); }
 
 .content { padding:12px; }
+
 </style>
 </head>
 
@@ -129,6 +129,11 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 
 <script>
 
+const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
+
+let DATA=[];
+let currentCat="ทั้งหมด";
+
 /* ===== COLOR ===== */
 function getColor(cat){
   if(cat.includes("ฝาก")) return "green";
@@ -138,37 +143,37 @@ function getColor(cat){
   return "blue";
 }
 
+/* ===== GROUP NAME ===== */
 function getGroupName(color){
-  if(color==="blue") return "💳 บัญชี";
-  if(color==="green") return "💰 ฝาก";
-  if(color==="purple") return "💸 ถอน";
-  if(color==="red") return "⚠️ ปัญหา";
-  if(color==="pink") return "💖 ทั่วไป";
-  return "";
+  if(color==="blue") return "💳 บัญชีและข้อมูล";
+  if(color==="green") return "💰 การเงิน ฝาก-ถอน";
+  if(color==="purple") return "💸 การถอนเงิน";
+  if(color==="red") return "⚠️ ปัญหาและแก้ไข";
+  if(color==="pink") return "💖 ทั่วไป / โปรโมท";
+  return "📁 อื่นๆ";
 }
 
-/* MOCK DATA (ของจริงคุณใช้ DATA เดิมได้เลย) */
-let DATA=[
-  ["สมัคร","ข้อความ1"],
-  ["ฝากเงิน","ข้อความ2"],
-  ["ถอนเงิน","ข้อความ3"],
-  ["ปัญหา","ข้อความ4"],
-  ["กำลังใจ","ข้อความ5"]
-];
+async function init(){
+  const res=await fetch(API_URL+"?t="+Date.now());
+  DATA=await res.json();
+  render();
+}
 
-let currentCat="ทั้งหมด";
-
-/* ===== RENDER ===== */
+/* ===== RENDER ใหม่ ===== */
 function render(){
+  const s = search.value.toLowerCase();
 
-  let groups={blue:[],green:[],purple:[],red:[],pink:[]};
-  let catsSet=new Set(["ทั้งหมด"]);
+  let groups = {blue:[],green:[],purple:[],red:[],pink:[]};
+  let catsSet = new Set(["ทั้งหมด"]);
 
   DATA.forEach((r,i)=>{
-    const [cat,text]=r;
+    const [cat,text,status,img]=r;
+    if(status==="deleted") return;
+
     catsSet.add(cat);
 
     if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
+    if(s && !text.toLowerCase().includes(s)) return;
 
     const color=getColor(cat);
 
@@ -179,14 +184,14 @@ function render(){
     `);
   });
 
-  /* GROUP */
   let html="";
+
   Object.keys(groups).forEach(color=>{
     if(groups[color].length){
       html+=`
         <div class="section">
           <div class="section-title">${getGroupName(color)}</div>
-          <div class="section-grid">
+          <div class="grid">
             ${groups[color].join("")}
           </div>
         </div>
@@ -196,7 +201,6 @@ function render(){
 
   grid.innerHTML=html;
 
-  /* SIDEBAR */
   let cHTML="";
   catsSet.forEach(c=>{
     cHTML+=`
@@ -210,7 +214,7 @@ function render(){
   cats.innerHTML=cHTML;
 }
 
-render();
+init();
 
 </script>
 
