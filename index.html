@@ -43,12 +43,14 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   overflow-y:auto;
 }
 
-/* SIDEBAR */
+/* SIDEBAR BUTTONS */
 .cat {
   padding:10px 14px;
   border-radius:8px;
   cursor:pointer;
   border-left:4px solid transparent;
+  margin-bottom: 5px;
+  font-weight: 500;
 }
 .cat:hover { background:#f1f5f9; }
 
@@ -61,20 +63,46 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 .cat.active {
   background:var(--primary);
   color:#fff;
+  border-left-color:var(--primary);
 }
 
-/* MAIN */
+/* MAIN CONTENT */
 .main { flex:1; overflow-y:auto; }
 
-/* GRID */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
-  padding:15px;
-  max-width:1400px;
-  margin:0 auto;
+/* ===== GROUPING & GRID (เลย์เอาต์ใหม่) ===== */
+.main-container { 
+  padding: 15px; 
+  max-width: 1400px; 
+  margin: 0 auto; 
 }
+
+.group-section {
+  margin-bottom: 40px; 
+}
+
+.group-header {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #ddd;
+  display: inline-block;
+  min-width: 250px;
+}
+
+body.dark .group-header { border-bottom-color: #444; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .card-grid { grid-template-columns: repeat(1, 1fr); } }
 
 /* CARD */
 .card {
@@ -84,6 +112,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   position:relative;
   cursor:pointer;
   transition:.15s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 .card:active { transform:scale(0.96); opacity:0.85; }
 
@@ -96,6 +125,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   height:100%;
 }
 
+/* สีแถบข้างการ์ด */
 .card.blue::before { background:var(--blue-strong); }
 .card.green::before { background:var(--green-strong); }
 .card.purple::before { background:var(--purple-strong); }
@@ -130,6 +160,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 .content {
   padding:12px;
   font-size:14px;
+  line-height: 1.5;
 }
 
 .var {
@@ -137,6 +168,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   padding:2px 5px;
   border-radius:4px;
   font-weight:bold;
+  color: var(--primary);
 }
 
 .toast {
@@ -150,6 +182,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   border-radius:50px;
   opacity:0;
   transition:.3s;
+  z-index: 100;
 }
 
 .modal {
@@ -159,6 +192,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   display:none;
   align-items:center;
   justify-content:center;
+  z-index: 1000;
 }
 
 .modal-box {
@@ -183,11 +217,11 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 
 <div class="header">
   <div class="top">
-    <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
-    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
+    <div style="font-weight:bold;color:white;font-size:18px;">🔥 Zap789 PRO</div>
+    <input id="search" class="search" placeholder="ค้นหาข้อความ..." oninput="render()">
     <div>
-      <button onclick="openModal()">+ เพิ่ม</button>
-      <button onclick="toggleDark()">🌙</button>
+      <button onclick="openModal()" style="padding:8px 15px; border-radius:6px; border:none; cursor:pointer;">+ เพิ่มข้อมูล</button>
+      <button onclick="toggleDark()" style="padding:8px; border-radius:6px; border:none; cursor:pointer; margin-left:5px;">🌙</button>
     </div>
   </div>
 </div>
@@ -198,7 +232,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   </div>
 
   <div class="main">
-    <div id="grid"></div>
+    <div id="grid" class="main-container"></div>
   </div>
 </div>
 
@@ -206,11 +240,11 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 
 <div id="modal" class="modal">
   <div class="modal-box">
-    <input id="catInput" class="input-ui" placeholder="หมวด">
-    <textarea id="textInput" class="input-ui"></textarea>
-    <input type="file" id="imgInput">
-    <button onclick="save()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
+    <input id="catInput" class="input-ui" placeholder="ระบุหมวดหมู่ (เช่น สมัคร, ฝากเงิน)">
+    <textarea id="textInput" class="input-ui" rows="4" placeholder="พิมพ์ข้อความ... ใส่ {name} ตรงจุดที่ต้องการแทนชื่อ"></textarea>
+    <input type="file" id="imgInput" accept="image/*">
+    <button onclick="save()" style="padding:10px; background:var(--primary); color:#fff; border:none; border-radius:6px; cursor:pointer;">บันทึก</button>
+    <button onclick="closeModal()" style="padding:10px; background:#ddd; border:none; border-radius:6px; cursor:pointer;">ยกเลิก</button>
   </div>
 </div>
 
@@ -221,7 +255,7 @@ let DATA=[];
 let currentCat="ทั้งหมด";
 let editIndex=null;
 
-/* ===== FIXED COLOR MAP ===== */
+/* ===== FIXED COLOR MAP (แมปสีหมวดหมู่ให้เป๊ะ) ===== */
 const COLOR_MAP = {
   "ทั้งหมด":"blue",
   "สมัคร":"blue",
@@ -249,7 +283,7 @@ const COLOR_MAP = {
   "ลูกค้าด่า":"red"
 };
 
-/* COLOR */
+/* COLOR FUNCTION */
 function getColor(cat){
   if(COLOR_MAP[cat]) return COLOR_MAP[cat];
 
@@ -258,7 +292,6 @@ function getColor(cat){
       return COLOR_MAP[key];
     }
   }
-
   return "blue";
 }
 
@@ -268,9 +301,13 @@ function getCatStyle(cat){
 
 /* INIT */
 async function init(){
-  const res=await fetch(API_URL+"?t="+Date.now());
-  DATA=await res.json();
-  render();
+  try {
+    const res=await fetch(API_URL+"?t="+Date.now());
+    DATA=await res.json();
+    render();
+  } catch (error) {
+    console.error("Error loading data:", error);
+  }
 }
 
 /* TOAST */
@@ -281,48 +318,95 @@ function showToast(msg){
   setTimeout(()=>t.style.opacity=0,1200);
 }
 
-/* COPY */
+/* COPY TEXT */
 async function copyText(text){
-  await navigator.clipboard.writeText(text);
-  showToast("✅ คัดลอกสำเร็จ");
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("✅ คัดลอกข้อความสำเร็จ");
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+  }
 }
 
+/* COPY IMAGE */
 async function copyImage(url){
-  const res=await fetch(url);
-  const blob=await res.blob();
-  await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
-  showToast("✅ คัดลอกสำเร็จ");
+  try {
+    const res=await fetch(url);
+    const blob=await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
+    showToast("✅ คัดลอกรูปภาพสำเร็จ");
+  } catch (err) {
+    console.error('Failed to copy image: ', err);
+    showToast("❌ ไม่สามารถคัดลอกรูปภาพได้");
+  }
 }
 
-/* RENDER */
+/* ===== RENDER FUNCTION (จัดกลุ่ม + Grid + ฟังก์ชันครบ) ===== */
 function render(){
   const s=search.value.toLowerCase();
-  let html="";
   let catsSet=new Set(["ทั้งหมด"]);
 
+  // 1. เตรียมกล่องรองรับการ์ดแต่ละหมวดหมู่สี พร้อมตั้งชื่อหัวข้อ
+  const groups = {
+    blue: { title: "💳 บัญชี ข้อมูล และ ทางเข้า", cards: [] },
+    green: { title: "💰 การเงิน ฝากเงิน", cards: [] },
+    purple: { title: "🔄 การถอนเงิน", cards: [] },
+    pink: { title: "💖 ทั่วไป โปรโมท และ กำลังใจ", cards: [] },
+    red: { title: "⚠️ ปัญหาขัดข้อง และ ลูกค้าคอมเพลน", cards: [] }
+  };
+
+  // 2. วนลูปข้อมูลและสร้างการ์ด
   DATA.forEach((r,i)=>{
     const [cat,text,status,img]=r;
     if(status==="deleted") return;
 
     catsSet.add(cat);
+    
+    // กรองข้อมูลตามหมวดและคำค้นหา
     if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
     if(s && !text.toLowerCase().includes(s)) return;
 
-    html+=`
-    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
+    const color = getColor(cat);
+
+    // 3. สร้าง HTML ของตัวการ์ด พร้อมฟังก์ชัน
+    const cardHTML = `
+    <div class="card ${color}" onclick="copyText(\`${text}\`)">
       <div class="actions">
-        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
-        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
+        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️ แก้ไข</div>
+        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️ ลบ</div>
       </div>
       ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
       <div class="content">
         ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
       </div>
     </div>`;
+
+    // ยัดการ์ดลงกล่องสีให้ถูกหมวด
+    if(groups[color]) {
+      groups[color].cards.push(cardHTML);
+    }
   });
 
-  grid.innerHTML=html;
+  // 4. นำกล่องที่มีการ์ดมาต่อกันเป็น HTML ของหน้าเว็บ
+  let html="";
+  Object.keys(groups).forEach(key => {
+    const g = groups[key];
+    if(g.cards.length > 0) { 
+      html += `
+      <div class="group-section">
+        <div class="group-header">${g.title}</div>
+        <div class="card-grid">
+          ${g.cards.join("")}
+        </div>
+      </div>
+      `;
+    }
+  });
 
+  if(html==="") html="<div style='text-align:center; padding:50px; color:#888; font-size:16px;'>ไม่พบข้อความที่ค้นหา</div>";
+  document.getElementById("grid").innerHTML=html;
+
+  // 5. เรนเดอร์ปุ่ม Sidebar
   let cHTML="";
   catsSet.forEach(c=>{
     cHTML+=`
@@ -332,29 +416,41 @@ function render(){
       </div>
     `;
   });
-
-  cats.innerHTML=cHTML;
+  document.getElementById("cats").innerHTML=cHTML;
 }
 
-function openModal(){ editIndex=null; modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
+/* MODAL FUNCTIONS */
+function openModal(){ 
+  editIndex=null; 
+  document.getElementById('catInput').value = currentCat !== "ทั้งหมด" ? currentCat : "";
+  document.getElementById('textInput').value = "";
+  document.getElementById('imgInput').value = "";
+  document.getElementById('modal').style.display="flex"; 
+}
+
+function closeModal(){ 
+  document.getElementById('modal').style.display="none"; 
+}
 
 function edit(i){
   editIndex=i;
-  catInput.value=DATA[i][0];
-  textInput.value=DATA[i][1];
-  modal.style.display="flex";
+  document.getElementById('catInput').value=DATA[i][0];
+  document.getElementById('textInput').value=DATA[i][1];
+  document.getElementById('modal').style.display="flex";
 }
 
 async function removeItem(i){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({action:"delete",index:i})
-  });
-  init();
+  if(confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อความนี้?")){
+    await fetch(API_URL,{
+      method:"POST",
+      body:JSON.stringify({action:"delete",index:i})
+    });
+    init();
+  }
 }
 
 function save(){
+  const imgInput = document.getElementById('imgInput');
   const file=imgInput.files[0];
   if(file){
     const reader=new FileReader();
@@ -366,18 +462,30 @@ function save(){
 }
 
 async function executeSave(img){
+  // กรณีแก้ไข รูปเดิมจะถูกบันทึกทับ ถ้าไม่อัปใหม่ ควรเก็บของเก่าไว้
+  // ในที่นี้ทำตาม Logic เดิมของคุณคือส่ง img = null ถ้าไม่ได้อัปใหม่
+  const catVal = document.getElementById('catInput').value;
+  const textVal = document.getElementById('textInput').value;
+  
+  if(!catVal || !textVal) {
+    alert("กรุณาระบุหมวดหมู่และข้อความให้ครบถ้วน");
+    return;
+  }
+
+  document.getElementById('modal').style.display="none"; // ปิดก่อนกันกดเบิ้ล
+  showToast("กำลังบันทึกข้อมูล...");
+
   await fetch(API_URL,{
     method:"POST",
     body:JSON.stringify({
       action:editIndex!==null?"edit":"add",
       index:editIndex,
-      cat:catInput.value,
-      text:textInput.value,
+      cat:catVal,
+      text:textVal,
       image:img
     })
   });
 
-  closeModal();
   init();
 }
 
