@@ -1,44 +1,24 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<title>Zap789 PRO | Perfect Edition</title>
-
 <style>
-:root { --primary:#ff7a00; --bg:#f4f4f4; --card-bg:#ffffff; --text:#333; --var-bg:#eee; }
-body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
 
-body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
+/* ===== COLOR PALETTE ===== */
+:root {
+  --blue-soft:#e0f2fe;
+  --blue-strong:#0284c7;
 
-/* HEADER */
-.header { background:var(--primary); padding:10px; }
-.top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
-.search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
+  --green-soft:#dcfce7;
+  --green-strong:#16a34a;
 
-/* LAYOUT */
-.layout { display:flex; height:calc(100vh - 60px); }
+  --purple-soft:#ede9fe;
+  --purple-strong:#6d28d9;
 
-.sidebar {
-  width:260px;
-  background:#fff;
-  border-right:1px solid #ddd;
-  padding:10px;
-  overflow-y:auto;
+  --pink-soft:#fce7f3;
+  --pink-strong:#db2777;
+
+  --red-soft:#fee2e2;
+  --red-strong:#dc2626;
 }
 
-/* ===== CATEGORY CLEAN STYLE ===== */
-.categories {
-  display:flex;
-  flex-direction:column;
-}
-
-.cat-group {
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom:18px;
-}
-
+/* ===== SIDEBAR BUTTON ===== */
 .cat {
   padding:10px 14px;
   border-radius:8px;
@@ -51,13 +31,34 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   border-left:4px solid transparent;
 }
 
+/* hover */
 .cat:hover { background:#f1f5f9; }
 
-/* border color only */
-.cat.blue { border-left-color:#3b82f6; }
-.cat.green { border-left-color:#22c55e; }
-.cat.red { border-left-color:#ef4444; }
-.cat.purple { border-left-color:#8b5cf6; }
+/* ===== CATEGORY COLORS ===== */
+.cat.blue {
+  background:var(--blue-soft);
+  border-left-color:var(--blue-strong);
+}
+
+.cat.green {
+  background:var(--green-soft);
+  border-left-color:var(--green-strong);
+}
+
+.cat.purple {
+  background:var(--purple-soft);
+  border-left-color:var(--purple-strong);
+}
+
+.cat.pink {
+  background:var(--pink-soft);
+  border-left-color:var(--pink-strong);
+}
+
+.cat.red {
+  background:var(--red-soft);
+  border-left-color:var(--red-strong);
+}
 
 /* active */
 .cat.active {
@@ -67,301 +68,11 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   font-weight:600;
 }
 
-.main { flex:1; overflow-y:auto; }
+/* ===== CARD COLOR STRIP (RIGHT SIDE) ===== */
+.card.blue::before { background:var(--blue-strong); }
+.card.green::before { background:var(--green-strong); }
+.card.purple::before { background:var(--purple-strong); }
+.card.pink::before { background:var(--pink-strong); }
+.card.red::before { background:var(--red-strong); }
 
-/* ===== ORIGINAL GRID (UNTOUCHED) ===== */
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
-
-.card {
-  background:var(--card-bg);
-  border-radius:10px;
-  overflow:hidden;
-  position:relative;
-  cursor:pointer;
-  transition:.15s;
-}
-.card:active { transform:scale(0.96); opacity:0.85; }
-
-.card::before {
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:4px;
-  height:100%;
-}
-.green::before { background:#22c55e; }
-.red::before { background:#ef4444; }
-.pink::before { background:#ec4899; }
-.blue::before { background:#3b82f6; }
-
-.actions {
-  position:absolute;
-  top:8px;
-  left:12px;
-  display:none;
-  gap:5px;
-  z-index:10;
-}
-.card:hover .actions { display:flex; }
-
-.btn-action {
-  background:rgba(0,0,0,0.7);
-  color:#fff;
-  padding:4px 8px;
-  border-radius:5px;
-  font-size:12px;
-  cursor:pointer;
-}
-
-.img-box {
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-}
-
-.content {
-  padding:12px;
-  font-size:14px;
-}
-
-.var {
-  background:var(--var-bg);
-  padding:2px 5px;
-  border-radius:4px;
-  font-weight:bold;
-}
-
-.toast {
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#000;
-  color:#fff;
-  padding:10px 20px;
-  border-radius:50px;
-  opacity:0;
-  transition:.3s;
-}
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-.modal-box {
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  width:350px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.input-ui {
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ddd;
-}
 </style>
-</head>
-
-<body>
-
-<div class="header">
-  <div class="top">
-    <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
-    <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-    <div>
-      <button onclick="openModal()">+ เพิ่ม</button>
-      <button onclick="toggleDark()">🌙</button>
-    </div>
-  </div>
-</div>
-
-<div class="layout">
-  <div class="sidebar">
-    <div id="cats" class="categories"></div>
-  </div>
-
-  <div class="main">
-    <div id="grid" class="grid"></div>
-  </div>
-</div>
-
-<div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
-
-<div id="modal" class="modal">
-  <div class="modal-box">
-    <input id="catInput" class="input-ui" placeholder="หมวด">
-    <textarea id="textInput" class="input-ui"></textarea>
-    <input type="file" id="imgInput">
-    <button onclick="save()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
-  </div>
-</div>
-
-<script>
-const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
-
-let DATA=[];
-let currentCat="ทั้งหมด";
-let editIndex=null;
-
-async function init(){
-  const res=await fetch(API_URL+"?t="+Date.now());
-  DATA=await res.json();
-  render();
-}
-
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1200);
-}
-
-function getColor(cat){
-  if(cat.includes("ฝาก")||cat.includes("ถอน")) return "green";
-  if(cat.includes("ปัญหา")) return "red";
-  if(cat.includes("ทัก")) return "pink";
-  return "blue";
-}
-
-function getCatStyle(cat){
-  if(cat.includes("สมัคร") || cat.includes("ข้อมูล")) return "blue";
-  if(cat.includes("ฝาก") || cat.includes("ถอน") || cat.includes("เครดิต")) return "green";
-  if(cat.includes("ปัญหา") || cat.includes("เข้าไม่ได้") || cat.includes("เน็ต")) return "red";
-  return "purple";
-}
-
-function getCatGroup(cat){
-  if(cat==="ทั้งหมด" || cat.includes("สมัคร") || cat.includes("ข้อมูล") || cat.includes("รหัส") || cat.includes("บัญชี") || cat.includes("ปิด") || cat.includes("ทางเข้า")) return 1;
-  if(cat.includes("เครดิต") || cat.includes("โปร")) return 2;
-  if(cat.includes("ฝาก") || cat.includes("QR") || cat.includes("บัญชีไม่ตรง")) return 3;
-  if(cat.includes("ถอน")) return 4;
-  return 5;
-}
-
-async function copyText(text){
-  await navigator.clipboard.writeText(text);
-  showToast("✅ คัดลอกสำเร็จ");
-}
-
-async function copyImage(url){
-  const res=await fetch(url);
-  const blob=await res.blob();
-  await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
-  showToast("✅ คัดลอกสำเร็จ");
-}
-
-function render(){
-  const s=search.value.toLowerCase();
-  let html="";
-  let catsSet=new Set(["ทั้งหมด"]);
-
-  DATA.forEach((r,i)=>{
-    const [cat,text,status,img]=r;
-    if(status==="deleted") return;
-
-    catsSet.add(cat);
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-    if(s && !text.toLowerCase().includes(s)) return;
-
-    html+=`
-    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
-      <div class="actions">
-        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
-        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
-      </div>
-      ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
-      <div class="content">
-        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
-      </div>
-    </div>`;
-  });
-
-  grid.innerHTML=html;
-
-  let groups = {1:[],2:[],3:[],4:[],5:[]};
-
-  catsSet.forEach(c=>{
-    const g = getCatGroup(c);
-    groups[g].push(`
-      <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
-      onclick="currentCat='${c}';render()">
-      ${c}
-      </div>
-    `);
-  });
-
-  let cHTML="";
-  Object.keys(groups).forEach(g=>{
-    if(groups[g].length){
-      cHTML+=`<div class="cat-group">${groups[g].join("")}</div>`;
-    }
-  });
-
-  cats.innerHTML=cHTML;
-}
-
-function openModal(){ editIndex=null; modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
-
-function edit(i){
-  editIndex=i;
-  catInput.value=DATA[i][0];
-  textInput.value=DATA[i][1];
-  modal.style.display="flex";
-}
-
-async function removeItem(i){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({action:"delete",index:i})
-  });
-  init();
-}
-
-function save(){
-  const file=imgInput.files[0];
-  if(file){
-    const reader=new FileReader();
-    reader.onload=e=>executeSave(e.target.result);
-    reader.readAsDataURL(file);
-  }else{
-    executeSave(null);
-  }
-}
-
-async function executeSave(img){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:editIndex!==null?"edit":"add",
-      index:editIndex,
-      cat:catInput.value,
-      text:textInput.value,
-      image:img
-    })
-  });
-
-  closeModal();
-  init();
-}
-
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
-
-init();
-</script>
-
-</body>
-</html>
