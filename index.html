@@ -10,18 +10,14 @@ body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
 
 body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
 
-/* ===== HEADER (เหมือนเดิม) ===== */
+/* HEADER */
 .header { background:var(--primary); padding:10px; }
 .top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
 .search { padding:8px 15px; border-radius:8px; border:none; width:250px; }
 
-/* ===== NEW LAYOUT ===== */
-.layout {
-  display:flex;
-  height:calc(100vh - 60px);
-}
+/* LAYOUT */
+.layout { display:flex; height:calc(100vh - 60px); }
 
-/* ===== SIDEBAR ===== */
 .sidebar {
   width:260px;
   background:#fff;
@@ -30,44 +26,50 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   overflow-y:auto;
 }
 
-/* ===== CATEGORY (VERTICAL) ===== */
+/* ===== CATEGORY CLEAN STYLE ===== */
 .categories {
   display:flex;
   flex-direction:column;
-  gap:8px;
+}
+
+.cat-group {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:18px;
 }
 
 .cat {
-  padding:10px 12px;
+  padding:10px 14px;
   border-radius:8px;
   font-size:14px;
   cursor:pointer;
   font-weight:500;
   transition:.2s;
+  background:#fff;
+  color:#333;
+  border-left:4px solid transparent;
 }
 
-/* hover */
-.cat:hover { transform:translateX(3px); }
+.cat:hover { background:#f1f5f9; }
 
-/* ===== COLOR GROUPS ===== */
-.cat.blue { background:#e0f2fe; color:#075985; }
-.cat.green { background:#dcfce7; color:#166534; }
-.cat.red { background:#fee2e2; color:#991b1b; }
-.cat.purple { background:#f3e8ff; color:#6b21a8; }
+/* border color only */
+.cat.blue { border-left-color:#3b82f6; }
+.cat.green { border-left-color:#22c55e; }
+.cat.red { border-left-color:#ef4444; }
+.cat.purple { border-left-color:#8b5cf6; }
 
-/* ===== ACTIVE ===== */
+/* active */
 .cat.active {
-  transform:scale(1.03);
-  box-shadow:0 4px 10px rgba(0,0,0,0.15);
+  background:var(--primary);
+  color:#fff;
+  border-left-color:var(--primary);
+  font-weight:600;
 }
 
-/* ===== MAIN CONTENT ===== */
-.main {
-  flex:1;
-  overflow-y:auto;
-}
+.main { flex:1; overflow-y:auto; }
 
-/* ====== ORIGINAL GRID (ห้ามแตะ) ====== */
+/* ===== ORIGINAL GRID (UNTOUCHED) ===== */
 .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
 
 .card {
@@ -183,9 +185,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   </div>
 </div>
 
-<!-- ✅ NEW STRUCTURE -->
 <div class="layout">
-  
   <div class="sidebar">
     <div id="cats" class="categories"></div>
   </div>
@@ -193,12 +193,10 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   <div class="main">
     <div id="grid" class="grid"></div>
   </div>
-
 </div>
 
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
-<!-- modal เหมือนเดิม -->
 <div id="modal" class="modal">
   <div class="modal-box">
     <input id="catInput" class="input-ui" placeholder="หมวด">
@@ -236,12 +234,19 @@ function getColor(cat){
   return "blue";
 }
 
-/* ใช้กับ sidebar */
 function getCatStyle(cat){
   if(cat.includes("สมัคร") || cat.includes("ข้อมูล")) return "blue";
   if(cat.includes("ฝาก") || cat.includes("ถอน") || cat.includes("เครดิต")) return "green";
   if(cat.includes("ปัญหา") || cat.includes("เข้าไม่ได้") || cat.includes("เน็ต")) return "red";
   return "purple";
+}
+
+function getCatGroup(cat){
+  if(cat==="ทั้งหมด" || cat.includes("สมัคร") || cat.includes("ข้อมูล") || cat.includes("รหัส") || cat.includes("บัญชี") || cat.includes("ปิด") || cat.includes("ทางเข้า")) return 1;
+  if(cat.includes("เครดิต") || cat.includes("โปร")) return 2;
+  if(cat.includes("ฝาก") || cat.includes("QR") || cat.includes("บัญชีไม่ตรง")) return 3;
+  if(cat.includes("ถอน")) return 4;
+  return 5;
 }
 
 async function copyText(text){
@@ -284,13 +289,23 @@ function render(){
 
   grid.innerHTML=html;
 
-  let cHTML="";
+  let groups = {1:[],2:[],3:[],4:[],5:[]};
+
   catsSet.forEach(c=>{
-    cHTML+=`
-    <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
-    onclick="currentCat='${c}';render()">
-    ${c}
-    </div>`;
+    const g = getCatGroup(c);
+    groups[g].push(`
+      <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
+      onclick="currentCat='${c}';render()">
+      ${c}
+      </div>
+    `);
+  });
+
+  let cHTML="";
+  Object.keys(groups).forEach(g=>{
+    if(groups[g].length){
+      cHTML+=`<div class="cat-group">${groups[g].join("")}</div>`;
+    }
   });
 
   cats.innerHTML=cHTML;
