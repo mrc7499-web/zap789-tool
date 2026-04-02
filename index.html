@@ -1,34 +1,36 @@
-<style>
-.card {
-  position: relative; /* สำคัญมาก ห้ามลบ */
-}
+<script>
+function getColor(cat){
 
-/* เส้นสีด้านซ้าย */
-.card::before {
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:5px;
-  height:100%;
-  border-radius:10px 0 0 10px;
-}
+  // กัน null / undefined (ตัวนี้แหละที่ทำเว็บพังบ่อย)
+  if(!cat || typeof cat !== "string") return "cat-default";
 
-/* ===== สีหมวด ===== */
-.card.cat-register::before { background:#3b82f6; }   /* สมัคร */
-.card.cat-deposit::before { background:#22c55e; }    /* ฝาก */
-.card.cat-withdraw::before { background:#10b981; }   /* ถอน */
-.card.cat-problem::before { background:#ef4444; }    /* ปัญหา */
-.card.cat-warning::before { background:#f97316; }    /* เตือน */
-.card.cat-system::before { background:#6366f1; }     /* ระบบ */
-.card.cat-game::before { background:#a855f7; }       /* เกม */
-.card.cat-vip::before { background:#eab308; }        /* โปร */
-.card.cat-chat::before { background:#ec4899; }       /* แชท */
-.card.cat-default::before { background:#94a3b8; }    /* อื่น */
+  try {
 
-/* hover (ไม่กระทบระบบ) */
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    if(cat.includes("สมัคร")) return "cat-register";
+
+    if(cat.includes("ฝาก")) return "cat-deposit";
+
+    if(cat.includes("ถอน")) return "cat-withdraw";
+
+    if(cat.includes("ปัญหา")) return "cat-problem";
+
+    if(cat.includes("บัญชี") || cat.includes("เตือน")) return "cat-warning";
+
+    if(cat.includes("ระบบ") || cat.includes("เข้า") || cat.includes("เล่น"))
+      return "cat-system";
+
+    if(cat.includes("เกม")) return "cat-game";
+
+    if(cat.includes("โปร") || cat.includes("เครดิตฟรี"))
+      return "cat-vip";
+
+    if(cat.includes("แชท") || cat.includes("ทัก"))
+      return "cat-chat";
+
+  } catch(e){
+    console.log("getColor error:", e);
+  }
+
+  return "cat-default";
 }
-</style>
+</script>
