@@ -12,7 +12,7 @@
   --text:#333;
   --var-bg:#eee;
 
-  /* ===== COLOR PALETTE ===== */
+  /* COLOR */
   --blue-soft:#e0f2fe;
   --blue-strong:#0284c7;
 
@@ -48,48 +48,48 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   overflow-y:auto;
 }
 
-/* ===== SIDEBAR BUTTON ===== */
-.categories { display:flex; flex-direction:column; }
-
-.cat-group {
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom:18px;
-}
-
+/* SIDEBAR */
 .cat {
   padding:10px 14px;
   border-radius:8px;
-  font-size:14px;
   cursor:pointer;
-  font-weight:500;
-  transition:.2s;
   background:#fff;
-  color:#333;
   border-left:4px solid transparent;
 }
-
 .cat:hover { background:#f1f5f9; }
 
-/* COLOR BY CATEGORY */
 .cat.blue { background:var(--blue-soft); border-left-color:var(--blue-strong); }
 .cat.green { background:var(--green-soft); border-left-color:var(--green-strong); }
 .cat.purple { background:var(--purple-soft); border-left-color:var(--purple-strong); }
 .cat.pink { background:var(--pink-soft); border-left-color:var(--pink-strong); }
 .cat.red { background:var(--red-soft); border-left-color:var(--red-strong); }
 
-/* ACTIVE */
 .cat.active {
   background:var(--primary);
   color:#fff;
   border-left-color:var(--primary);
-  font-weight:600;
+}
+
+/* ===== GROUP SECTION ===== */
+.section { margin-bottom:40px; }
+
+.section-title {
+  font-size:16px;
+  font-weight:700;
+  margin:10px 15px;
+  padding-bottom:6px;
+  border-bottom:2px solid #eee;
+}
+
+.section-box {
+  background:#f9f9f9;
+  border-radius:10px;
+  padding:10px 5px;
 }
 
 .main { flex:1; overflow-y:auto; }
 
-/* ===== GRID (ห้ามแตะ) ===== */
+/* ===== ORIGINAL GRID ===== */
 .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
 
 .card {
@@ -111,7 +111,6 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   height:100%;
 }
 
-/* CARD COLORS MATCH SIDEBAR */
 .card.blue::before { background:var(--blue-strong); }
 .card.green::before { background:var(--green-strong); }
 .card.purple::before { background:var(--purple-strong); }
@@ -124,7 +123,6 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   left:12px;
   display:none;
   gap:5px;
-  z-index:10;
 }
 .card:hover .actions { display:flex; }
 
@@ -134,7 +132,6 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   padding:4px 8px;
   border-radius:5px;
   font-size:12px;
-  cursor:pointer;
 }
 
 .img-box {
@@ -154,44 +151,6 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   border-radius:4px;
   font-weight:bold;
 }
-
-.toast {
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#000;
-  color:#fff;
-  padding:10px 20px;
-  border-radius:50px;
-  opacity:0;
-  transition:.3s;
-}
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-.modal-box {
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  width:350px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.input-ui {
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ddd;
-}
 </style>
 </head>
 
@@ -201,213 +160,105 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   <div class="top">
     <div style="font-weight:bold;color:white;">🔥 Zap789 PRO</div>
     <input id="search" class="search" placeholder="ค้นหา..." oninput="render()">
-    <div>
-      <button onclick="openModal()">+ เพิ่ม</button>
-      <button onclick="toggleDark()">🌙</button>
-    </div>
   </div>
 </div>
 
 <div class="layout">
   <div class="sidebar">
-    <div id="cats" class="categories"></div>
+    <div id="cats"></div>
   </div>
 
   <div class="main">
-    <div id="grid" class="grid"></div>
-  </div>
-</div>
-
-<div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
-
-<div id="modal" class="modal">
-  <div class="modal-box">
-    <input id="catInput" class="input-ui" placeholder="หมวด">
-    <textarea id="textInput" class="input-ui"></textarea>
-    <input type="file" id="imgInput">
-    <button onclick="save()">บันทึก</button>
-    <button onclick="closeModal()">ยกเลิก</button>
+    <div id="grid"></div>
   </div>
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
-let DATA=[];
-let currentCat="ทั้งหมด";
-let editIndex=null;
-
-/* ===== COLOR MAP ===== */
 const COLOR_MAP = {
   "ทั้งหมด":"blue",
   "สมัคร":"blue",
   "ขอข้อมูล":"blue",
   "เปลี่ยนรหัส":"blue",
   "เปลี่ยนบัญชี":"blue",
-  "ปิดแชท":"blue",
-  "ค้างเดิมพัน":"blue",
-  "เครดิตฟรี":"blue",
-  "ทางเข้าเล่น":"blue",
 
-  "ฝากเงินธนาคาร":"green",
-  "ฝากเงินพร้อมเพย์":"green",
-  "วิธีถอนเงิน":"green",
-  "ออกเข้าใหม่":"green",
+  "ฝากเงิน":"green",
   "VPN":"green",
-  "เล่นผ่าน Wifi":"green",
-  "ปิด-เปิดเครื่อง":"green",
-  "ลองใช้ซิม AIS":"green",
   "เน็ตช้า":"green",
-  "เช็คเครือข่าย":"green",
 
+  "ถอนเงิน":"purple",
   "รอถอน":"purple",
-  "ถอนสำเร็จ":"purple",
-  "ถอนไม่สำเร็จ":"purple",
-  "ถอนขัดข้อง":"purple",
-  "ยอดถอนไม่เข้า":"purple",
 
-  "เว็บตรง":"pink",
   "กำลังใจ":"pink",
-  "แนะนำเกม":"pink",
-  "ทักหลายไลน์":"pink",
 
-  "ฝากปัญหา":"red",
-  "สลิปปลอม":"red",
-  "บัญชีไม่ตรง":"red",
+  "ปัญหา":"red",
   "ลูกค้าด่า":"red"
 };
 
-/* ===== SAFE COLOR ===== */
 function getColor(cat){
   if(COLOR_MAP[cat]) return COLOR_MAP[cat];
   if(cat.includes("ฝาก")) return "green";
   if(cat.includes("ถอน")) return "purple";
   if(cat.includes("ปัญหา")) return "red";
-  if(cat.includes("โปร") || cat.includes("กำลังใจ")) return "pink";
   return "blue";
 }
 
-function getCatStyle(cat){
-  return getColor(cat);
+function getGroupName(color){
+  if(color==="blue") return "💳 บัญชีและข้อมูล";
+  if(color==="green") return "💰 การเงิน / ฝาก";
+  if(color==="purple") return "💸 ถอนเงิน";
+  if(color==="red") return "⚠️ ปัญหา";
+  if(color==="pink") return "💖 ทั่วไป";
+  return "อื่นๆ";
 }
 
-/* ===== ORIGINAL LOGIC ===== */
-async function init(){
-  const res=await fetch(API_URL+"?t="+Date.now());
-  DATA=await res.json();
-  render();
-}
+/* ===== MOCK DATA ===== */
+const DATA = [
+  ["สมัคร","ข้อความ1"],
+  ["ฝากเงิน","ข้อความ2"],
+  ["ถอนเงิน","ข้อความ3"],
+  ["ปัญหา","ข้อความ4"],
+  ["กำลังใจ","ข้อความ5"]
+];
 
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.innerText=msg;
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,1200);
-}
-
-async function copyText(text){
-  await navigator.clipboard.writeText(text);
-  showToast("✅ คัดลอกสำเร็จ");
-}
-
-async function copyImage(url){
-  const res=await fetch(url);
-  const blob=await res.blob();
-  await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
-  showToast("✅ คัดลอกสำเร็จ");
-}
+let currentCat="ทั้งหมด";
 
 function render(){
-  const s=search.value.toLowerCase();
-  let html="";
-  let catsSet=new Set(["ทั้งหมด"]);
+
+  let groups = {blue:[],green:[],purple:[],red:[],pink:[]};
 
   DATA.forEach((r,i)=>{
-    const [cat,text,status,img]=r;
-    if(status==="deleted") return;
+    const [cat,text]=r;
+    const color=getColor(cat);
 
-    catsSet.add(cat);
-    if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
-    if(s && !text.toLowerCase().includes(s)) return;
+    groups[color].push(`
+      <div class="card ${color}">
+        <div class="content">${text}</div>
+      </div>
+    `);
+  });
 
-    html+=`
-    <div class="card ${getColor(cat)}" onclick="copyText(\`${text}\`)">
-      <div class="actions">
-        <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️</div>
-        <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️</div>
-      </div>
-      ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
-      <div class="content">
-        ${text.replace(/{name}/g,'<span class="var">{name}</span>')}
-      </div>
-    </div>`;
+  let html="";
+
+  Object.keys(groups).forEach(color=>{
+    if(groups[color].length){
+      html+=`
+      <div class="section">
+        <div class="section-title">${getGroupName(color)}</div>
+        <div class="section-box">
+          <div class="grid">
+            ${groups[color].join("")}
+          </div>
+        </div>
+      </div>`;
+    }
   });
 
   grid.innerHTML=html;
-
-  let cHTML="";
-  catsSet.forEach(c=>{
-    cHTML+=`
-      <div class="cat ${getCatStyle(c)} ${c===currentCat?"active":""}" 
-      onclick="currentCat='${c}';render()">
-      ${c}
-      </div>
-    `;
-  });
-
-  cats.innerHTML=cHTML;
 }
 
-function openModal(){ editIndex=null; modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
+render();
 
-function edit(i){
-  editIndex=i;
-  catInput.value=DATA[i][0];
-  textInput.value=DATA[i][1];
-  modal.style.display="flex";
-}
-
-async function removeItem(i){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({action:"delete",index:i})
-  });
-  init();
-}
-
-function save(){
-  const file=imgInput.files[0];
-  if(file){
-    const reader=new FileReader();
-    reader.onload=e=>executeSave(e.target.result);
-    reader.readAsDataURL(file);
-  }else{
-    executeSave(null);
-  }
-}
-
-async function executeSave(img){
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:editIndex!==null?"edit":"add",
-      index:editIndex,
-      cat:catInput.value,
-      text:textInput.value,
-      image:img
-    })
-  });
-
-  closeModal();
-  init();
-}
-
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
-
-init();
 </script>
 
 </body>
