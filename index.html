@@ -1,11 +1,27 @@
-<!-- ===== FIX COLOR CATEGORY SAFE ===== -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Zap789 Admin</title>
 
 <style>
-.card {
-  position: relative;
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f5f5f5;
 }
 
-.card::before {
+/* CARD */
+.card{
+  position:relative;
+  background:#fff;
+  border-radius:10px;
+  padding:12px;
+  margin:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card::before{
   content:"";
   position:absolute;
   left:0;
@@ -16,20 +32,36 @@
 }
 
 /* สีหมวด */
-.card.cat-register::before { background:#3b82f6; }
-.card.cat-deposit::before { background:#22c55e; }
-.card.cat-withdraw::before { background:#10b981; }
-.card.cat-problem::before { background:#ef4444; }
-.card.cat-warning::before { background:#f97316; }
-.card.cat-system::before { background:#6366f1; }
-.card.cat-game::before { background:#a855f7; }
-.card.cat-vip::before { background:#eab308; }
-.card.cat-chat::before { background:#ec4899; }
-.card.cat-default::before { background:#94a3b8; }
+.card.cat-register::before{ background:#3b82f6; }
+.card.cat-deposit::before{ background:#22c55e; }
+.card.cat-withdraw::before{ background:#10b981; }
+.card.cat-problem::before{ background:#ef4444; }
+.card.cat-warning::before{ background:#f97316; }
+.card.cat-system::before{ background:#6366f1; }
+.card.cat-game::before{ background:#a855f7; }
+.card.cat-vip::before{ background:#eab308; }
+.card.cat-chat::before{ background:#ec4899; }
+.card.cat-default::before{ background:#94a3b8; }
+
 </style>
+</head>
+
+<body>
+
+<div id="app"></div>
 
 <script>
-/* ทับ getColor เดิมแบบไม่พัง */
+
+/* ===== DATA DEMO (ของจริงคุณแทนตรงนี้ได้เลย) ===== */
+const data = [
+  {cat:"สมัคร", text:"📝 แอดมินมายด์ รับสมัครสมาชิกนะคะ"},
+  {cat:"ฝากเงิน", text:"💸 แอดมินฟ้า ส่งสลิปได้เลยค่ะ"},
+  {cat:"ถอนเงิน", text:"💰 แอดมินพิม ถอนใช้เวลา 1-5 นาทีค่ะ"},
+  {cat:"ปัญหา", text:"⚠️ แอดมินมุก ระบบกำลังตรวจสอบค่ะ"},
+  {cat:"เกม", text:"🎮 แอดมินแพรว แนะนำ Lucky Neko ค่ะ"},
+];
+
+/* ===== COLOR FUNCTION (ตัวแก้พัง) ===== */
 function getColor(cat){
 
   if(!cat || typeof cat !== "string") return "cat-default";
@@ -46,4 +78,18 @@ function getColor(cat){
 
   return "cat-default";
 }
+
+/* ===== RENDER ===== */
+const app = document.getElementById("app");
+
+data.forEach(item=>{
+  const div = document.createElement("div");
+  div.className = "card " + getColor(item.cat);
+  div.innerText = item.text;
+  app.appendChild(div);
+});
+
 </script>
+
+</body>
+</html>
