@@ -12,10 +12,19 @@
   --text:#333;
   --var-bg:#eee;
 
+  --blue-soft:#e0f2fe;
   --blue-strong:#0284c7;
+
+  --green-soft:#dcfce7;
   --green-strong:#16a34a;
+
+  --purple-soft:#ede9fe;
   --purple-strong:#6d28d9;
+
+  --pink-soft:#fce7f3;
   --pink-strong:#db2777;
+
+  --red-soft:#fee2e2;
   --red-strong:#dc2626;
 }
 
@@ -41,6 +50,7 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
 /* SIDEBAR */
 .cat {
   padding:10px 14px;
+  border-radius:8px;
   cursor:pointer;
   border-left:4px solid transparent;
 }
@@ -70,10 +80,17 @@ body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text)
   padding-bottom:6px;
 }
 
-/* GRID (เดิม) */
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:15px; max-width:1400px; margin:0 auto; }
+/* GRID เดิม */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+  padding:15px;
+  max-width:1400px;
+  margin:0 auto;
+}
 
-/* CARD (เดิมทั้งหมด) */
+/* CARD */
 .card {
   background:var(--card-bg);
   border-radius:10px;
@@ -236,14 +253,12 @@ function getGroupName(color){
   return "📁 อื่นๆ";
 }
 
-/* INIT */
 async function init(){
   const res=await fetch(API_URL+"?t="+Date.now());
   DATA=await res.json();
   render();
 }
 
-/* TOAST */
 function showToast(msg){
   const t=document.getElementById("toast");
   t.innerText=msg;
@@ -251,7 +266,6 @@ function showToast(msg){
   setTimeout(()=>t.style.opacity=0,1200);
 }
 
-/* COPY */
 async function copyText(text){
   await navigator.clipboard.writeText(text);
   showToast("✅ คัดลอกสำเร็จ");
@@ -264,7 +278,7 @@ async function copyImage(url){
   showToast("✅ คัดลอกสำเร็จ");
 }
 
-/* RENDER (แก้แล้ว) */
+/* 🔥 RENDER FINAL */
 function render(){
   const s = search.value.toLowerCase();
 
@@ -314,7 +328,7 @@ function render(){
     }
   });
 
-  grid.innerHTML=html;
+  grid.innerHTML = html;
 
   let cHTML="";
   catsSet.forEach(c=>{
@@ -329,7 +343,6 @@ function render(){
   cats.innerHTML=cHTML;
 }
 
-/* CRUD */
 function openModal(){ editIndex=null; modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 
