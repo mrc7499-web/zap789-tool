@@ -1,564 +1,1362 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Zap789 PRO | Perfect Edition</title>
 
+
+
 <style>
+
 :root {
+
   --primary:#ff7a00;
+
   --bg:#f4f4f4;
+
   --card-bg:#ffffff;
+
   --text:#333;
+
   --var-bg:#eee;
 
+
+
   /* Color Palette */
+
   --blue-soft:#e0f2fe;
+
   --blue-strong:#0284c7;
+
   --green-soft:#dcfce7;
+
   --green-strong:#16a34a;
+
   --purple-soft:#ede9fe;
+
   --purple-strong:#6d28d9;
+
   --pink-soft:#fce7f3;
+
   --pink-strong:#db2777;
+
   --red-soft:#fee2e2;
+
   --red-strong:#dc2626;
+
 }
+
+
 
 body.dark { --bg:#121212; --card-bg:#1e1e1e; --text:#efefef; --var-bg:#333; }
+
 body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
 
+
+
 /* Custom Scrollbar มินิมอล */
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
+
 ::-webkit-scrollbar-track { background: transparent; }
+
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
 body.dark ::-webkit-scrollbar-thumb { background: #555; }
 
+
+
 /* HEADER */
+
 .header { background:var(--primary); padding:10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
 .top { display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; }
+
 .search { padding:8px 15px; border-radius:8px; border:none; width:250px; outline:none; }
 
+
+
 /* LAYOUT */
+
 .layout { display:flex; height:calc(100vh - 55px); }
 
+
+
 .sidebar {
+
   width:260px;
+
   background:#fff;
+
   border-right:1px solid #ddd;
+
   padding:15px 10px;
+
   overflow-y:auto;
+
 }
+
+
 
 body.dark .sidebar { background:#1e1e1e; border-color:#333; }
 
+
+
 /* SIDEBAR BUTTONS */
+
 .cat {
+
   padding:10px 14px;
+
   border-radius:8px;
+
   cursor:pointer;
+
   border-left:4px solid transparent;
+
   margin-bottom: 5px;
+
   font-weight: 500;
+
   font-size: 14px;
+
   transition: all 0.2s;
+
 }
+
 .cat:hover { background:#f1f5f9; }
+
 body.dark .cat:hover { background:#2a2a2a; }
 
+
+
 .cat.blue { border-left-color:var(--blue-strong); }
+
 .cat.green { border-left-color:var(--green-strong); }
+
 .cat.purple { border-left-color:var(--purple-strong); }
+
 .cat.pink { border-left-color:var(--pink-strong); }
+
 .cat.red { border-left-color:var(--red-strong); }
 
+
+
 .cat.active {
+
   background:var(--primary) !important;
+
   color:#fff;
+
   border-left-color:var(--primary);
+
   box-shadow: 0 2px 4px rgba(255,122,0,0.3);
+
 }
+
+
 
 /* MAIN CONTENT */
+
 .main { flex:1; overflow-y:auto; position: relative; }
 
+
+
 /* GROUPING & GRID */
+
 .main-container { 
+
   padding: 20px; 
+
   max-width: 1400px; 
+
   margin: 0 auto; 
+
 }
+
+
 
 .group-section { margin-bottom: 40px; }
 
+
+
 .group-header {
+
   font-size: 18px;
+
   font-weight: bold;
+
   color: var(--text);
+
   margin-bottom: 15px;
+
   padding: 10px 0;
+
   border-bottom: 2px solid #ddd;
+
   display: block;
+
   /* หัวข้อติดขอบบนตอนเลื่อน */
+
   position: sticky;
+
   top: 0;
+
   background: var(--bg);
+
   z-index: 5;
+
 }
+
 body.dark .group-header { border-bottom-color: #444; }
 
+
+
 .card-grid {
+
   display: grid;
+
   grid-template-columns: repeat(4, 1fr);
+
   gap: 15px;
+
 }
+
+
 
 /* Responsive */
+
 @media (max-width: 1200px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+
 @media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+
 @media (max-width: 600px) { .card-grid { grid-template-columns: repeat(1, 1fr); } .layout { flex-direction: column; } .sidebar { width: auto; height: 150px; border-right: none; border-bottom: 1px solid #ddd; } }
 
+
+
 /* CARD */
+
 .card {
+
   background:var(--card-bg);
+
   border-radius:10px;
+
   overflow:hidden;
+
   position:relative;
+
   cursor:pointer;
+
   transition:.15s;
+
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
   display: flex;
+
   flex-direction: column;
+
 }
+
 .card:active { transform:scale(0.96); opacity:0.85; }
+
 .card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
+
+
 .card::before {
+
   content:"";
+
   position:absolute;
+
   left:0;
+
   top:0;
+
   width:4px;
+
   height:100%;
+
 }
+
+
 
 /* สีแถบข้างการ์ด */
+
 .card.blue::before { background:var(--blue-strong); }
+
 .card.green::before { background:var(--green-strong); }
+
 .card.purple::before { background:var(--purple-strong); }
+
 .card.pink::before { background:var(--pink-strong); }
+
 .card.red::before { background:var(--red-strong); }
 
+
+
 .actions {
+
   position:absolute;
+
   top:8px;
+
   right:8px;
+
   left: auto;
+
   display:none;
+
   gap:5px;
+
   z-index:10;
+
 }
+
 .card:hover .actions { display:flex; }
 
+
+
 .btn-action {
+
   background:rgba(0,0,0,0.7);
+
   color:#fff;
+
   padding:4px 8px;
+
   border-radius:5px;
+
   font-size:12px;
+
   cursor:pointer;
+
   transition: 0.2s;
+
 }
+
 .btn-action:hover { background:var(--primary); }
 
+
+
 .img-box {
+
   width:100%;
+
   aspect-ratio:1/1;
+
   object-fit:cover;
+
   border-bottom: 1px solid #eee;
+
 }
+
+
 
 .content {
+
   padding:15px;
+
   font-size:14px;
+
   line-height: 1.5;
+
   white-space: pre-wrap; /* เคารพการขึ้นบรรทัดใหม่ */
+
   flex-grow: 1;
+
   /* จัดการข้อความยาวเกินไป */
+
   max-height: 150px; 
+
   overflow-y: auto; 
+
 }
+
+
 
 .var {
+
   background:var(--var-bg);
+
   padding:2px 5px;
+
   border-radius:4px;
+
   font-weight:bold;
+
   color: var(--primary);
+
 }
+
+
 
 /* UI ELEMENTS */
+
 .toast {
+
   position:fixed;
+
   bottom:20px;
+
   left:50%;
+
   transform:translateX(-50%);
+
   background:#333;
+
   color:#fff;
+
   padding:12px 24px;
+
   border-radius:50px;
+
   opacity:0;
+
   transition:.3s;
+
   z-index: 100;
+
   font-size: 14px;
+
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
 }
+
+
 
 .modal {
+
   position:fixed;
+
   inset:0;
+
   background:rgba(0,0,0,.6);
+
   display:none;
+
   align-items:center;
+
   justify-content:center;
+
   z-index: 1000;
+
   backdrop-filter: blur(2px);
+
 }
+
+
 
 .modal-box {
+
   background:var(--card-bg);
+
   color: var(--text);
+
   padding:24px;
+
   border-radius:12px;
+
   width:90%;
+
   max-width: 400px;
+
   display:flex;
+
   flex-direction:column;
+
   gap:15px;
+
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+
 }
+
+
 
 .input-ui {
+
   padding:12px;
+
   border-radius:8px;
+
   border:1px solid #ddd;
+
   font-family: inherit;
+
   font-size: 14px;
+
   background: var(--bg);
+
   color: var(--text);
+
   outline: none;
+
 }
+
 body.dark .input-ui { border-color: #444; }
+
 .input-ui:focus { border-color: var(--primary); }
 
+
+
 .btn-primary { padding:12px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; }
+
 .btn-secondary { padding:12px; background:#e0e0e0; color:#333; border:none; border-radius:8px; cursor:pointer; font-size:14px; }
+
 body.dark .btn-secondary { background:#444; color:#fff; }
 
+
+
 .loader {
+
   text-align:center;
+
   padding:50px;
+
   color:#888;
+
   font-size:16px;
+
   animation: pulse 1.5s infinite;
+
 }
+
 @keyframes pulse { 0% {opacity:0.5;} 50% {opacity:1;} 100% {opacity:0.5;} }
+
+
+
+/* LOGIN PAGE */
+
+.login-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 9999;
+
+}
+
+.login-box {
+
+  background: rgba(255,255,255,0.05);
+
+  backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255,255,255,0.1);
+
+  border-radius: 16px;
+
+  padding: 40px;
+
+  width: 90%;
+
+  max-width: 360px;
+
+  text-align: center;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+
+}
+
+.login-box h2 {
+
+  color: #fff;
+
+  margin: 0 0 8px 0;
+
+  font-size: 24px;
+
+}
+
+.login-box p {
+
+  color: rgba(255,255,255,0.5);
+
+  margin: 0 0 30px 0;
+
+  font-size: 14px;
+
+}
+
+.login-input {
+
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border: 1px solid rgba(255,255,255,0.15);
+
+  border-radius: 10px;
+
+  background: rgba(255,255,255,0.08);
+
+  color: #fff;
+
+  font-size: 14px;
+
+  outline: none;
+
+  margin-bottom: 14px;
+
+  box-sizing: border-box;
+
+  transition: border-color 0.2s;
+
+}
+
+.login-input::placeholder { color: rgba(255,255,255,0.35); }
+
+.login-input:focus { border-color: var(--primary); }
+
+.login-btn {
+
+  width: 100%;
+
+  padding: 14px;
+
+  background: var(--primary);
+
+  color: #fff;
+
+  border: none;
+
+  border-radius: 10px;
+
+  font-size: 15px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  margin-top: 6px;
+
+  transition: opacity 0.2s;
+
+}
+
+.login-btn:hover { opacity: 0.85; }
+
+.login-error {
+
+  color: #ff6b6b;
+
+  font-size: 13px;
+
+  margin-top: 12px;
+
+  min-height: 20px;
+
+}
+
 </style>
+
 </head>
+
+
 
 <body>
 
-<div class="header">
-  <div class="top">
-    <div style="font-weight:bold;color:white;font-size:18px;">🔥 Zap789 PRO</div>
-    <input id="search" class="search" placeholder="ค้นหาข้อความ... (พิมพ์แล้วค้นหาทันที)" oninput="render()" autofocus>
-    <div>
-      <button onclick="openModal()" style="padding:8px 15px; border-radius:6px; border:none; cursor:pointer; font-weight:bold; color:var(--primary);">+ เพิ่มข้อมูล</button>
-      <button onclick="toggleDark()" style="padding:8px 12px; border-radius:6px; border:none; cursor:pointer; margin-left:5px; background:rgba(0,0,0,0.2); color:white;">🌙</button>
-    </div>
+
+
+<!-- LOGIN PAGE -->
+
+<div id="loginOverlay" class="login-overlay">
+
+  <div class="login-box">
+
+    <h2>🔥 Zap789 PRO</h2>
+
+    <p>กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+    <input id="loginUser" class="login-input" type="text" placeholder="ชื่อผู้ใช้ (Username)" autofocus>
+
+    <input id="loginPass" class="login-input" type="password" placeholder="รหัสผ่าน (Password)">
+
+    <button class="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+
+    <div id="loginError" class="login-error"></div>
+
   </div>
+
 </div>
+
+
+
+<div class="header">
+
+  <div class="top">
+
+    <div style="font-weight:bold;color:white;font-size:18px;">🔥 Zap789 PRO</div>
+
+    <input id="search" class="search" placeholder="ค้นหาข้อความ... (พิมพ์แล้วค้นหาทันที)" oninput="render()" autofocus>
+
+    <div>
+
+      <button onclick="openModal()" style="padding:8px 15px; border-radius:6px; border:none; cursor:pointer; font-weight:bold; color:var(--primary);">+ เพิ่มข้อมูล</button>
+
+      <button onclick="toggleDark()" style="padding:8px 12px; border-radius:6px; border:none; cursor:pointer; margin-left:5px; background:rgba(0,0,0,0.2); color:white;">🌙</button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 
 <div class="layout">
+
   <div class="sidebar">
+
     <div id="cats">
+
       <div style="color:#888; text-align:center; padding:20px; font-size:12px;">กำลังโหลดเมนู...</div>
+
     </div>
+
   </div>
 
+
+
   <div class="main">
+
     <div id="grid" class="main-container">
+
       <div class="loader">⏳ กำลังซิงค์ข้อมูลจากระบบ...</div>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <div id="toast" class="toast">✅ คัดลอกสำเร็จ</div>
 
+
+
 <div id="modal" class="modal">
+
   <div class="modal-box">
+
     <h3 style="margin:0; font-size:18px;">จัดการข้อความ</h3>
+
     <input id="catInput" class="input-ui" placeholder="ระบุหมวดหมู่ (เช่น สมัคร, ฝากเงิน)">
+
     <textarea id="textInput" class="input-ui" rows="5" placeholder="พิมพ์ข้อความที่นี่...&#10;💡 ใส่ {name} ตรงจุดที่ต้องการให้แอดมินพิมพ์ชื่อลูกค้า"></textarea>
+
     <div style="font-size: 12px; color: #888;">แนบรูปภาพ (ถ้ามี):</div>
+
     <input type="file" id="imgInput" accept="image/*" class="input-ui" style="padding:8px;">
+
     
+
     <div style="display:flex; gap:10px; margin-top:5px;">
+
       <button onclick="save()" class="btn-primary" style="flex:1;">💾 บันทึกข้อมูล</button>
+
       <button onclick="closeModal()" class="btn-secondary" style="flex:1;">ยกเลิก</button>
+
     </div>
+
   </div>
+
 </div>
 
+
+
 <script>
+
+
+const VALID_USERS = [
+
+  { username: "admin", password: "1234" },
+
+  { username: "usera", password: "1234" },
+  { username: "userb", password: "1234" },
+  { username: "userc", password: "1234" },
+  { username: "userd", password: "1234" }
+];
+
+
+
+function doLogin() {
+
+  const u = document.getElementById("loginUser").value.trim();
+
+  const p = document.getElementById("loginPass").value;
+
+  const err = document.getElementById("loginError");
+
+
+
+  if (!u || !p) {
+
+    err.textContent = "⚠️ กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
+
+    return;
+
+  }
+
+
+
+  const found = VALID_USERS.find(v => v.username === u && v.password === p);
+
+  if (found) {
+
+    const expiry = Date.now() + (3 * 24 * 60 * 60 * 1000); // 3 วัน
+
+    localStorage.setItem("zap789_logged", expiry);
+
+    document.getElementById("loginOverlay").style.display = "none";
+
+  } else {
+
+    err.textContent = "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+
+  }
+
+}
+
+
+
+// กด Enter เพื่อ Login
+
+document.getElementById("loginPass").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
+
+document.getElementById("loginUser").addEventListener("keydown", e => { if(e.key === "Enter") document.getElementById("loginPass").focus(); });
+
+
+
+// ถ้าเคย login แล้วและยังไม่หมดอายุ (3 วัน)
+
+const loginExpiry = localStorage.getItem("zap789_logged");
+
+if (loginExpiry && Date.now() < Number(loginExpiry)) {
+
+  document.getElementById("loginOverlay").style.display = "none";
+
+} else {
+
+  localStorage.removeItem("zap789_logged");
+
+}
+
+
+
 const API_URL="https://script.google.com/macros/s/AKfycbxHezmPZRW5x-PIEx7iPK5joGxshgIG_aN7wF0NvAl0FkIS0fgqnEKOI8oYR1RZN5cf/exec";
 
+
+
 let DATA=[];
+
 let currentCat="ทั้งหมด";
+
 let editIndex=null;
 
+
+
 /* ===== COLOR MAP (จัดหมวดหมู่สี) ===== */
+
 const COLOR_MAP = {
+
   "ทั้งหมด":"blue",
+
   "สมัคร":"blue",
+
   "ขอข้อมูล / เปลี่ยนรหัส":"blue",
+
   "เปลี่ยนบัญชี":"blue",
+
   "ปิดแชท":"blue",
+
   "ทางเข้า":"blue",
+
   "ค้างเดิมพัน / เครดิต":"blue",
 
+
+
   "ฝากเงิน":"green",
+
   "QR Code":"green",
+
+
 
   "ถอนเงิน":"purple",
 
+
+
   "เครดิตฟรี / โปร":"pink",
+
   "เกม / แนะนำ":"pink",
+
   "กำลังใจ (เต็ม)":"pink",
+
   "ทักหลายไลน์":"pink",
 
+
+
   "ฝากปัญหา":"red",
+
   "บัญชีไม่ตรง":"red",
+
   "ถอนปัญหา":"red",
+
   "เข้าเล่นไม่ได้":"red",
+
   "VPN / เน็ต":"red",
+
   "ลูกค้าด่า":"red"
+
 };
 
+
+
 function getColor(cat){
+
   if(COLOR_MAP[cat]) return COLOR_MAP[cat];
+
   // Fallback
+
   for(const key in COLOR_MAP){
+
     if(cat.includes(key)){ return COLOR_MAP[key]; }
+
   }
+
   return "blue";
+
 }
+
+
 
 /* ===== INIT LOAD ===== */
+
 async function init(){
+
   try {
+
     const res=await fetch(API_URL+"?t="+Date.now());
+
     DATA=await res.json();
+
     render();
+
   } catch (error) {
+
     console.error("Error loading data:", error);
+
     document.getElementById("grid").innerHTML = `<div class="loader" style="color:red;">❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณารีเฟรชหน้าเว็บ</div>`;
+
   }
+
 }
+
+
 
 /* ===== TOAST & COPY ===== */
+
 function showToast(msg){
+
   const t=document.getElementById("toast");
+
   t.innerText=msg;
+
   t.style.opacity=1;
+
   setTimeout(()=>t.style.opacity=0,1500);
+
 }
+
+
 
 async function copyText(text){
+
   try {
+
     await navigator.clipboard.writeText(text);
+
     showToast("✅ คัดลอกข้อความแล้ว");
+
   } catch (err) {
+
     console.error('Failed to copy: ', err);
+
     // Fallback
+
     const textArea = document.createElement("textarea");
+
     textArea.value = text;
+
     document.body.appendChild(textArea);
+
     textArea.select();
+
     document.execCommand("copy");
+
     textArea.remove();
+
     showToast("✅ คัดลอกข้อความแล้ว");
+
   }
+
 }
+
+
 
 async function copyImage(url){
+
   try {
+
     const res=await fetch(url);
+
     const blob=await res.blob();
+
     await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
+
     showToast("🖼️ คัดลอกรูปภาพแล้ว");
+
   } catch (err) {
+
     console.error('Failed to copy image: ', err);
+
     showToast("❌ ไม่สามารถคัดลอกรูปได้อัตโนมัติ");
+
   }
+
 }
 
+
+
 /* ===== RENDER FUNCTION ===== */
+
 function render(){
+
   const s=search.value.toLowerCase();
+
   let catsSet=new Set(["ทั้งหมด"]);
 
+
+
   // 1. โครงสร้างกลุ่ม
+
   const groups = {
+
     blue: { title: "💳 บัญชี ข้อมูล และ ทางเข้า", cards: [] },
+
     green: { title: "💰 การเงิน ฝากเงิน", cards: [] },
+
     purple: { title: "🔄 การถอนเงิน", cards: [] },
+
     pink: { title: "💖 ทั่วไป โปรโมท และ กำลังใจ", cards: [] },
+
     red: { title: "⚠️ ปัญหาขัดข้อง และ ลูกค้าคอมเพลน", cards: [] }
+
   };
 
+
+
   // 2. จัดการข้อมูล
+
   DATA.forEach((r,i)=>{
+
     const [cat,text,status,img]=r;
+
     if(status==="deleted") return;
 
+
+
     catsSet.add(cat);
+
     
+
     // กรอง
+
     if(currentCat!=="ทั้งหมด" && cat!==currentCat) return;
+
     if(s && !text.toLowerCase().includes(s)) return;
+
+
 
     const color = getColor(cat);
 
+
+
     // HTML การ์ด
+
     const cardHTML = `
+
     <div class="card ${color}" onclick="copyText(\`${text.replace(/`/g, '\\`')}\`)">
+
       <div class="actions">
+
         <div class="btn-action" onclick="event.stopPropagation();edit(${i})">✏️ แก้ไข</div>
+
         <div class="btn-action" onclick="event.stopPropagation();removeItem(${i})">🗑️ ลบ</div>
+
       </div>
+
       ${img ? `<img src="${img}" class="img-box" onclick="event.stopPropagation();copyImage('${img}')">` : ""}
+
       <div class="content">${text.replace(/{name}/g,'<span class="var">{name}</span>')}</div>
+
     </div>`;
 
+
+
     if(groups[color]) { groups[color].cards.push(cardHTML); }
+
   });
+
+
 
   // 3. วาด Grid และ Section
+
   let html="";
+
   Object.keys(groups).forEach(key => {
+
     const g = groups[key];
+
     if(g.cards.length > 0) { 
+
       html += `
+
       <div class="group-section">
+
         <div class="group-header">${g.title} <span style="font-size:12px; color:#888; font-weight:normal;">(${g.cards.length})</span></div>
+
         <div class="card-grid">
+
           ${g.cards.join("")}
+
         </div>
+
       </div>
+
       `;
+
     }
+
   });
+
+
 
   if(html==="") html="<div style='text-align:center; padding:50px; color:#888; font-size:16px;'>🔍 ไม่พบข้อความที่คุณค้นหา</div>";
+
   document.getElementById("grid").innerHTML=html;
 
+
+
   // 4. วาด Sidebar Menu
+
   let cHTML="";
+
   catsSet.forEach(c=>{
+
     cHTML+=`
+
       <div class="cat ${getColor(c)} ${c===currentCat?"active":""}" 
+
       onclick="currentCat='${c}';render()">
+
       ${c}
+
       </div>
+
     `;
+
   });
+
   document.getElementById("cats").innerHTML=cHTML;
+
 }
 
+
+
 /* ===== MODAL & CRUD ===== */
+
 function openModal(){ 
+
   editIndex=null; 
+
   document.getElementById('catInput').value = currentCat !== "ทั้งหมด" ? currentCat : "";
+
   document.getElementById('textInput').value = "";
+
   document.getElementById('imgInput').value = "";
+
   document.getElementById('modal').style.display="flex"; 
+
 }
+
+
 
 function closeModal(){ document.getElementById('modal').style.display="none"; }
 
+
+
 function edit(i){
+
   editIndex=i;
+
   document.getElementById('catInput').value=DATA[i][0];
+
   document.getElementById('textInput').value=DATA[i][1];
+
   document.getElementById('imgInput').value = ""; 
+
   document.getElementById('modal').style.display="flex";
+
 }
+
+
 
 async function removeItem(i){
+
   if(confirm("🗑️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อความนี้? (การลบจะไม่สามารถกู้คืนได้)")){
+
     document.getElementById("grid").innerHTML = `<div class="loader">กำลังลบข้อมูล...</div>`;
+
     await fetch(API_URL,{
+
       method:"POST",
+
       body:JSON.stringify({action:"delete",index:i})
+
     });
+
     init();
+
   }
+
 }
+
+
 
 function save(){
+
   const imgInput = document.getElementById('imgInput');
+
   const file=imgInput.files[0];
+
   if(file){
+
     const reader=new FileReader();
+
     reader.onload=e=>executeSave(e.target.result);
+
     reader.readAsDataURL(file);
+
   }else{
+
     executeSave(null);
+
   }
+
 }
+
+
 
 async function executeSave(img){
+
   const catVal = document.getElementById('catInput').value.trim();
+
   const textVal = document.getElementById('textInput').value.trim();
+
   
+
   if(!catVal || !textVal) {
+
     alert("⚠️ กรุณาระบุหมวดหมู่และข้อความให้ครบถ้วน");
+
     return;
+
   }
 
+
+
   document.getElementById('modal').style.display="none"; 
+
   document.getElementById("grid").innerHTML = `<div class="loader">กำลังบันทึกข้อมูล...</div>`;
 
+
+
   await fetch(API_URL,{
+
     method:"POST",
+
     body:JSON.stringify({
+
       action:editIndex!==null?"edit":"add",
+
       index:editIndex,
+
       cat:catVal,
+
       text:textVal,
+
       image:img
+
     })
+
   });
 
+
+
   init();
+
 }
+
+
 
 /* ===== THEME ===== */
+
 function toggleDark(){
+
   document.body.classList.toggle("dark");
+
   const isDark = document.body.classList.contains("dark");
+
   localStorage.setItem("zap789_theme", isDark ? "dark" : "light");
+
 }
+
+
 
 if(localStorage.getItem("zap789_theme") === "dark"){
+
   document.body.classList.add("dark");
+
 }
 
+
+
 init();
+
 </script>
 
+
+
 </body>
+
 </html>
