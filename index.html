@@ -207,6 +207,22 @@ button{cursor:pointer}
   .role-row{grid-template-columns:1fr;gap:3px}
 }
 
+
+/* Production hardening: message sorting fallback + compact controls */
+.msg-sort-hint{display:flex!important;align-items:center;justify-content:space-between;gap:8px}
+.msg-step-tools{display:flex;gap:5px;flex:0 0 auto}
+.msg-step-btn{
+  min-width:34px;height:30px;border:1px solid var(--border);border-radius:9px;
+  background:var(--surface);font-weight:900;cursor:pointer
+}
+.msg-step-btn:hover{transform:translateY(-1px)}
+.message-sort-card{cursor:grab}
+.message-sort-card:active{cursor:grabbing}
+@media(max-width:700px){
+  .msg-sort-hint{font-size:11px}
+  .msg-step-btn{min-width:38px;height:34px}
+}
+
 </style>
 </head>
 <body>
@@ -266,7 +282,7 @@ button{cursor:pointer}
     <div class="main-inner">
       <div class="page-head">
         <div class="page-title"><h2 id="pageTitle">ข้อความทั้งหมด</h2><p id="pageSubtitle">คลิก Copy หรือกดที่การ์ดเพื่อใช้งานข้อความ</p></div>
-        <div class="head-sort-controls">
+        <div id="headSortControls" class="head-sort-controls">
           <button id="messageSortBtn" class="secondary-btn hidden" onclick="toggleMessageSort()">↕ จัดเรียงข้อความกลาง</button>
           <select id="sortSelect" class="sort-select" onchange="render()"><option value="default">เรียงตามระบบ</option><option value="popular">ใช้บ่อยที่สุด</option><option value="recent">ใช้ล่าสุด</option><option value="az">หมวด A-Z</option></select>
         </div>
@@ -453,6 +469,21 @@ function sortMessagesForUser(items){
   // ลำดับจากเซิร์ฟเวอร์/Google Sheet คือ "ลำดับกลาง" ของทุกคน
   return items;
 }
+function saveDataCache(items){
+  const rows=(Array.isArray(items)?items:[]).map(x=>({
+    id:String(x.id||""),
+    cat:String(x.cat||""),
+    text:String(x.text||""),
+    status:String(x.status||""),
+    image:String(x.img||x.image||""),
+    tags:String(x.tags||""),
+    createdAt:x.createdAt||"",
+    updatedAt:x.updatedAt||"",
+    updatedBy:String(x.updatedBy||"")
+  }));
+  localStorage.setItem(STORAGE.data,JSON.stringify(rows));
+  localStorage.setItem(STORAGE.dataAt,String(Date.now()));
+}
 function toggleMessageSort(){
   if(!isAdmin()){
     toast("เฉพาะ Owner / Admin เท่านั้นที่จัดเรียงข้อความกลางได้");
@@ -471,6 +502,38 @@ function getVisibleItemsForSort(){
   if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
   return items;
 }
+
+async function moveMessageStep(id,dir){
+  if(!MESSAGE_SORT_MODE || !isAdmin() || MESSAGE_SORT_SAVING)return;
+  const visible=getVisibleItemsForSort();
+  const i=visible.findIndex(x=>String(x.id)===String(id));
+  const j=i+Number(dir||0);
+  if(i<0 || j<0 || j>=visible.length)return;
+
+  // สลับตำแหน่งของข้อความที่มองเห็น โดยคงรายการอื่นใน DATA ไว้ครบ
+  const a=DATA.findIndex(x=>String(x.id)===String(visible[i].id));
+  const b=DATA.findIndex(x=>String(x.id)===String(visible[j].id));
+  if(a<0 || b<0)return;
+
+  const before=DATA.slice();
+  [DATA[a],DATA[b]]=[DATA[b],DATA[a]];
+  render();
+
+  MESSAGE_SORT_SAVING=true;
+  try{
+    await api({action:"reorder",ids:DATA.map(x=>x.id)});
+    saveDataCache(DATA);
+    toast("บันทึกลำดับกลางแล้ว • ทุกบัญชีจะเห็นลำดับนี้");
+  }catch(err){
+    DATA=before;
+    render();
+    toast(err.message||"บันทึกลำดับไม่สำเร็จ");
+    try{await loadData(true)}catch(_){}
+  }finally{
+    MESSAGE_SORT_SAVING=false;
+  }
+}
+
 async function moveMessageById(dragId,targetId){
   if(!isAdmin() || MESSAGE_SORT_SAVING || !dragId || !targetId || dragId===targetId)return;
   const from=DATA.findIndex(x=>String(x.id)===String(dragId));
@@ -686,8 +749,22 @@ async function api(payload){
     return {ok:false,error:"Unknown demo action"};
   }
   const token=localStorage.getItem(STORAGE.token)||"";
-  const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...payload,token})});
-  const out=await res.json(); if(!out.ok)throw new Error(out.error||"เกิดข้อผิดพลาด"); return out;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),20000);
+  try{
+    const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...payload,token}),signal:controller.signal});
+    const raw=await res.text();
+    let out;
+    try{out=JSON.parse(raw)}catch(_){throw new Error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง กรุณาลองใหม่")}
+    if(!res.ok)throw new Error(out?.error||`Server HTTP ${res.status}`);
+    if(!out.ok)throw new Error(out.error||"เกิดข้อผิดพลาด");
+    return out;
+  }catch(err){
+    if(err?.name==="AbortError")throw new Error("เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่");
+    throw err;
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
 async function doLogin(){
@@ -802,7 +879,7 @@ function leaveUserManagement(){
   el("userPanel").classList.remove("active");
   el("content").classList.remove("hidden");
   el("chips").classList.remove("hidden");
-  el("sortSelect").classList.remove("hidden");
+  el("headSortControls")?.classList.remove("hidden");
 }
 function setView(view,cat=null){
   leaveUserManagement();
@@ -892,7 +969,7 @@ function cardHTML(item){
     <div class="card-topline line-${color}"></div>
     ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="รูปประกอบ" loading="lazy" decoding="async" onerror="this.style.display='none'" onclick="if(!MESSAGE_SORT_MODE){event.stopPropagation();copyImage('${jsString(item.img)}')}">`:""}
     <div class="card-body">
-      ${MESSAGE_SORT_MODE?`<div class="msg-sort-hint">⠿ ลากการ์ดนี้เพื่อย้ายตำแหน่ง</div>`:""}
+      ${MESSAGE_SORT_MODE?`<div class="msg-sort-hint"><span>⠿ ลากการ์ดนี้เพื่อย้ายตำแหน่ง</span><span class="msg-step-tools"><button type="button" class="msg-step-btn" onclick="event.stopPropagation();moveMessageStep(\'${jsString(item.id)}\',-1)" title="เลื่อนขึ้น">↑</button><button type="button" class="msg-step-btn" onclick="event.stopPropagation();moveMessageStep(\'${jsString(item.id)}\',1)" title="เลื่อนลง">↓</button></span></div>`:""}
       <div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span></div>
       <div class="card-text">${highlightVars(item.text)}</div>
     </div>
@@ -1166,7 +1243,7 @@ async function openUserManagement(){
   if(!canManageUsers()){toast("บัญชีนี้ไม่มีสิทธิ์จัดการพนักงาน","error");return}
   currentView="users";currentCat="ทั้งหมด";closeDrawer();
   document.querySelectorAll(".nav-item[data-view]").forEach(n=>n.classList.toggle("active",n.dataset.view==="users"));
-  el("content").classList.add("hidden");el("chips").classList.add("hidden");el("sortSelect").classList.add("hidden");el("userPanel").classList.add("active");
+  el("content").classList.add("hidden");el("chips").classList.add("hidden");el("headSortControls")?.classList.add("hidden");el("userPanel").classList.add("active");
   el("pageTitle").textContent="จัดการพนักงาน";el("pageSubtitle").textContent="สร้างบัญชีแยก ปิดบัญชี และรีเซ็ตรหัสผ่าน";
   await loadTeamUsers();
 }
