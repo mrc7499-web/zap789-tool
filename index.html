@@ -99,6 +99,32 @@ button{cursor:pointer}
 .zone-items .nav-item.active{box-shadow:inset 3px 0 0 var(--primary)}
 .zone-items .category-name{white-space:normal;line-height:1.25}
 
+
+.category-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tiny-sort-btn{border:0;background:transparent;color:var(--primary);font-size:11px;font-weight:800;cursor:pointer;padding:4px 6px;border-radius:7px}
+.tiny-sort-btn:hover{background:var(--primary-soft)}
+.cat-row{display:flex;align-items:center;gap:4px}
+.cat-row>.nav-item{flex:1;min-width:0}
+.cat-order-tools{display:flex;gap:2px;flex:0 0 auto}
+.cat-order-btn{width:26px;height:28px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:900}
+.cat-order-btn:hover{background:var(--surface-2);color:var(--text)}
+.sort-reset{width:100%;border:0;background:transparent;color:var(--muted);padding:6px 10px 10px;font-size:11px;cursor:pointer;text-align:left}
+.sort-reset:hover{color:var(--primary)}
+.card-actions .mini-btn.edit-direct,.card-actions .mini-btn.delete-direct{width:auto;min-width:40px;padding:0 11px}
+
+
+.cat-row{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.category-dragging{cursor:grabbing}
+.category-dragging .cat-row{touch-action:none}
+.cat-row.drag-source{opacity:.62;transform:scale(.985);background:var(--primary-soft);border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.10)}
+.cat-row.drag-source .nav-item{background:transparent}
+
+
+#catSelect{cursor:pointer}
+.image-info{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+.image-preview{max-height:260px;max-width:100%;object-fit:contain}
+.file-drop.processing{opacity:.72;pointer-events:none}
+
 </style>
 </head>
 <body>
@@ -127,7 +153,7 @@ button{cursor:pointer}
     <button class="nav-item active" data-view="all" onclick="setView('all')"><span class="nav-icon">▦</span>ทั้งหมด<span id="countAll" class="nav-count">0</span></button>
     <button class="nav-item" data-view="favorites" onclick="setView('favorites')"><span class="nav-icon">★</span>รายการโปรด<span id="countFav" class="nav-count">0</span></button>
     <button class="nav-item" data-view="recent" onclick="setView('recent')"><span class="nav-icon">◷</span>ใช้ล่าสุด<span id="countRecent" class="nav-count">0</span></button>
-    <div class="side-title">โซนข้อความ</div>
+    <div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="toggleCategorySort()">↕ จัดเรียง</button></div>
     <div id="categoryNav"></div>
     <div id="adminSection" class="hidden">
       <div class="side-title">จัดการ</div>
@@ -191,10 +217,21 @@ button{cursor:pointer}
     <div class="modal-head"><h3 id="editorTitle">เพิ่มข้อความ</h3><button class="icon-btn" onclick="closeEditor()">×</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label>หมวดหมู่ *</label><input id="catInput" class="input" list="catDatalist" placeholder="เช่น ฝากเงิน"><datalist id="catDatalist"></datalist></div>
+        <div class="field"><label>หมวดหมู่ *</label>
+  <select id="catSelect" class="input" onchange="handleCategorySelect()"></select>
+  <input id="newCatInput" class="input hidden" style="margin-top:8px" placeholder="พิมพ์ชื่อหมวดใหม่">
+</div>
         <div class="field"><label>คีย์เวิร์ด / Tag</label><input id="tagInput" class="input" placeholder="เช่น qr, ฝากไม่เข้า, ตรวจสอบ"></div>
         <div class="field full"><label>ข้อความ *</label><textarea id="textInput" class="input" rows="7" placeholder="พิมพ์ข้อความ..." oninput="updatePreview()"></textarea><div class="helper-row"><button class="token-btn" onclick="insertToken('{name}')">+ {name}</button><button class="token-btn" onclick="insertToken('{amount}')">+ {amount}</button><button class="token-btn" onclick="insertToken('{bank}')">+ {bank}</button><button class="token-btn" onclick="insertToken('{username}')">+ {username}</button></div></div>
-        <div class="field full"><label>รูปภาพ (ไม่บังคับ)</label><div id="dropZone" class="file-drop">ลากรูปมาวาง หรือ <button type="button" class="ghost-btn" onclick="document.getElementById('imgInput').click()">เลือกรูป</button><input id="imgInput" type="file" accept="image/*" hidden onchange="handleImageFile(this.files[0])"><br><img id="imagePreview" class="image-preview hidden"></div></div>
+        <div class="field full"><label>รูปภาพ / แคตตาล็อก (ไม่บังคับ)</label>
+  <div id="dropZone" class="file-drop">
+    ลากรูปมาวาง หรือ <button type="button" class="ghost-btn" onclick="document.getElementById('imgInput').click()">เลือกรูป</button>
+    <input id="imgInput" type="file" accept="image/*" hidden onchange="handleImageFile(this.files[0])">
+    <div id="imageInfo" class="image-info"></div>
+    <br><img id="imagePreview" class="image-preview hidden">
+    <div><button id="removeImageBtn" type="button" class="ghost-btn hidden" onclick="removeEditorImage()">ลบรูป</button></div>
+  </div>
+</div>
         <div class="field full"><label>Preview</label><div id="livePreview" class="preview muted">ข้อความตัวอย่างจะแสดงตรงนี้</div></div>
       </div>
     </div>
@@ -280,13 +317,97 @@ const DEMO_SEED = [
 ];
 const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
 const DATA_CACHE_MS = 30000;
+let CATEGORY_SORT_MODE=false;
+function categoryOrderKey(){return "zap789_v2_category_order_"+(SESSION?.username||"guest")}
+function getCategoryOrder(){
+  try{const v=JSON.parse(localStorage.getItem(categoryOrderKey())||"[]");return Array.isArray(v)?v:[]}catch(_){return []}
+}
+function saveCategoryOrder(v){localStorage.setItem(categoryOrderKey(),JSON.stringify(v))}
+function sortCategoriesForUser(cats){
+  const saved=getCategoryOrder();
+  return [...cats].sort((a,b)=>{
+    const ia=saved.indexOf(a), ib=saved.indexOf(b);
+    if(ia>=0 || ib>=0){
+      if(ia<0)return 1;
+      if(ib<0)return -1;
+      return ia-ib;
+    }
+    return categoryPriority(a)-categoryPriority(b)||a.localeCompare(b,"th");
+  });
+}
+function moveCategory(cat,dir){
+  const all=Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{}));
+  let order=sortCategoriesForUser(all);
+  const zone=zoneForCategory(cat).id;
+  const same=order.filter(c=>zoneForCategory(c).id===zone);
+  const i=same.indexOf(cat), j=i+dir;
+  if(i<0||j<0||j>=same.length)return;
+  [same[i],same[j]]=[same[j],same[i]];
+  let si=0;
+  order=order.map(c=>zoneForCategory(c).id===zone?same[si++]:c);
+  saveCategoryOrder(order); updateNav();
+}
+function toggleCategorySort(){
+  CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE; updateNav();
+}
+function resetCategoryOrder(){
+  localStorage.removeItem(categoryOrderKey()); updateNav(); toast("คืนลำดับเริ่มต้นแล้ว");
+}
+
+let CAT_DRAG = {timer:null, active:false, cat:null, pointerId:null, startY:0};
+function clearCatLongPress(){
+  if(CAT_DRAG.timer){clearTimeout(CAT_DRAG.timer);CAT_DRAG.timer=null}
+}
+function beginCatHold(e,cat){
+  if(e.button!==undefined && e.button!==0)return;
+  clearCatLongPress();
+  CAT_DRAG.active=false; CAT_DRAG.cat=cat; CAT_DRAG.pointerId=e.pointerId; CAT_DRAG.startY=e.clientY;
+  CAT_DRAG.timer=setTimeout(()=>{
+    CAT_DRAG.active=true;
+    document.body.classList.add("category-dragging");
+    const row=document.querySelector(`.cat-row[data-cat="${CSS.escape(cat)}"]`);
+    row?.classList.add("drag-source");
+    try{e.currentTarget.setPointerCapture(e.pointerId)}catch(_){}
+    if(navigator.vibrate) navigator.vibrate(25);
+  },380);
+}
+function moveCatHold(e){
+  if(!CAT_DRAG.timer && !CAT_DRAG.active)return;
+  if(!CAT_DRAG.active && Math.abs(e.clientY-CAT_DRAG.startY)>8){clearCatLongPress();return}
+  if(!CAT_DRAG.active)return;
+  e.preventDefault();
+  const elAt=document.elementFromPoint(e.clientX,e.clientY);
+  const target=elAt?.closest(".cat-row");
+  if(!target)return;
+  const targetCat=target.dataset.cat;
+  if(!targetCat || targetCat===CAT_DRAG.cat)return;
+  if(zoneForCategory(targetCat).id!==zoneForCategory(CAT_DRAG.cat).id)return;
+
+  const all=Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{}));
+  let order=sortCategoriesForUser(all);
+  const a=order.indexOf(CAT_DRAG.cat), b=order.indexOf(targetCat);
+  if(a<0||b<0)return;
+  order.splice(a,1); order.splice(b,0,CAT_DRAG.cat);
+  saveCategoryOrder(order);
+  updateNav();
+  const src=document.querySelector(`.cat-row[data-cat="${CSS.escape(CAT_DRAG.cat)}"]`);
+  src?.classList.add("drag-source");
+}
+function endCatHold(){
+  clearCatLongPress();
+  if(CAT_DRAG.active){
+    document.body.classList.remove("category-dragging");
+    document.querySelectorAll(".drag-source").forEach(x=>x.classList.remove("drag-source"));
+  }
+  CAT_DRAG={timer:null,active:false,cat:null,pointerId:null,startY:0};
+}
 const ZONES = [
   {id:"frequent",icon:"💬",title:"ลูกค้าทักเข้ามา / ข้อความเริ่มต้น",color:"blue",keywords:["สมัคร","ทางเข้า","ทัก","ยินดี","สวัสดี","ปิดแชท","ปิดปรับปรุง"]},
   {id:"finance",icon:"💰",title:"ฝาก / ถอน / บัญชี",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
   {id:"promo",icon:"🎁",title:"โปรโมชั่น / เครดิตฟรี",color:"purple",keywords:["โปร","เครดิตฟรี","โบนัส","โปรโมชั่น"]},
   {id:"game",icon:"🎮",title:"เกม / เดิมพัน",color:"purple",keywords:["เกม","เกมส์","เดิมพัน"]},
-  {id:"problem",icon:"🛠️",title:"ปัญหาการใช้งาน",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
-  {id:"care",icon:"💗",title:"ปลอบใจ / ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์","อารมณ์เสีย"]},
+  {id:"problem",icon:"🛠️",title:"ปัญหาการใช้งาน",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้"]},
+  {id:"care",icon:"💗",title:"ปลอบใจ / ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์","อารมณ์เสีย","สถานการณ์","ลูกค้าด่า"]},
   {id:"other",icon:"📁",title:"อื่น ๆ",color:"blue",keywords:[]}
 ];
 const CATEGORY_PRIORITY = [
@@ -557,29 +678,35 @@ function cardHTML(item){
   const color=getColor(item.cat), fav=FAVORITES.includes(item.id), usage=USAGE[item.id]||0;
   return `<article class="card" data-id="${escAttr(item.id)}" onclick="copyItem('${jsString(item.id)}')" title="คลิกเพื่อคัดลอกข้อความ">
     <div class="card-topline line-${color}"></div>
-    ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="" onclick="event.stopPropagation();copyImage('${jsString(item.img)}')">`:""}
+    ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="รูปประกอบ" loading="lazy" decoding="async" onerror="this.style.display='none'" onclick="event.stopPropagation();copyImage('${jsString(item.img)}')">`:""}
     <div class="card-body"><div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span><span class="usage">ใช้ ${usage} ครั้ง</span></div><div class="card-text">${highlightVars(item.text)}</div></div>
     <div class="card-actions">
       <button class="mini-btn fav ${fav?'on':''}" onclick="event.stopPropagation();toggleFavorite('${jsString(item.id)}')" title="Favorite">${fav?'★':'☆'}</button>
-      ${isAdmin()?`<div class="menu-wrap"><button class="mini-btn" onclick="event.stopPropagation();toggleCardMenu(event,'${jsString(item.id)}')">⋯</button>${openMenuId===item.id?`<div class="card-menu"><button onclick="event.stopPropagation();openEditor('${jsString(item.id)}')">✎ แก้ไข</button><button class="danger" onclick="event.stopPropagation();askDelete('${jsString(item.id)}')">🗑 ลบ</button></div>`:""}</div>`:""}
+      ${isAdmin()?`<button class="mini-btn edit-direct" onclick="event.stopPropagation();openEditor('${jsString(item.id)}')" title="แก้ไข">✎</button><button class="mini-btn delete-direct" onclick="event.stopPropagation();askDelete('${jsString(item.id)}')" title="ลบ">🗑</button>`:""}
     </div></article>`;
 }
 function updateNav(){
   const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
-  const cats=Object.keys(counts).sort((a,b)=>categoryPriority(a)-categoryPriority(b)||a.localeCompare(b,"th"));
+  const cats=sortCategoriesForUser(Object.keys(counts));
   const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
   el("categoryNav").innerHTML=ZONES.filter(z=>grouped[z.id].length).map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
-    const children=grouped[z.id].map(c=>`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`).join("");
+    const children=grouped[z.id].map((c,i)=>{
+      const nav=`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="if(!CAT_DRAG.active)setCategory('${jsString(c)}')"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`;
+      const tools=CATEGORY_SORT_MODE?`<div class="cat-order-tools"><button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',-1)" ${i===0?'disabled':''}>↑</button><button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',1)" ${i===grouped[z.id].length-1?'disabled':''}>↓</button></div>`:"";
+      return `<div class="cat-row" data-cat="${escAttr(c)}" onpointerdown="beginCatHold(event,'${jsString(c)}')" onpointermove="moveCatHold(event)" onpointerup="endCatHold()" onpointercancel="endCatHold()" oncontextmenu="event.preventDefault()">${nav}${tools}</div>`;
+    }).join("");
     return `<div class="zone-block open"><div class="nav-item zone-toggle zone-static"><span class="nav-icon">${z.icon}</span><span>${z.title}</span><span class="nav-count">${total}</span></div><div class="zone-items">${children}</div></div>`;
   }).join("") || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
+
+  if(CATEGORY_SORT_MODE) el("categoryNav").insertAdjacentHTML("beforeend",'<button class="sort-reset" onclick="resetCategoryOrder()">↺ คืนลำดับเริ่มต้น</button>');
+  if(el("sortCatBtn")) el("sortCatBtn").textContent=CATEGORY_SORT_MODE?"✓ เสร็จ":"↕ จัดเรียง";
 
   el("countAll").textContent=DATA.length;
   el("countFav").textContent=FAVORITES.filter(id=>DATA.some(x=>x.id===id)).length;
   el("countRecent").textContent=RECENT.filter(id=>DATA.some(x=>x.id===id)).length;
-  el("catDatalist").innerHTML=cats.map(c=>`<option value="${escAttr(c)}"></option>`).join("");
 }
 function updateStats(found){el("statTotal").textContent=DATA.length;el("statFav").textContent=FAVORITES.length;el("statRecent").textContent=RECENT.length;el("statFound").textContent=found}
 function updateHead(){
@@ -587,7 +714,7 @@ function updateHead(){
   const [t,s]=map[currentView]||map.all;el("pageTitle").textContent=t;el("pageSubtitle").textContent=s;
 }
 function updateChips(){
-  const cats=[...new Set(DATA.map(x=>x.cat))];
+  const cats=sortCategoriesForUser([...new Set(DATA.map(x=>x.cat))]);
   el("chips").innerHTML=`<button class="chip ${currentView==='all'?'active':''}" onclick="setView('all')">ทั้งหมด</button><button class="chip ${currentView==='favorites'?'active':''}" onclick="setView('favorites')">★ โปรด</button><button class="chip ${currentView==='recent'?'active':''}" onclick="setView('recent')">◷ ล่าสุด</button>${cats.slice(0,10).map(c=>`<button class="chip ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')">${escapeHTML(c)}</button>`).join("")}`;
 }
 
@@ -618,26 +745,194 @@ async function copyImage(url){try{const r=await fetch(url),blob=await r.blob();a
 function toggleFavorite(id){FAVORITES=FAVORITES.includes(id)?FAVORITES.filter(x=>x!==id):[id,...FAVORITES];saveJSON(STORAGE.favorites,FAVORITES);render()}
 
 /* ===================== EDITOR CRUD ===================== */
+function allCategories(){
+  return [...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))];
+}
+function buildCategoryOptions(selected=""){
+  const cats=sortCategoriesForUser(allCategories());
+  const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
+  cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
+
+  let html='<option value="">— เลือกหมวดหมู่ —</option>';
+  ZONES.forEach(z=>{
+    if(!grouped[z.id].length)return;
+    html+=`<optgroup label="${escAttr(z.icon+" "+z.title)}">`;
+    grouped[z.id].forEach(c=>html+=`<option value="${escAttr(c)}">${escapeHTML(c)}</option>`);
+    html+='</optgroup>';
+  });
+  if(selected && !cats.includes(selected)){
+    html+=`<option value="${escAttr(selected)}">${escapeHTML(selected)}</option>`;
+  }
+  html+='<option value="__new__">＋ สร้างหมวดใหม่...</option>';
+  el("catSelect").innerHTML=html;
+  el("catSelect").value=selected||"";
+  handleCategorySelect();
+}
+function handleCategorySelect(){
+  const isNew=el("catSelect").value==="__new__";
+  el("newCatInput").classList.toggle("hidden",!isNew);
+  if(isNew)setTimeout(()=>el("newCatInput").focus(),30);
+}
+function selectedCategory(){
+  const v=el("catSelect").value;
+  return v==="__new__"?el("newCatInput").value.trim():v.trim();
+}
 function openEditor(id=null){
   if(!isAdmin()){toast("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล","error");return}
-  editId=id;editImage=null;const item=id?DATA.find(x=>x.id===id):null;
-  el("editorTitle").textContent=item?"แก้ไขข้อความ":"เพิ่มข้อความ";el("catInput").value=item?.cat||((currentView==="category")?currentCat:"");el("tagInput").value=item?.tags||"";el("textInput").value=item?.text||"";editImage=item?.img||null;
-  showImagePreview(editImage);updatePreview();el("editorOverlay").classList.add("show");setTimeout(()=>el("textInput").focus(),50)
+  editId=id; editImage=null;
+  const item=id?DATA.find(x=>x.id===id):null;
+  const selected=item?.cat||((currentView==="category")?currentCat:"");
+
+  el("editorTitle").textContent=item?"แก้ไขข้อความ":"เพิ่มข้อความ";
+  el("tagInput").value=item?.tags||"";
+  el("textInput").value=item?.text||"";
+  el("newCatInput").value="";
+  buildCategoryOptions(selected);
+
+  editImage=item?.img||null;
+  showImagePreview(editImage);
+  el("imageInfo").textContent=editImage?"มีรูปอยู่แล้ว — เลือกรูปใหม่เพื่อแทนที่":"";
+  updatePreview();
+  el("editorOverlay").classList.add("show");
+  setTimeout(()=>el("textInput").focus(),50);
 }
-function closeEditor(){el("editorOverlay").classList.remove("show");editId=null;editImage=null;el("imgInput").value=""}
-function insertToken(token){const t=el("textInput"),start=t.selectionStart,end=t.selectionEnd;t.value=t.value.slice(0,start)+token+t.value.slice(end);t.focus();t.selectionStart=t.selectionEnd=start+token.length;updatePreview()}
-function updatePreview(){const text=el("textInput").value;el("livePreview").innerHTML=text?highlightVars(text):'<span class="muted">ข้อความตัวอย่างจะแสดงตรงนี้</span>'}
+function closeEditor(){
+  el("editorOverlay").classList.remove("show");
+  editId=null; editImage=null;
+  el("imgInput").value="";
+  el("newCatInput").value="";
+  el("imageInfo").textContent="";
+  el("dropZone").classList.remove("processing");
+}
+function insertToken(token){
+  const t=el("textInput"),start=t.selectionStart,end=t.selectionEnd;
+  t.value=t.value.slice(0,start)+token+t.value.slice(end);
+  t.focus();t.selectionStart=t.selectionEnd=start+token.length;updatePreview()
+}
+function updatePreview(){
+  const text=el("textInput").value;
+  el("livePreview").innerHTML=text?highlightVars(text):'<span class="muted">ข้อความตัวอย่างจะแสดงตรงนี้</span>'
+}
+function invalidateDataCache(){
+  localStorage.removeItem(STORAGE.dataAt);
+}
 async function saveItem(){
-  const cat=el("catInput").value.trim(),text=el("textInput").value.trim(),tags=el("tagInput").value.trim();if(!cat||!text){toast("กรุณากรอกหมวดหมู่และข้อความ","error");return}
+  const cat=selectedCategory(),text=el("textInput").value.trim(),tags=el("tagInput").value.trim();
+  if(!cat||!text){toast("กรุณาเลือกหมวดหมู่และกรอกข้อความ","error");return}
   const btn=el("saveBtn");setBusy(btn,true,"กำลังบันทึก...");
-  try{await api({action:editId?"edit":"add",id:editId,cat,text,tags,image:editImage||""});toast("บันทึกข้อมูลแล้ว","success");closeEditor();await loadData()}catch(err){toast(err.message,"error")}finally{setBusy(btn,false,"บันทึกข้อมูล")}
+  try{
+    await api({action:editId?"edit":"add",id:editId,cat,text,tags,image:editImage||""});
+    invalidateDataCache();
+    toast("บันทึกข้อมูลแล้ว","success");
+    closeEditor();
+    await loadData(true);
+  }catch(err){
+    toast(err.message,"error")
+  }finally{
+    setBusy(btn,false,"บันทึกข้อมูล")
+  }
 }
 function askDelete(id){pendingDeleteId=id;openMenuId=null;el("deleteOverlay").classList.add("show")}
 function closeDelete(){el("deleteOverlay").classList.remove("show");pendingDeleteId=null}
-async function confirmDelete(){if(!pendingDeleteId)return;const btn=el("deleteBtn");setBusy(btn,true,"กำลังลบ...");try{await api({action:"delete",id:pendingDeleteId});FAVORITES=FAVORITES.filter(x=>x!==pendingDeleteId);RECENT=RECENT.filter(x=>x!==pendingDeleteId);saveJSON(STORAGE.favorites,FAVORITES);saveJSON(STORAGE.recent,RECENT);toast("ลบข้อความแล้ว","success");closeDelete();await loadData()}catch(err){toast(err.message,"error")}finally{setBusy(btn,false,"ลบข้อความ")}}
-function handleImageFile(file){if(!file)return;if(!file.type.startsWith("image/")){toast("รองรับเฉพาะไฟล์รูปภาพ","error");return}if(file.size>2*1024*1024){toast("รูปใหญ่เกิน 2 MB กรุณาลดขนาดก่อน","error");return}const r=new FileReader();r.onload=e=>{editImage=e.target.result;showImagePreview(editImage)};r.readAsDataURL(file)}
-function showImagePreview(src){const img=el("imagePreview");if(src){img.src=src;img.classList.remove("hidden")}else{img.removeAttribute("src");img.classList.add("hidden")}}
+async function confirmDelete(){
+  if(!pendingDeleteId)return;
+  const btn=el("deleteBtn");setBusy(btn,true,"กำลังลบ...");
+  try{
+    await api({action:"delete",id:pendingDeleteId});
+    FAVORITES=FAVORITES.filter(x=>x!==pendingDeleteId);
+    RECENT=RECENT.filter(x=>x!==pendingDeleteId);
+    saveJSON(STORAGE.favorites,FAVORITES);saveJSON(STORAGE.recent,RECENT);
+    invalidateDataCache();
+    toast("ลบข้อความแล้ว","success");
+    closeDelete();
+    await loadData(true);
+  }catch(err){toast(err.message,"error")}
+  finally{setBusy(btn,false,"ลบข้อความ")}
+}
 
+/* Google Sheets จำกัดข้อความใน 1 เซลล์ประมาณ 50,000 ตัวอักษร
+   จึงบีบรูปฝั่งเบราว์เซอร์ให้ data URL ต่ำกว่า ~44,000 ตัวอักษรก่อนส่ง */
+const IMAGE_DATA_TARGET = 44000;
+async function handleImageFile(file){
+  if(!file)return;
+  if(!file.type.startsWith("image/")){toast("รองรับเฉพาะไฟล์รูปภาพ","error");return}
+  if(file.size>20*1024*1024){toast("รูปต้นฉบับใหญ่เกิน 20 MB","error");return}
+
+  const dz=el("dropZone");
+  dz.classList.add("processing");
+  el("imageInfo").textContent="กำลังปรับขนาดรูปให้เหมาะกับระบบ...";
+  try{
+    const result=await compressImageForSheet(file);
+    editImage=result.dataUrl;
+    showImagePreview(editImage);
+    el("imageInfo").textContent=`พร้อมบันทึก • ${result.width}×${result.height}px • ประมาณ ${Math.round(result.dataUrl.length/1024)} KB`;
+    toast("เตรียมรูปเรียบร้อย","success");
+  }catch(err){
+    editImage=null;
+    showImagePreview(null);
+    el("imageInfo").textContent="";
+    toast(err.message||"เตรียมรูปไม่สำเร็จ","error");
+  }finally{
+    dz.classList.remove("processing");
+    el("imgInput").value="";
+  }
+}
+function loadImageFromFile(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("เปิดไฟล์รูปไม่สำเร็จ"))};
+    img.src=url;
+  });
+}
+async function compressImageForSheet(file){
+  const img=await loadImageFromFile(file);
+  let maxW=1100,maxH=1100;
+  let scale=Math.min(1,maxW/img.naturalWidth,maxH/img.naturalHeight);
+  let w=Math.max(1,Math.round(img.naturalWidth*scale));
+  let h=Math.max(1,Math.round(img.naturalHeight*scale));
+
+  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d",{alpha:false});
+  if(!ctx)throw new Error("เบราว์เซอร์ไม่รองรับการปรับรูป");
+  let quality=.82, dataUrl="";
+
+  for(let attempt=0;attempt<14;attempt++){
+    canvas.width=w;canvas.height=h;
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);
+    ctx.drawImage(img,0,0,w,h);
+    dataUrl=canvas.toDataURL("image/webp",quality);
+    if(!dataUrl.startsWith("data:image/webp"))dataUrl=canvas.toDataURL("image/jpeg",quality);
+
+    if(dataUrl.length<=IMAGE_DATA_TARGET){
+      return {dataUrl,width:w,height:h};
+    }
+    if(quality>.48) quality-=.08;
+    else{
+      w=Math.max(320,Math.round(w*.82));
+      h=Math.max(180,Math.round(h*.82));
+      quality=.62;
+    }
+  }
+  if(dataUrl.length>IMAGE_DATA_TARGET)throw new Error("รูปยังใหญ่เกินไป กรุณาใช้รูปที่รายละเอียดน้อยลง");
+  return {dataUrl,width:w,height:h};
+}
+function removeEditorImage(){
+  editImage=null;
+  showImagePreview(null);
+  el("imageInfo").textContent="ลบรูปออกแล้ว";
+}
+function showImagePreview(src){
+  const img=el("imagePreview"),btn=el("removeImageBtn");
+  if(src){
+    img.src=src;
+    img.classList.remove("hidden");
+    btn.classList.remove("hidden");
+  }else{
+    img.removeAttribute("src");
+    img.classList.add("hidden");
+    btn.classList.add("hidden");
+  }
+}
 
 /* ===================== FIRST LOGIN PASSWORD ===================== */
 function openForcePassword(){el("forcePasswordInput").value="";el("forcePasswordConfirm").value="";el("forcePasswordOverlay").classList.add("show");setTimeout(()=>el("forcePasswordInput").focus(),60)}
