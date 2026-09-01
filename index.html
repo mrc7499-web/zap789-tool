@@ -90,6 +90,15 @@ button{cursor:pointer}
 .boot-spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:bootspin .75s linear infinite}
 @keyframes bootspin{to{transform:rotate(360deg)}}
 
+
+.zone-static{cursor:default;background:var(--surface-2);margin-top:8px}
+.zone-static:hover{background:var(--surface-2)}
+.zone-block .zone-items{display:block!important;padding:3px 0 6px 10px}
+.zone-block .zone-chevron{display:none!important}
+.zone-items .nav-item{min-height:36px}
+.zone-items .nav-item.active{box-shadow:inset 3px 0 0 var(--primary)}
+.zone-items .category-name{white-space:normal;line-height:1.25}
+
 </style>
 </head>
 <body>
@@ -272,19 +281,21 @@ const DEMO_SEED = [
 const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
 const DATA_CACHE_MS = 30000;
 const ZONES = [
-  {id:"frequent",icon:"⚡",title:"ใช้บ่อย",color:"blue",keywords:["สมัคร","ทางเข้า","ปิดแชท","ปิดปรับปรุง"]},
+  {id:"frequent",icon:"💬",title:"ลูกค้าทักเข้ามา / ข้อความเริ่มต้น",color:"blue",keywords:["สมัคร","ทางเข้า","ทัก","ยินดี","สวัสดี","ปิดแชท","ปิดปรับปรุง"]},
   {id:"finance",icon:"💰",title:"ฝาก / ถอน / บัญชี",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
-  {id:"problem",icon:"🛠️",title:"ปัญหา",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
-  {id:"game",icon:"🎮",title:"เกม / โปรโมชั่น",color:"purple",keywords:["เกม","เกมส์","เครดิตฟรี","โปร","เดิมพัน"]},
-  {id:"care",icon:"💗",title:"ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์","อารมณ์เสีย"]},
+  {id:"promo",icon:"🎁",title:"โปรโมชั่น / เครดิตฟรี",color:"purple",keywords:["โปร","เครดิตฟรี","โบนัส","โปรโมชั่น"]},
+  {id:"game",icon:"🎮",title:"เกม / เดิมพัน",color:"purple",keywords:["เกม","เกมส์","เดิมพัน"]},
+  {id:"problem",icon:"🛠️",title:"ปัญหาการใช้งาน",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
+  {id:"care",icon:"💗",title:"ปลอบใจ / ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์","อารมณ์เสีย"]},
   {id:"other",icon:"📁",title:"อื่น ๆ",color:"blue",keywords:[]}
 ];
 const CATEGORY_PRIORITY = [
-  "สมัคร","ทางเข้า","ฝากเงิน","ถอนเงิน","เปลี่ยนบัญชี","บัญชีไม่ตรง",
-  "ฝากมีปัญหา","ฝากปัญหา","ถอนมีปัญหา","ถอนปัญหา","qr code","qr",
-  "vpn","เน็ต","เข้าเล่นไม่ได้","ปัญหา",
-  "เครดิตฟรี","โปร","เกม","เกมส์","ค้างเดิมพัน",
-  "กำลังใจ","ปลอบใจ","คืนยอดเสีย","เครดิต",
+  "สวัสดี","ยินดี","ทัก","สมัคร","ทางเข้า",
+  "ฝากเงิน","ถอนเงิน","ฝาก","ถอน","เปลี่ยนบัญชี","บัญชีไม่ตรง","qr code","qr","คืนยอดเสีย","เครดิต",
+  "โปร","โปรโมชั่น","เครดิตฟรี","โบนัส",
+  "เกม","เกมส์","เดิมพัน","ค้างเดิมพัน",
+  "ฝากมีปัญหา","ฝากปัญหา","ถอนมีปัญหา","ถอนปัญหา","vpn","เน็ต","เข้าเล่นไม่ได้","ปัญหา",
+  "กำลังใจ","ปลอบใจ",
   "ปิดแชท","ปิดปรับปรุง","สถานการณ์"
 ];
 function categoryPriority(name){
@@ -529,18 +540,9 @@ function zoneForCategory(cat){
   const s=String(cat||"").toLowerCase();
   return ZONES.find(z=>z.id!=="other"&&z.keywords.some(k=>s.includes(k.toLowerCase()))) || ZONES.find(z=>z.id==="other");
 }
-function getOpenZones(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(STORAGE.zones)||"[]");
-    return Array.isArray(saved)?saved.slice(0,1):[];
-  }catch(_){return []}
-}
-function setOpenZones(ids){localStorage.setItem(STORAGE.zones,JSON.stringify((ids||[]).slice(0,1)))}
-function toggleZone(id){
-  const open=getOpenZones();
-  setOpenZones(open[0]===id?[]:[id]);
-  updateNav();
-}
+function getOpenZones(){ return ZONES.map(z=>z.id); }
+function setOpenZones(ids){}
+function toggleZone(id){}
 function renderGrouped(items){
   const buckets={}; ZONES.forEach(z=>buckets[z.id]=[]);
   items.forEach(x=>buckets[zoneForCategory(x.cat).id].push(x));
@@ -568,24 +570,15 @@ function updateNav(){
   const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
-  let open=getOpenZones();
-  if(currentView==="category"){
-    const activeZone=zoneForCategory(currentCat).id;
-    if(open[0]!==activeZone){open=[activeZone];setOpenZones(open)}
-  }
-  if(!open.length){
-    const firstAvailable=ZONES.find(z=>grouped[z.id].length);
-    if(firstAvailable){open=[firstAvailable.id];setOpenZones(open)}
-  }
-
   el("categoryNav").innerHTML=ZONES.filter(z=>grouped[z.id].length).map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
-    const isOpen=open.includes(z.id);
     const children=grouped[z.id].map(c=>`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`).join("");
-    return `<div class="zone-block ${isOpen?'open':''}"><button class="nav-item zone-toggle" onclick="toggleZone('${z.id}')"><span class="nav-icon">${z.icon}</span><span>${z.title}</span><span class="nav-count">${total}</span><span class="zone-chevron">›</span></button><div class="zone-items">${children}</div></div>`;
+    return `<div class="zone-block open"><div class="nav-item zone-toggle zone-static"><span class="nav-icon">${z.icon}</span><span>${z.title}</span><span class="nav-count">${total}</span></div><div class="zone-items">${children}</div></div>`;
   }).join("") || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
 
-  el("countAll").textContent=DATA.length; el("countFav").textContent=FAVORITES.filter(id=>DATA.some(x=>x.id===id)).length; el("countRecent").textContent=RECENT.filter(id=>DATA.some(x=>x.id===id)).length;
+  el("countAll").textContent=DATA.length;
+  el("countFav").textContent=FAVORITES.filter(id=>DATA.some(x=>x.id===id)).length;
+  el("countRecent").textContent=RECENT.filter(id=>DATA.some(x=>x.id===id)).length;
   el("catDatalist").innerHTML=cats.map(c=>`<option value="${escAttr(c)}"></option>`).join("");
 }
 function updateStats(found){el("statTotal").textContent=DATA.length;el("statFav").textContent=FAVORITES.length;el("statRecent").textContent=RECENT.length;el("statFound").textContent=found}
@@ -599,7 +592,11 @@ function updateChips(){
 }
 
 /* ===================== COPY / FAVORITES / RECENT ===================== */
+let COPY_LOCK_UNTIL=0;
 function copyItem(id){
+  const now=Date.now();
+  if(now<COPY_LOCK_UNTIL)return;
+  COPY_LOCK_UNTIL=now+180;
   const item=DATA.find(x=>x.id===id); if(!item)return;
   finishCopy(item,item.text);
 }
@@ -709,7 +706,15 @@ function resetDemo(){
 /* ===================== UI HELPERS ===================== */
 function getColor(cat){return zoneForCategory(cat).color}
 function highlightVars(text){return escapeHTML(text).replace(/\{([a-zA-Z0-9_ก-๙]+)\}/g,'<span class="var">{$1}</span>')}
-function toggleCardMenu(e,id){e.stopPropagation();openMenuId=openMenuId===id?null:id;render()}
+let MENU_LOCK_UNTIL=0;
+function toggleCardMenu(e,id){
+  e.stopPropagation();
+  const now=Date.now();
+  if(now<MENU_LOCK_UNTIL)return;
+  MENU_LOCK_UNTIL=now+160;
+  openMenuId=openMenuId===id?null:id;
+  render();
+}
 function toggleAccountMenu(){if(confirm(`ผู้ใช้: ${SESSION?.username||'-'}\nสิทธิ์: ${SESSION?.role||'-'}\n\nออกจากระบบหรือไม่?`))logout()}
 function openDrawer(){el("sidebar").classList.add("open");el("drawerBackdrop").classList.add("show")}
 function closeDrawer(){el("sidebar").classList.remove("open");el("drawerBackdrop").classList.remove("show")}
