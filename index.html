@@ -259,7 +259,8 @@ const DEMO_SEED = [
   {id:"d9",cat:"เข้าเล่นไม่ได้",text:"รบกวนคุณ {name} ส่งภาพหน้าจอที่พบปัญหาเข้ามาให้แอดมินตรวจสอบได้เลยค่ะ",tags:"เข้าไม่ได้ error ปัญหา"},
   {id:"d10",cat:"ปิดแชท",text:"ขอบคุณที่ใช้บริการค่ะ 💛 หากต้องการสอบถามเพิ่มเติม ทักหาแอดมินได้ตลอดนะคะ",tags:"ขอบคุณ ปิดแชท"}
 ];
-const STORAGE = {token:"zap789_v2_token", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
+const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
+const DATA_CACHE_MS = 30000;
 const ZONES = [
   {id:"standard",icon:"💬",title:"ข้อความมาตรฐาน",color:"blue",keywords:["สมัคร","ทางเข้า","ปิดแชท","ปิดปรับปรุง"]},
   {id:"finance",icon:"💰",title:"บัญชี / ฝาก-ถอน",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
@@ -367,24 +368,85 @@ async function doLogin(){
     if(!result.token) throw new Error("Server ไม่ได้ส่ง session token กลับมา");
     localStorage.setItem(STORAGE.token,result.token);
     SESSION=result.user||{username,role:"staff"};
+    localStorage.setItem(STORAGE.session,JSON.stringify(SESSION));
     await enterApp();
   }catch(err){setLoginError(err.message||"เข้าสู่ระบบไม่สำเร็จ")}finally{setBusy(el("loginBtn"),false,"เข้าสู่ระบบ")}
 }
 
 async function restoreSession(){
-  const token=localStorage.getItem(STORAGE.token); if(!token) return false;
-  try{const result=await api({action:"me"}); SESSION=result.user; return !!SESSION}catch(_){localStorage.removeItem(STORAGE.token);return false}
+  const token=localStorage.getItem(STORAGE.token);
+  if(!token) return false;
+  try{
+    const cached=JSON.parse(localStorage.getItem(STORAGE.session)||"null");
+    if(cached && cached.username){
+      SESSION=cached;
+      return true;
+    }
+  }catch(_){}
+  try{
+    const result=await api({action:"me"});
+    SESSION=result.user;
+    if(SESSION) localStorage.setItem(STORAGE.session,JSON.stringify(SESSION));
+    return !!SESSION;
+  }catch(err){
+    // Only clear the login when the server explicitly says the session is invalid/expired.
+    const msg=String(err&&err.message||"");
+    if(/session|เข้าสู่ระบบใหม่|หมดอายุ/i.test(msg)){
+      localStorage.removeItem(STORAGE.token);
+      localStorage.removeItem(STORAGE.session);
+      return false;
+    }
+    // Temporary network/server issue: keep the saved token instead of logging the user out.
+    return false;
+  }
 }
-async function logout(){localStorage.removeItem(STORAGE.token);localStorage.removeItem("zap789_demo_user");location.reload()}
+async function logout(){
+  try{await api({action:"logout"})}catch(_){}
+  localStorage.removeItem(STORAGE.token);
+  localStorage.removeItem(STORAGE.session);
+  localStorage.removeItem("zap789_demo_user");
+  location.reload();
+}
 
-async function loadData(){
-  el("content").innerHTML='<div class="card-grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>';
+async function loadData(force=false){
+  let cachedRows=null, cachedAt=Number(localStorage.getItem(STORAGE.dataAt)||0);
+  try{
+    const c=JSON.parse(localStorage.getItem(STORAGE.data)||"null");
+    if(Array.isArray(c)) cachedRows=c;
+  }catch(_){}
+  if(cachedRows){
+    DATA=cachedRows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted");
+    render();
+    // Prevent every refresh from hammering Apps Script / Google Sheets.
+    if(!force && Date.now()-cachedAt < DATA_CACHE_MS) return;
+  }else{
+    el("content").innerHTML='<div class="card-grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>';
+  }
   try{
     const result=await api({action:"list"});
     const rows=Array.isArray(result)?result:(result.items||[]);
     DATA=rows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted");
+    localStorage.setItem(STORAGE.data,JSON.stringify(rows));
+    localStorage.setItem(STORAGE.dataAt,String(Date.now()));
     render();
-  }catch(err){el("content").innerHTML=`<div class="empty"><div class="emoji">⚠️</div><h3>โหลดข้อมูลไม่สำเร็จ</h3><p>${escapeHTML(err.message)}</p><button class="secondary-btn" onclick="loadData()">ลองใหม่</button></div>`}
+  }catch(err){
+    const msg=String(err&&err.message||"");
+    if(/session|เข้าสู่ระบบใหม่|หมดอายุ/i.test(msg)){
+      localStorage.removeItem(STORAGE.token);
+      localStorage.removeItem(STORAGE.session);
+      SESSION=null;
+      el("app").classList.add("hidden");
+      el("loginOverlay").classList.remove("hidden");
+      setLoginError("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      return;
+    }
+    // If cached data exists, stay inside the app and keep working/read instead of kicking to login.
+    if(cachedRows){
+      toast("เชื่อมต่อเซิร์ฟเวอร์ชั่วคราวไม่ได้ — แสดงข้อมูลที่บันทึกล่าสุด","error");
+      return;
+    }
+    el("content").innerHTML=`<div class="empty"><div class="emoji">⚠️</div><h3>โหลดข้อมูลไม่สำเร็จ</h3><p>${escapeHTML(msg)}</p><button class="secondary-btn" onclick="loadData(true)">ลองใหม่</button></div>`;
+  }
 }
 function normalizeRow(r,i){
   if(Array.isArray(r)) return {id:String(r[4]??i),cat:String(r[0]??""),text:String(r[1]??""),status:String(r[2]??""),img:String(r[3]??""),tags:String(r[5]??"")};
