@@ -125,6 +125,28 @@ button{cursor:pointer}
 .image-preview{max-height:260px;max-width:100%;object-fit:contain}
 .file-drop.processing{opacity:.72;pointer-events:none}
 
+
+/* Consistent message-card layout */
+.card-grid{align-items:stretch}
+.card{height:100%;min-height:330px;display:flex;flex-direction:column;overflow:hidden}
+.card-image{width:100%;height:210px;aspect-ratio:auto;object-fit:cover;display:block;flex:0 0 210px}
+.card-body{flex:1;display:flex;flex-direction:column}
+.card-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;line-height:1.55}
+.card-actions{margin-top:auto}
+@media(max-width:700px){
+  .card{min-height:300px}
+  .card-image{height:180px;flex-basis:180px}
+}
+
+
+.sort-note{margin:0 0 14px;padding:10px 14px;border:1px solid var(--border);background:var(--primary-soft);color:var(--primary);border-radius:12px;font-size:12px;font-weight:800}
+.message-sort-card{cursor:grab;user-select:none;-webkit-user-select:none}
+.message-sort-card:active{cursor:grabbing}
+.message-sort-card.msg-dragging{opacity:.42;transform:scale(.985)}
+.message-sort-card.msg-drag-over{outline:3px dashed var(--primary);outline-offset:-6px}
+.msg-sort-hint{font-size:11px;font-weight:800;color:var(--primary);background:var(--primary-soft);padding:6px 9px;border-radius:8px;margin-bottom:8px;text-align:center}
+#messageSortBtn{font-weight:800}
+
 </style>
 </head>
 <body>
@@ -153,6 +175,7 @@ button{cursor:pointer}
     <button class="nav-item active" data-view="all" onclick="setView('all')"><span class="nav-icon">▦</span>ทั้งหมด<span id="countAll" class="nav-count">0</span></button>
     <button class="nav-item" data-view="favorites" onclick="setView('favorites')"><span class="nav-icon">★</span>รายการโปรด<span id="countFav" class="nav-count">0</span></button>
     <button class="nav-item" data-view="recent" onclick="setView('recent')"><span class="nav-icon">◷</span>ใช้ล่าสุด<span id="countRecent" class="nav-count">0</span></button>
+<button id="messageSortBtn" class="chip" onclick="toggleMessageSort()">↕ จัดเรียงข้อความ</button><button id="messageSortResetBtn" class="chip hidden" onclick="resetMessageOrder()">↺ คืนลำดับ</button>
     <div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="toggleCategorySort()">↕ จัดเรียง</button></div>
     <div id="categoryNav"></div>
     <div id="adminSection" class="hidden">
@@ -350,6 +373,95 @@ function moveCategory(cat,dir){
 function toggleCategorySort(){
   CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE; updateNav();
 }
+
+let MESSAGE_SORT_MODE=false;
+
+function messageOrderKey(){
+  return "zap789_v2_message_order_"+(SESSION?.username||"guest");
+}
+function getMessageOrder(){
+  try{
+    const v=JSON.parse(localStorage.getItem(messageOrderKey())||"[]");
+    return Array.isArray(v)?v:[];
+  }catch(_){return []}
+}
+function saveMessageOrder(v){
+  localStorage.setItem(messageOrderKey(),JSON.stringify(v));
+}
+function sortMessagesForUser(items){
+  const saved=getMessageOrder();
+  const pos=new Map(saved.map((id,i)=>[id,i]));
+  return [...items].sort((a,b)=>{
+    const ia=pos.has(a.id)?pos.get(a.id):Number.MAX_SAFE_INTEGER;
+    const ib=pos.has(b.id)?pos.get(b.id):Number.MAX_SAFE_INTEGER;
+    return ia-ib;
+  });
+}
+function toggleMessageSort(){
+  MESSAGE_SORT_MODE=!MESSAGE_SORT_MODE;
+  render();
+}
+function resetMessageOrder(){
+  localStorage.removeItem(messageOrderKey());
+  render();
+  toast("คืนลำดับข้อความเริ่มต้นแล้ว");
+}
+function ensureMessageOrder(items){
+  let order=getMessageOrder();
+  const known=new Set(order);
+  items.forEach(x=>{if(!known.has(x.id)){order.push(x.id);known.add(x.id)}});
+  saveMessageOrder(order);
+  return order;
+}
+function moveMessageById(dragId,targetId){
+  if(!dragId||!targetId||dragId===targetId)return;
+  const items=getVisibleItemsForSort();
+  let order=ensureMessageOrder(items);
+  const a=order.indexOf(dragId), b=order.indexOf(targetId);
+  if(a<0||b<0)return;
+  order.splice(a,1);
+  order.splice(b,0,dragId);
+  saveMessageOrder(order);
+  render();
+}
+function getVisibleItemsForSort(){
+  const q=el("search").value.trim().toLowerCase();
+  let items=DATA.slice();
+  if(currentView==="favorites") items=items.filter(x=>FAVORITES.includes(x.id));
+  else if(currentView==="recent") items=RECENT.map(id=>items.find(x=>x.id===id)).filter(Boolean);
+  else if(currentView==="category") items=items.filter(x=>x.cat===currentCat);
+  if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
+  return items;
+}
+let MSG_DRAG_ID=null;
+function msgDragStart(e,id){
+  if(!MESSAGE_SORT_MODE){e.preventDefault();return}
+  MSG_DRAG_ID=id;
+  e.dataTransfer.effectAllowed="move";
+  e.dataTransfer.setData("text/plain",id);
+  requestAnimationFrame(()=>e.currentTarget.classList.add("msg-dragging"));
+}
+function msgDragOver(e){
+  if(!MESSAGE_SORT_MODE)return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect="move";
+  e.currentTarget.classList.add("msg-drag-over");
+}
+function msgDragLeave(e){
+  e.currentTarget.classList.remove("msg-drag-over");
+}
+function msgDrop(e,targetId){
+  if(!MESSAGE_SORT_MODE)return;
+  e.preventDefault();
+  e.currentTarget.classList.remove("msg-drag-over");
+  const dragId=e.dataTransfer.getData("text/plain")||MSG_DRAG_ID;
+  moveMessageById(dragId,targetId);
+}
+function msgDragEnd(){
+  MSG_DRAG_ID=null;
+  document.querySelectorAll(".msg-dragging,.msg-drag-over").forEach(x=>x.classList.remove("msg-dragging","msg-drag-over"));
+}
+
 function resetCategoryOrder(){
   localStorage.removeItem(categoryOrderKey()); updateNav(); toast("คืนลำดับเริ่มต้นแล้ว");
 }
@@ -648,14 +760,34 @@ function render(){
   else if(currentView==="recent") items=RECENT.map(id=>items.find(x=>x.id===id)).filter(Boolean);
   else if(currentView==="category") items=items.filter(x=>x.cat===currentCat);
   if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
+
   const sort=el("sortSelect").value;
-  if(sort==="popular") items.sort((a,b)=>(USAGE[b.id]||0)-(USAGE[a.id]||0));
-  else if(sort==="recent") items.sort((a,b)=>RECENT.indexOf(a.id)-RECENT.indexOf(b.id));
-  else if(sort==="az") items.sort((a,b)=>a.cat.localeCompare(b.cat,"th"));
+  if(MESSAGE_SORT_MODE || sort==="default"){
+    items=sortMessagesForUser(items);
+  }else if(sort==="popular"){
+    items.sort((a,b)=>(USAGE[b.id]||0)-(USAGE[a.id]||0));
+  }else if(sort==="recent"){
+    items.sort((a,b)=>RECENT.indexOf(a.id)-RECENT.indexOf(b.id));
+  }else if(sort==="az"){
+    items.sort((a,b)=>a.cat.localeCompare(b.cat,"th"));
+  }
 
   updateNav(); updateStats(items.length); updateHead(); updateChips();
-  if(!items.length){el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>ลองเปลี่ยนคำค้น หมวดหมู่ หรือตัวกรอง</p></div>';return}
-  if(currentView==="all"&&!q&&sort==="default") renderGrouped(items); else el("content").innerHTML=`<div class="card-grid">${items.map(cardHTML).join("")}</div>`;
+  if(el("messageSortBtn")) el("messageSortBtn").textContent=MESSAGE_SORT_MODE?"✓ เสร็จจัดเรียง":"↕ จัดเรียงข้อความ";
+  if(el("messageSortResetBtn")) el("messageSortResetBtn").classList.toggle("hidden",!MESSAGE_SORT_MODE);
+
+  if(!items.length){
+    el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>ลองเปลี่ยนคำค้น หมวดหมู่ หรือตัวกรอง</p></div>';
+    return;
+  }
+
+  if(MESSAGE_SORT_MODE){
+    el("content").innerHTML=`<div class="sort-note">ลากการ์ดข้อความไปวางตำแหน่งที่ต้องการ • ลำดับนี้เป็นของบัญชีคุณ</div><div class="card-grid">${items.map(cardHTML).join("")}</div>`;
+  }else if(currentView==="all"&&!q&&sort==="default"){
+    renderGrouped(items);
+  }else{
+    el("content").innerHTML=`<div class="card-grid">${items.map(cardHTML).join("")}</div>`;
+  }
 }
 function zoneForCategory(cat){
   const s=String(cat||"").toLowerCase();
@@ -666,7 +798,7 @@ function setOpenZones(ids){}
 function toggleZone(id){}
 function renderGrouped(items){
   const buckets={}; ZONES.forEach(z=>buckets[z.id]=[]);
-  items.forEach(x=>buckets[zoneForCategory(x.cat).id].push(x));
+  sortMessagesForUser(items).forEach(x=>buckets[zoneForCategory(x.cat).id].push(x));
   let html="";
   ZONES.forEach(z=>{
     if(!buckets[z.id].length)return;
@@ -676,14 +808,27 @@ function renderGrouped(items){
 }
 function cardHTML(item){
   const color=getColor(item.cat), fav=FAVORITES.includes(item.id), usage=USAGE[item.id]||0;
-  return `<article class="card" data-id="${escAttr(item.id)}" onclick="copyItem('${jsString(item.id)}')" title="คลิกเพื่อคัดลอกข้อความ">
+  return `<article class="card ${MESSAGE_SORT_MODE?'message-sort-card':''}" data-id="${escAttr(item.id)}"
+    draggable="${MESSAGE_SORT_MODE?'true':'false'}"
+    ondragstart="msgDragStart(event,'${jsString(item.id)}')"
+    ondragover="msgDragOver(event)"
+    ondragleave="msgDragLeave(event)"
+    ondrop="msgDrop(event,'${jsString(item.id)}')"
+    ondragend="msgDragEnd()"
+    onclick="if(!MESSAGE_SORT_MODE)copyItem('${jsString(item.id)}')"
+    title="${MESSAGE_SORT_MODE?'ลากเพื่อจัดเรียงข้อความ':'คลิกเพื่อคัดลอกข้อความ'}">
     <div class="card-topline line-${color}"></div>
-    ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="รูปประกอบ" loading="lazy" decoding="async" onerror="this.style.display='none'" onclick="event.stopPropagation();copyImage('${jsString(item.img)}')">`:""}
-    <div class="card-body"><div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span><span class="usage">ใช้ ${usage} ครั้ง</span></div><div class="card-text">${highlightVars(item.text)}</div></div>
-    <div class="card-actions">
+    ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="รูปประกอบ" loading="lazy" decoding="async" onerror="this.style.display='none'" onclick="if(!MESSAGE_SORT_MODE){event.stopPropagation();copyImage('${jsString(item.img)}')}">`:""}
+    <div class="card-body">
+      ${MESSAGE_SORT_MODE?`<div class="msg-sort-hint">⠿ ลากการ์ดนี้เพื่อย้ายตำแหน่ง</div>`:""}
+      <div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span><span class="usage">ใช้ ${usage} ครั้ง</span></div>
+      <div class="card-text">${highlightVars(item.text)}</div>
+    </div>
+    <div class="card-actions ${MESSAGE_SORT_MODE?'hidden':''}">
       <button class="mini-btn fav ${fav?'on':''}" onclick="event.stopPropagation();toggleFavorite('${jsString(item.id)}')" title="Favorite">${fav?'★':'☆'}</button>
       ${isAdmin()?`<button class="mini-btn edit-direct" onclick="event.stopPropagation();openEditor('${jsString(item.id)}')" title="แก้ไข">✎</button><button class="mini-btn delete-direct" onclick="event.stopPropagation();askDelete('${jsString(item.id)}')" title="ลบ">🗑</button>`:""}
-    </div></article>`;
+    </div>
+  </article>`;
 }
 function updateNav(){
   const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
