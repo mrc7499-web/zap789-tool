@@ -84,11 +84,21 @@ button{cursor:pointer}
 @media(max-width:760px){
   .app{display:block}.header{height:auto;min-height:64px;padding:10px;position:sticky}.mobile-menu{display:grid}.account-meta{display:none}.header .primary-btn .label{display:none}.header .primary-btn{padding:11px 13px}.search-kbd{display:none}.search-wrap input{padding-right:12px}.sidebar{position:fixed;left:0;top:0;bottom:0;width:min(86vw,310px);transform:translateX(-104%);transition:.22s;box-shadow:20px 0 60px rgba(0,0,0,.25)}.sidebar.open{transform:none}.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55}.drawer-backdrop.show{display:block}.main{height:auto;overflow:visible}.main-inner{padding:17px 12px 36px}.page-head{align-items:flex-start}.page-title h2{font-size:20px}.sort-select{max-width:132px}.card-grid{grid-template-columns:1fr}.stats-strip{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:11px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.overlay{align-items:flex-end;padding:0}.modal{border-radius:20px 20px 0 0;max-height:92vh;width:100%}.variable-line{grid-template-columns:90px 1fr}.toast-stack{left:10px;right:10px;bottom:10px}.toast{min-width:0;max-width:none}
 }
+
+.boot-screen{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.boot-card{display:flex;align-items:center;gap:12px;padding:16px 20px;border:1px solid var(--border);background:var(--surface);border-radius:16px;box-shadow:var(--shadow);font-weight:800}
+.boot-spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:bootspin .75s linear infinite}
+@keyframes bootspin{to{transform:rotate(360deg)}}
+
 </style>
 </head>
 <body>
 
-<div id="loginOverlay" class="login-overlay">
+<div id="bootScreen" class="boot-screen">
+  <div class="boot-card"><span class="boot-spinner"></span><span>กำลังเปิด Zap789 PRO...</span></div>
+</div>
+
+<div id="loginOverlay" class="login-overlay hidden">
   <div class="login-card">
     <div class="login-logo">🔥</div>
     <h1>Zap789 PRO V2</h1>
@@ -262,16 +272,20 @@ const DEMO_SEED = [
 const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
 const DATA_CACHE_MS = 30000;
 const ZONES = [
-  {id:"standard",icon:"💬",title:"ข้อความมาตรฐาน",color:"blue",keywords:["สมัคร","ทางเข้า","ปิดแชท","ปิดปรับปรุง"]},
-  {id:"finance",icon:"💰",title:"บัญชี / ฝาก-ถอน",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
-  {id:"problem",icon:"🛠️",title:"ปัญหาอื่น ๆ",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
-  {id:"game",icon:"🎮",title:"เกม / โปรโมชั่น",color:"purple",keywords:["เกม","เกมส์","เครดิตฟรี","โปร"]},
-  {id:"care",icon:"💗",title:"ปลอบใจ / ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์"]},
+  {id:"frequent",icon:"⚡",title:"ใช้บ่อย",color:"blue",keywords:["สมัคร","ทางเข้า","ปิดแชท","ปิดปรับปรุง"]},
+  {id:"finance",icon:"💰",title:"ฝาก / ถอน / บัญชี",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
+  {id:"problem",icon:"🛠️",title:"ปัญหา",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
+  {id:"game",icon:"🎮",title:"เกม / โปรโมชั่น",color:"purple",keywords:["เกม","เกมส์","เครดิตฟรี","โปร","เดิมพัน"]},
+  {id:"care",icon:"💗",title:"ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์","อารมณ์เสีย"]},
   {id:"other",icon:"📁",title:"อื่น ๆ",color:"blue",keywords:[]}
 ];
 const CATEGORY_PRIORITY = [
-  "สมัคร","ทางเข้า","ฝากเงิน","ถอนเงิน","เปลี่ยนบัญชี","บัญชีไม่ตรง","ฝากมีปัญหา","ถอนมีปัญหา",
-  "vpn","เน็ต","เครดิตฟรี","โปร","เกม","กำลังใจ","คืนยอดเสีย","ค้างเดิมพัน","เครดิต","ปิดแชท","ปิดปรับปรุง","สถานการณ์"
+  "สมัคร","ทางเข้า","ฝากเงิน","ถอนเงิน","เปลี่ยนบัญชี","บัญชีไม่ตรง",
+  "ฝากมีปัญหา","ฝากปัญหา","ถอนมีปัญหา","ถอนปัญหา","qr code","qr",
+  "vpn","เน็ต","เข้าเล่นไม่ได้","ปัญหา",
+  "เครดิตฟรี","โปร","เกม","เกมส์","ค้างเดิมพัน",
+  "กำลังใจ","ปลอบใจ","คืนยอดเสีย","เครดิต",
+  "ปิดแชท","ปิดปรับปรุง","สถานการณ์"
 ];
 function categoryPriority(name){
   const s=String(name||"").toLowerCase();
@@ -455,7 +469,7 @@ function normalizeRow(r,i){
 
 /* ===================== APP / STATE ===================== */
 async function enterApp(){
-  el("loginOverlay").classList.add("hidden"); el("app").classList.remove("hidden");
+  el("loginOverlay").classList.add("hidden"); el("bootScreen")?.classList.add("hidden"); el("app").classList.remove("hidden");
   applySessionUI();
   await loadData();
   if(SESSION?.forceChange) openForcePassword();
@@ -518,14 +532,14 @@ function zoneForCategory(cat){
 function getOpenZones(){
   try{
     const saved=JSON.parse(localStorage.getItem(STORAGE.zones)||"[]");
-    return Array.isArray(saved)?saved:[];
+    return Array.isArray(saved)?saved.slice(0,1):[];
   }catch(_){return []}
 }
-function setOpenZones(ids){localStorage.setItem(STORAGE.zones,JSON.stringify(ids))}
+function setOpenZones(ids){localStorage.setItem(STORAGE.zones,JSON.stringify((ids||[]).slice(0,1)))}
 function toggleZone(id){
-  const open=getOpenZones(), i=open.indexOf(id);
-  if(i>=0) open.splice(i,1); else open.push(id);
-  setOpenZones(open); updateNav();
+  const open=getOpenZones();
+  setOpenZones(open[0]===id?[]:[id]);
+  updateNav();
 }
 function renderGrouped(items){
   const buckets={}; ZONES.forEach(z=>buckets[z.id]=[]);
@@ -557,7 +571,11 @@ function updateNav(){
   let open=getOpenZones();
   if(currentView==="category"){
     const activeZone=zoneForCategory(currentCat).id;
-    if(!open.includes(activeZone)){open.push(activeZone);setOpenZones(open)}
+    if(open[0]!==activeZone){open=[activeZone];setOpenZones(open)}
+  }
+  if(!open.length){
+    const firstAvailable=ZONES.find(z=>grouped[z.id].length);
+    if(firstAvailable){open=[firstAvailable.id];setOpenZones(open)}
   }
 
   el("categoryNav").innerHTML=ZONES.filter(z=>grouped[z.id].length).map(z=>{
@@ -720,11 +738,16 @@ el("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
   if(localStorage.getItem(STORAGE.theme)==="dark")document.body.classList.add("dark");
   el("themeBtn").textContent=document.body.classList.contains("dark")?"☀":"☾";
   el("loginUser").value=""; el("loginPass").value="";
-  const restored=await restoreSession();
-  if(restored){
-    await enterApp();
-  }else{
-    el("loginUser").focus();
+  try{
+    const restored=await restoreSession();
+    if(restored){
+      await enterApp();
+    }else{
+      el("loginOverlay").classList.remove("hidden");
+      el("loginUser").focus();
+    }
+  }finally{
+    el("bootScreen").classList.add("hidden");
   }
 })();
 </script>
