@@ -190,24 +190,21 @@ button{cursor:pointer}
 @media(max-width:850px){.role-guide-grid{grid-template-columns:1fr}}
 
 
-/* Compact collapsible permissions guide */
-.role-guide-compact{margin:10px 0 14px;padding:0!important;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
-.role-guide-compact summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:900;user-select:none}
+.head-sort-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.role-guide-compact{margin:0 0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.role-guide-compact summary{cursor:pointer;padding:11px 13px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;list-style:none}
 .role-guide-compact summary::-webkit-details-marker{display:none}
-.role-guide-compact summary::after{content:"⌄";font-size:16px;transition:transform .18s ease}
-.role-guide-compact[open] summary::after{transform:rotate(180deg)}
 .role-guide-hint{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted)}
 .role-guide-list{border-top:1px solid var(--border);padding:4px 12px 8px}
-.role-row{display:grid;grid-template-columns:135px 1fr;gap:12px;padding:10px 2px;border-bottom:1px solid var(--border)}
+.role-row{display:grid;grid-template-columns:155px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .role-row:last-child{border-bottom:0}
-.role-name{display:flex;align-items:center;gap:5px;font-size:12px}
+.role-name{font-size:12px}
 .role-name small{font-size:10px;color:var(--muted);font-weight:700}
-.role-desc{font-size:11px;line-height:1.55;color:var(--muted)}
-@media(max-width:600px){
-  .role-guide-compact summary{padding:10px 12px}
-  .role-row{grid-template-columns:1fr;gap:3px;padding:9px 0}
-  .role-name{font-size:12px}
-  .role-desc{font-size:11px;line-height:1.45}
+.role-desc{font-size:11px;line-height:1.5;color:var(--muted)}
+@media(max-width:700px){
+  .head-sort-controls{width:100%;justify-content:stretch}
+  .head-sort-controls>*{flex:1}
+  .role-row{grid-template-columns:1fr;gap:3px}
 }
 
 </style>
@@ -238,35 +235,14 @@ button{cursor:pointer}
     <button class="nav-item active" data-view="all" onclick="setView('all')"><span class="nav-icon">▦</span>ทั้งหมด<span id="countAll" class="nav-count">0</span></button>
     <button class="nav-item" data-view="favorites" onclick="setView('favorites')"><span class="nav-icon">★</span>รายการโปรด<span id="countFav" class="nav-count">0</span></button>
     <button class="nav-item" data-view="recent" onclick="setView('recent')"><span class="nav-icon">◷</span>ใช้ล่าสุด<span id="countRecent" class="nav-count">0</span></button>
-<button id="messageSortBtn" class="chip" onclick="toggleMessageSort()">↕ จัดเรียงข้อความ</button><button id="messageSortResetBtn" class="chip hidden" onclick="resetMessageOrder()">↺ คืนลำดับ</button>
-    <div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="toggleCategorySort()">↕ จัดเรียง</button></div>
+<div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="toggleCategorySort()">↕ จัดเรียง</button></div>
     <div id="categoryNav"></div>
     <div id="adminSection" class="hidden">
       <div class="side-title">จัดการ</div>
       <button class="nav-item" onclick="openEditor()"><span class="nav-icon">＋</span>เพิ่มข้อความ</button>
       <button id="manageUsersNav" class="nav-item hidden" data-view="users" onclick="openUserManagement()"><span class="nav-icon">👥</span>จัดการพนักงาน<span id="countUsers" class="nav-count">0</span></button>
     </div>
-<details class="role-guide role-guide-compact">
-  <summary>
-    <span>📘 คู่มือสิทธิ์ผู้ใช้งาน</span>
-    <span class="role-guide-hint">กดเพื่อดู</span>
-  </summary>
-  <div class="role-guide-list">
-    <div class="role-row">
-      <div class="role-name">👑 <b>Owner</b><small>เจ้าของระบบ</small></div>
-      <div class="role-desc">ทำได้ทุกอย่าง • เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้าง Admin/Staff • เปิด-ปิดบัญชี • รีเซ็ตรหัสและจัดการผู้ใช้ทั้งหมด</div>
-    </div>
-    <div class="role-row">
-      <div class="role-name">🛡️ <b>Admin</b><small>หัวหน้า</small></div>
-      <div class="role-desc">เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้างและจัดการ Staff • จัดการ Owner/Admin ระดับสูงกว่าไม่ได้</div>
-    </div>
-    <div class="role-row">
-      <div class="role-name">👤 <b>Staff</b><small>พนักงาน</small></div>
-      <div class="role-desc">ดู/ค้นหา/คัดลอก • Favorite/Recent • ใช้รูป/แคตตาล็อก • จัดเรียงส่วนตัว • เพิ่ม/แก้ไข/ลบข้อความและจัดการผู้ใช้ไม่ได้</div>
-    </div>
-  </div>
-</details>
-</div>
+
   </aside>
   <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
 
@@ -290,7 +266,10 @@ button{cursor:pointer}
     <div class="main-inner">
       <div class="page-head">
         <div class="page-title"><h2 id="pageTitle">ข้อความทั้งหมด</h2><p id="pageSubtitle">คลิก Copy หรือกดที่การ์ดเพื่อใช้งานข้อความ</p></div>
-        <select id="sortSelect" class="sort-select" onchange="render()"><option value="default">เรียงตามระบบ</option><option value="popular">ใช้บ่อยที่สุด</option><option value="recent">ใช้ล่าสุด</option><option value="az">หมวด A-Z</option></select>
+        <div class="head-sort-controls">
+          <button id="messageSortBtn" class="secondary-btn hidden" onclick="toggleMessageSort()">↕ จัดเรียงข้อความกลาง</button>
+          <select id="sortSelect" class="sort-select" onchange="render()"><option value="default">เรียงตามระบบ</option><option value="popular">ใช้บ่อยที่สุด</option><option value="recent">ใช้ล่าสุด</option><option value="az">หมวด A-Z</option></select>
+        </div>
       </div>
 
       <div class="stats-strip">
@@ -304,6 +283,14 @@ button{cursor:pointer}
       <div id="content"><div class="card-grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
 
       <section id="userPanel" class="user-panel">
+        <details class="role-guide-compact">
+          <summary><span>📘 คู่มือสิทธิ์ผู้ใช้งาน</span><span class="role-guide-hint">กดเพื่อดู</span></summary>
+          <div class="role-guide-list">
+            <div class="role-row"><div class="role-name">👑 <b>Owner</b> <small>เจ้าของระบบ</small></div><div class="role-desc">ทำได้ทุกอย่าง • เพิ่ม/แก้ไข/ลบข้อความและรูป • จัดเรียงข้อความกลาง • สร้าง Admin/Staff • เปิด-ปิดบัญชี • รีเซ็ตรหัสและจัดการผู้ใช้ทั้งหมด</div></div>
+            <div class="role-row"><div class="role-name">🛡️ <b>Admin</b> <small>หัวหน้า</small></div><div class="role-desc">เพิ่ม/แก้ไข/ลบข้อความและรูป • จัดเรียงข้อความกลาง • สร้างและจัดการ Staff • จัดการ Owner/Admin ระดับสูงกว่าไม่ได้</div></div>
+            <div class="role-row"><div class="role-name">👤 <b>Staff</b> <small>พนักงาน</small></div><div class="role-desc">ดู/ค้นหา/คัดลอก • Favorite/Recent • ใช้รูป/แคตตาล็อก • ไม่มีสิทธิ์เพิ่ม/แก้ไข/ลบ/จัดเรียงข้อความกลาง หรือจัดการผู้ใช้</div></div>
+          </div>
+        </details>
         <div class="owner-note">ยูสใหญ่สามารถสร้างบัญชีแยกให้พนักงานแต่ละคนได้ เวลาพนักงานออกให้ “ปิดบัญชี” ได้ทันที โดยไม่ต้องเปลี่ยนรหัสของคนอื่น ระบบนี้แยกสิทธิ์บัญชีและตรวจสอบสิทธิ์ซ้ำที่ฝั่งเซิร์ฟเวอร์</div>
         <div class="user-toolbar">
           <div><b style="font-size:16px">บัญชีทีมงาน</b><div class="muted" style="font-size:11px;margin-top:3px">Owner จัดการได้ทั้งหมด • Admin สร้าง Staff ได้ • Staff ไม่มีสิทธิ์เข้าหน้านี้</div></div>
@@ -459,53 +446,20 @@ function toggleCategorySort(){
 }
 
 let MESSAGE_SORT_MODE=false;
+let MSG_DRAG_ID=null;
+let MESSAGE_SORT_SAVING=false;
 
-function messageOrderKey(){
-  return "zap789_v2_message_order_"+(SESSION?.username||"guest");
-}
-function getMessageOrder(){
-  try{
-    const v=JSON.parse(localStorage.getItem(messageOrderKey())||"[]");
-    return Array.isArray(v)?v:[];
-  }catch(_){return []}
-}
-function saveMessageOrder(v){
-  localStorage.setItem(messageOrderKey(),JSON.stringify(v));
-}
 function sortMessagesForUser(items){
-  const saved=getMessageOrder();
-  const pos=new Map(saved.map((id,i)=>[id,i]));
-  return [...items].sort((a,b)=>{
-    const ia=pos.has(a.id)?pos.get(a.id):Number.MAX_SAFE_INTEGER;
-    const ib=pos.has(b.id)?pos.get(b.id):Number.MAX_SAFE_INTEGER;
-    return ia-ib;
-  });
+  // ลำดับจากเซิร์ฟเวอร์/Google Sheet คือ "ลำดับกลาง" ของทุกคน
+  return items;
 }
 function toggleMessageSort(){
+  if(!isAdmin()){
+    toast("เฉพาะ Owner / Admin เท่านั้นที่จัดเรียงข้อความกลางได้");
+    return;
+  }
   MESSAGE_SORT_MODE=!MESSAGE_SORT_MODE;
-  render();
-}
-function resetMessageOrder(){
-  localStorage.removeItem(messageOrderKey());
-  render();
-  toast("คืนลำดับข้อความเริ่มต้นแล้ว");
-}
-function ensureMessageOrder(items){
-  let order=getMessageOrder();
-  const known=new Set(order);
-  items.forEach(x=>{if(!known.has(x.id)){order.push(x.id);known.add(x.id)}});
-  saveMessageOrder(order);
-  return order;
-}
-function moveMessageById(dragId,targetId){
-  if(!dragId||!targetId||dragId===targetId)return;
-  const items=getVisibleItemsForSort();
-  let order=ensureMessageOrder(items);
-  const a=order.indexOf(dragId), b=order.indexOf(targetId);
-  if(a<0||b<0)return;
-  order.splice(a,1);
-  order.splice(b,0,dragId);
-  saveMessageOrder(order);
+  if(MESSAGE_SORT_MODE) el("sortSelect").value="default";
   render();
 }
 function getVisibleItemsForSort(){
@@ -517,16 +471,41 @@ function getVisibleItemsForSort(){
   if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
   return items;
 }
-let MSG_DRAG_ID=null;
+async function moveMessageById(dragId,targetId){
+  if(!isAdmin() || MESSAGE_SORT_SAVING || !dragId || !targetId || dragId===targetId)return;
+  const from=DATA.findIndex(x=>String(x.id)===String(dragId));
+  const to=DATA.findIndex(x=>String(x.id)===String(targetId));
+  if(from<0 || to<0)return;
+
+  const before=DATA.slice();
+  const moved=DATA.splice(from,1)[0];
+  const targetNow=DATA.findIndex(x=>String(x.id)===String(targetId));
+  DATA.splice(targetNow,0,moved);
+  render();
+
+  MESSAGE_SORT_SAVING=true;
+  try{
+    await api({action:"reorder",ids:DATA.map(x=>x.id)});
+    saveDataCache(DATA);
+    toast("บันทึกลำดับกลางแล้ว • ทุกบัญชีจะเห็นลำดับนี้");
+  }catch(err){
+    DATA=before;
+    render();
+    toast(err.message||"บันทึกลำดับไม่สำเร็จ");
+    try{await loadData(true)}catch(_){}
+  }finally{
+    MESSAGE_SORT_SAVING=false;
+  }
+}
 function msgDragStart(e,id){
-  if(!MESSAGE_SORT_MODE){e.preventDefault();return}
+  if(!MESSAGE_SORT_MODE || !isAdmin()){e.preventDefault();return}
   MSG_DRAG_ID=id;
   e.dataTransfer.effectAllowed="move";
   e.dataTransfer.setData("text/plain",id);
   requestAnimationFrame(()=>e.currentTarget.classList.add("msg-dragging"));
 }
 function msgDragOver(e){
-  if(!MESSAGE_SORT_MODE)return;
+  if(!MESSAGE_SORT_MODE || !isAdmin())return;
   e.preventDefault();
   e.dataTransfer.dropEffect="move";
   e.currentTarget.classList.add("msg-drag-over");
@@ -534,12 +513,12 @@ function msgDragOver(e){
 function msgDragLeave(e){
   e.currentTarget.classList.remove("msg-drag-over");
 }
-function msgDrop(e,targetId){
-  if(!MESSAGE_SORT_MODE)return;
+async function msgDrop(e,targetId){
+  if(!MESSAGE_SORT_MODE || !isAdmin())return;
   e.preventDefault();
   e.currentTarget.classList.remove("msg-drag-over");
   const dragId=e.dataTransfer.getData("text/plain")||MSG_DRAG_ID;
-  moveMessageById(dragId,targetId);
+  await moveMessageById(dragId,targetId);
 }
 function msgDragEnd(){
   MSG_DRAG_ID=null;
@@ -662,6 +641,16 @@ async function api(payload){
     if(action==="add"){rows.unshift({id:"d"+Date.now(),cat:payload.cat,text:payload.text,tags:payload.tags||"",img:payload.image||"",status:""});saveJSON(DEMO_DATA_KEY,rows);return {ok:true}}
     if(action==="edit"){const i=rows.findIndex(x=>String(x.id)===String(payload.id));if(i<0)return {ok:false,error:"ไม่พบข้อมูล"};rows[i]={...rows[i],cat:payload.cat,text:payload.text,tags:payload.tags||"",img:payload.image||""};saveJSON(DEMO_DATA_KEY,rows);return {ok:true}}
     if(action==="delete"){rows=rows.filter(x=>String(x.id)!==String(payload.id));saveJSON(DEMO_DATA_KEY,rows);return {ok:true}}
+    if(action==="reorder"){
+      if(!["owner","admin"].includes(currentUser.role))return {ok:false,error:"ไม่มีสิทธิ์จัดเรียงข้อความ"};
+      const ids=Array.isArray(payload.ids)?payload.ids.map(String):[];
+      const byId=new Map(rows.map(x=>[String(x.id),x]));
+      const used=new Set();
+      const ordered=[];
+      ids.forEach(id=>{if(byId.has(id)&&!used.has(id)){ordered.push(byId.get(id));used.add(id)}});
+      rows.forEach(x=>{if(!used.has(String(x.id)))ordered.push(x)});
+      rows=ordered;saveJSON(DEMO_DATA_KEY,rows);return {ok:true};
+    }
     if(action==="users_list"){
       if(!["owner","admin"].includes(currentUser.role)) return {ok:false,error:"ไม่มีสิทธิ์จัดการพนักงาน"};
       return {ok:true,users:users.map(({password,...u})=>u)};
@@ -805,7 +794,7 @@ async function enterApp(){
 function applySessionUI(){
   const name=SESSION?.username||"User", role=(SESSION?.role||"staff").toLowerCase();
   el("accountName").textContent=name; el("accountRole").textContent=role; el("avatar").textContent=name.slice(0,1).toUpperCase();
-  const canEdit=["owner","admin"].includes(role); el("addBtn").classList.toggle("hidden",!canEdit); el("adminSection").classList.toggle("hidden",!canEdit); el("manageUsersNav").classList.toggle("hidden",!canEdit);
+  const canEdit=["owner","admin"].includes(role); el("addBtn").classList.toggle("hidden",!canEdit); el("adminSection").classList.toggle("hidden",!canEdit); el("manageUsersNav").classList.toggle("hidden",!canEdit); el("messageSortBtn")?.classList.toggle("hidden",!canEdit);
 }
 function isAdmin(){return ["owner","admin"].includes((SESSION?.role||"").toLowerCase())}
 function canManageUsers(){return ["owner","admin"].includes((SESSION?.role||"").toLowerCase())}
@@ -857,8 +846,7 @@ function render(){
   }
 
   updateNav(); updateStats(items.length); updateHead(); updateChips();
-  if(el("messageSortBtn")) el("messageSortBtn").textContent=MESSAGE_SORT_MODE?"✓ เสร็จจัดเรียง":"↕ จัดเรียงข้อความ";
-  if(el("messageSortResetBtn")) el("messageSortResetBtn").classList.toggle("hidden",!MESSAGE_SORT_MODE);
+  if(el("messageSortBtn")) el("messageSortBtn").textContent=MESSAGE_SORT_MODE?"✓ เสร็จจัดเรียง":"↕ จัดเรียงข้อความกลาง";
 
   if(!items.length){
     el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>ลองเปลี่ยนคำค้น หมวดหมู่ หรือตัวกรอง</p></div>';
@@ -866,7 +854,7 @@ function render(){
   }
 
   if(MESSAGE_SORT_MODE){
-    el("content").innerHTML=`<div class="sort-note">ลากการ์ดข้อความไปวางตำแหน่งที่ต้องการ • ลำดับนี้เป็นของบัญชีคุณ</div><div class="card-grid">${items.map(cardHTML).join("")}</div>`;
+    el("content").innerHTML=`<div class="sort-note">ลากการ์ดข้อความไปวางตำแหน่งที่ต้องการ • เมื่อย้ายแล้วลำดับนี้จะใช้กับทุกบัญชี</div><div class="card-grid">${items.map(cardHTML).join("")}</div>`;
   }else if(currentView==="all"&&!q&&sort==="default"){
     renderGrouped(items);
   }else{
