@@ -180,6 +180,15 @@ button{cursor:pointer}
   }
 }
 
+
+.role-guide{margin:12px 0 16px;padding:12px;border:1px solid var(--border);background:var(--surface-2);border-radius:13px}
+.role-guide-title{font-size:13px;font-weight:900;margin-bottom:9px}
+.role-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.role-guide-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:5px}
+.role-guide-card b{font-size:12px}
+.role-guide-card span{font-size:11px;line-height:1.5;color:var(--muted)}
+@media(max-width:850px){.role-guide-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -216,6 +225,14 @@ button{cursor:pointer}
       <button class="nav-item" onclick="openEditor()"><span class="nav-icon">＋</span>เพิ่มข้อความ</button>
       <button id="manageUsersNav" class="nav-item hidden" data-view="users" onclick="openUserManagement()"><span class="nav-icon">👥</span>จัดการพนักงาน<span id="countUsers" class="nav-count">0</span></button>
     </div>
+<div class="role-guide">
+  <div class="role-guide-title">📘 คู่มือสิทธิ์ผู้ใช้งาน</div>
+  <div class="role-guide-grid">
+    <div class="role-guide-card"><b>👑 Owner — เจ้าของระบบ</b><span>ใช้งานได้ทุกอย่าง • เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้าง Admin/Staff • เปิด-ปิดบัญชี • รีเซ็ตรหัสและจัดการผู้ใช้ทั้งหมด</span></div>
+    <div class="role-guide-card"><b>🛡️ Admin — หัวหน้า</b><span>เพิ่ม/แก้ไข/ลบข้อความและรูปได้ • จัดการ Staff ได้ • สร้าง Staff ได้ • ไม่สามารถสร้างหรือจัดการ Owner/Admin ระดับสูงกว่าได้</span></div>
+    <div class="role-guide-card"><b>👤 Staff — พนักงาน</b><span>ดู/ค้นหา/คัดลอกข้อความ • Favorite/Recent • ใช้รูป/แคตตาล็อก • จัดเรียงหมวดและข้อความส่วนตัว • เพิ่ม/แก้ไข/ลบข้อความหรือจัดการผู้ใช้ไม่ได้</span></div>
+  </div>
+</div>
   </aside>
   <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
 
@@ -854,7 +871,7 @@ function cardHTML(item){
     ${item.img?`<img class="card-image" src="${escAttr(item.img)}" alt="รูปประกอบ" loading="lazy" decoding="async" onerror="this.style.display='none'" onclick="if(!MESSAGE_SORT_MODE){event.stopPropagation();copyImage('${jsString(item.img)}')}">`:""}
     <div class="card-body">
       ${MESSAGE_SORT_MODE?`<div class="msg-sort-hint">⠿ ลากการ์ดนี้เพื่อย้ายตำแหน่ง</div>`:""}
-      <div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span><span class="usage">ใช้ ${usage} ครั้ง</span></div>
+      <div class="card-meta"><span class="badge">${escapeHTML(item.cat)}</span></div>
       <div class="card-text">${highlightVars(item.text)}</div>
     </div>
     <div class="card-actions ${MESSAGE_SORT_MODE?'hidden':''}">
