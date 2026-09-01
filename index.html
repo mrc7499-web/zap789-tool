@@ -263,11 +263,20 @@ const STORAGE = {token:"zap789_v2_token", theme:"zap789_theme", favorites:"zap78
 const ZONES = [
   {id:"standard",icon:"💬",title:"ข้อความมาตรฐาน",color:"blue",keywords:["สมัคร","ทางเข้า","ปิดแชท","ปิดปรับปรุง"]},
   {id:"finance",icon:"💰",title:"บัญชี / ฝาก-ถอน",color:"green",keywords:["ฝาก","ถอน","บัญชี","เครดิต","คืนยอด","qr code","qr"]},
-  {id:"game",icon:"🎮",title:"เกม / โปรโมชั่น",color:"purple",keywords:["เกม","เกมส์","เครดิตฟรี","โปร"]},
   {id:"problem",icon:"🛠️",title:"ปัญหาอื่น ๆ",color:"red",keywords:["vpn","เน็ต","ปัญหา","เข้าเล่นไม่ได้","สถานการณ์","ลูกค้าด่า"]},
+  {id:"game",icon:"🎮",title:"เกม / โปรโมชั่น",color:"purple",keywords:["เกม","เกมส์","เครดิตฟรี","โปร"]},
   {id:"care",icon:"💗",title:"ปลอบใจ / ดูแลลูกค้า",color:"pink",keywords:["กำลังใจ","ปลอบใจ","ทักหลายไลน์"]},
   {id:"other",icon:"📁",title:"อื่น ๆ",color:"blue",keywords:[]}
 ];
+const CATEGORY_PRIORITY = [
+  "สมัคร","ทางเข้า","ฝากเงิน","ถอนเงิน","เปลี่ยนบัญชี","บัญชีไม่ตรง","ฝากมีปัญหา","ถอนมีปัญหา",
+  "vpn","เน็ต","เครดิตฟรี","โปร","เกม","กำลังใจ","คืนยอดเสีย","ค้างเดิมพัน","เครดิต","ปิดแชท","ปิดปรับปรุง","สถานการณ์"
+];
+function categoryPriority(name){
+  const s=String(name||"").toLowerCase();
+  const i=CATEGORY_PRIORITY.findIndex(k=>s.includes(k.toLowerCase()));
+  return i<0?999:i;
+}
 const VAR_RE = /\{([a-zA-Z0-9_ก-๙]+)\}/g;
 
 let DATA=[];
@@ -479,7 +488,7 @@ function cardHTML(item){
 }
 function updateNav(){
   const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
-  const cats=Object.keys(counts).sort((a,b)=>a.localeCompare(b,"th"));
+  const cats=Object.keys(counts).sort((a,b)=>categoryPriority(a)-categoryPriority(b)||a.localeCompare(b,"th"));
   const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
@@ -646,8 +655,15 @@ el("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
 
 /* ===================== START ===================== */
 (async function init(){
-  if(localStorage.getItem(STORAGE.theme)==="dark")document.body.classList.add("dark");el("themeBtn").textContent=document.body.classList.contains("dark")?"☀":"☾";
-  el("loginUser").value=""; el("loginPass").value=""; el("loginUser").focus();
+  if(localStorage.getItem(STORAGE.theme)==="dark")document.body.classList.add("dark");
+  el("themeBtn").textContent=document.body.classList.contains("dark")?"☀":"☾";
+  el("loginUser").value=""; el("loginPass").value="";
+  const restored=await restoreSession();
+  if(restored){
+    await enterApp();
+  }else{
+    el("loginUser").focus();
+  }
 })();
 </script>
 </body>
