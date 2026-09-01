@@ -189,6 +189,27 @@ button{cursor:pointer}
 .role-guide-card span{font-size:11px;line-height:1.5;color:var(--muted)}
 @media(max-width:850px){.role-guide-grid{grid-template-columns:1fr}}
 
+
+/* Compact collapsible permissions guide */
+.role-guide-compact{margin:10px 0 14px;padding:0!important;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.role-guide-compact summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:900;user-select:none}
+.role-guide-compact summary::-webkit-details-marker{display:none}
+.role-guide-compact summary::after{content:"⌄";font-size:16px;transition:transform .18s ease}
+.role-guide-compact[open] summary::after{transform:rotate(180deg)}
+.role-guide-hint{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted)}
+.role-guide-list{border-top:1px solid var(--border);padding:4px 12px 8px}
+.role-row{display:grid;grid-template-columns:135px 1fr;gap:12px;padding:10px 2px;border-bottom:1px solid var(--border)}
+.role-row:last-child{border-bottom:0}
+.role-name{display:flex;align-items:center;gap:5px;font-size:12px}
+.role-name small{font-size:10px;color:var(--muted);font-weight:700}
+.role-desc{font-size:11px;line-height:1.55;color:var(--muted)}
+@media(max-width:600px){
+  .role-guide-compact summary{padding:10px 12px}
+  .role-row{grid-template-columns:1fr;gap:3px;padding:9px 0}
+  .role-name{font-size:12px}
+  .role-desc{font-size:11px;line-height:1.45}
+}
+
 </style>
 </head>
 <body>
@@ -225,13 +246,26 @@ button{cursor:pointer}
       <button class="nav-item" onclick="openEditor()"><span class="nav-icon">＋</span>เพิ่มข้อความ</button>
       <button id="manageUsersNav" class="nav-item hidden" data-view="users" onclick="openUserManagement()"><span class="nav-icon">👥</span>จัดการพนักงาน<span id="countUsers" class="nav-count">0</span></button>
     </div>
-<div class="role-guide">
-  <div class="role-guide-title">📘 คู่มือสิทธิ์ผู้ใช้งาน</div>
-  <div class="role-guide-grid">
-    <div class="role-guide-card"><b>👑 Owner — เจ้าของระบบ</b><span>ใช้งานได้ทุกอย่าง • เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้าง Admin/Staff • เปิด-ปิดบัญชี • รีเซ็ตรหัสและจัดการผู้ใช้ทั้งหมด</span></div>
-    <div class="role-guide-card"><b>🛡️ Admin — หัวหน้า</b><span>เพิ่ม/แก้ไข/ลบข้อความและรูปได้ • จัดการ Staff ได้ • สร้าง Staff ได้ • ไม่สามารถสร้างหรือจัดการ Owner/Admin ระดับสูงกว่าได้</span></div>
-    <div class="role-guide-card"><b>👤 Staff — พนักงาน</b><span>ดู/ค้นหา/คัดลอกข้อความ • Favorite/Recent • ใช้รูป/แคตตาล็อก • จัดเรียงหมวดและข้อความส่วนตัว • เพิ่ม/แก้ไข/ลบข้อความหรือจัดการผู้ใช้ไม่ได้</span></div>
+<details class="role-guide role-guide-compact">
+  <summary>
+    <span>📘 คู่มือสิทธิ์ผู้ใช้งาน</span>
+    <span class="role-guide-hint">กดเพื่อดู</span>
+  </summary>
+  <div class="role-guide-list">
+    <div class="role-row">
+      <div class="role-name">👑 <b>Owner</b><small>เจ้าของระบบ</small></div>
+      <div class="role-desc">ทำได้ทุกอย่าง • เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้าง Admin/Staff • เปิด-ปิดบัญชี • รีเซ็ตรหัสและจัดการผู้ใช้ทั้งหมด</div>
+    </div>
+    <div class="role-row">
+      <div class="role-name">🛡️ <b>Admin</b><small>หัวหน้า</small></div>
+      <div class="role-desc">เพิ่ม/แก้ไข/ลบข้อความและรูป • สร้างและจัดการ Staff • จัดการ Owner/Admin ระดับสูงกว่าไม่ได้</div>
+    </div>
+    <div class="role-row">
+      <div class="role-name">👤 <b>Staff</b><small>พนักงาน</small></div>
+      <div class="role-desc">ดู/ค้นหา/คัดลอก • Favorite/Recent • ใช้รูป/แคตตาล็อก • จัดเรียงส่วนตัว • เพิ่ม/แก้ไข/ลบข้อความและจัดการผู้ใช้ไม่ได้</div>
+    </div>
   </div>
+</details>
 </div>
   </aside>
   <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
