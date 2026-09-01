@@ -223,6 +223,10 @@ button{cursor:pointer}
   .msg-step-btn{min-width:38px;height:34px}
 }
 
+
+.danger-user-btn{color:#d92d20!important;border-color:#f4c7c3!important;background:#fff8f7!important}
+.danger-user-btn:hover{background:#fff0ee!important}
+
 </style>
 </head>
 <body>
@@ -746,6 +750,15 @@ async function api(payload){
       if(String(payload.password||"").length<8)return {ok:false,error:"รหัสผ่านอย่างน้อย 8 ตัว"};
       target.password=String(payload.password);target.forceChange=payload.forceChange!==false;saveJSON(DEMO_USERS_KEY,users);return {ok:true};
     }
+    if(action==="user_delete"){
+      if(!["owner","admin"].includes(currentUser.role))return {ok:false,error:"ไม่มีสิทธิ์"};
+      const idx=users.findIndex(x=>x.username===payload.username);if(idx<0)return {ok:false,error:"ไม่พบบัญชี"};
+      const target=users[idx];
+      if(target.role==="owner")return {ok:false,error:"ไม่สามารถลบบัญชี Owner"};
+      if(target.username===currentUser.username)return {ok:false,error:"ไม่สามารถลบบัญชีตัวเอง"};
+      if(currentUser.role==="admin" && target.role!=="staff")return {ok:false,error:"Admin ลบได้เฉพาะ Staff"};
+      users.splice(idx,1);saveJSON(DEMO_USERS_KEY,users);return {ok:true};
+    }
     return {ok:false,error:"Unknown demo action"};
   }
   const token=localStorage.getItem(STORAGE.token)||"";
@@ -1244,7 +1257,7 @@ async function openUserManagement(){
   currentView="users";currentCat="ทั้งหมด";closeDrawer();
   document.querySelectorAll(".nav-item[data-view]").forEach(n=>n.classList.toggle("active",n.dataset.view==="users"));
   el("content").classList.add("hidden");el("chips").classList.add("hidden");el("headSortControls")?.classList.add("hidden");el("userPanel").classList.add("active");
-  el("pageTitle").textContent="จัดการพนักงาน";el("pageSubtitle").textContent="สร้างบัญชีแยก ปิดบัญชี และรีเซ็ตรหัสผ่าน";
+  el("pageTitle").textContent="จัดการพนักงาน";el("pageSubtitle").textContent="สร้างบัญชี ปิด/เปิด ลบ และรีเซ็ตรหัสผ่าน";
   await loadTeamUsers();
 }
 async function loadTeamUsers(){
@@ -1256,8 +1269,21 @@ function renderUsers(){
     const role=String(u.role||"staff").toLowerCase(),disabled=!u.enabled;
     const canTouch=role!=="owner" && u.username!==me && (myRole==="owner" || (myRole==="admin"&&role==="staff"));
     const last=u.lastLogin?formatDateTime(u.lastLogin):"ยังไม่เคยเข้า";
-    return `<tr><td><b>${escapeHTML(u.username)}</b>${u.username===me?' <span class="muted">(คุณ)</span>':''}</td><td>${escapeHTML(u.displayName||"-")}</td><td><span class="role-badge role-${escAttr(role)}">${escapeHTML(role.toUpperCase())}</span></td><td><span class="status-badge ${disabled?'status-off':'status-on'}">${disabled?'ปิดใช้งาน':'ใช้งานอยู่'}</span></td><td>${escapeHTML(last)}</td><td><div class="row-actions">${canTouch?`<button class="mini-btn" onclick="openResetPassword('${jsString(u.username)}')">รีเซ็ตรหัส</button><button class="mini-btn" onclick="toggleUserEnabled('${jsString(u.username)}',${disabled?'true':'false'})">${disabled?'เปิดบัญชี':'ปิดบัญชี'}</button>`:'<span class="muted">—</span>'}</div></td></tr>`;
+    return `<tr><td><b>${escapeHTML(u.username)}</b>${u.username===me?' <span class="muted">(คุณ)</span>':''}</td><td>${escapeHTML(u.displayName||"-")}</td><td><span class="role-badge role-${escAttr(role)}">${escapeHTML(role.toUpperCase())}</span></td><td><span class="status-badge ${disabled?'status-off':'status-on'}">${disabled?'ปิดใช้งาน':'ใช้งานอยู่'}</span></td><td>${escapeHTML(last)}</td><td><div class="row-actions">${canTouch?`<button class="mini-btn" onclick="openResetPassword('${jsString(u.username)}')">รีเซ็ตรหัส</button><button class="mini-btn" onclick="toggleUserEnabled('${jsString(u.username)}',${disabled?'true':'false'})">${disabled?'เปิดบัญชี':'ปิดบัญชี'}</button><button class="mini-btn danger-user-btn" onclick="deleteTeamUser('${jsString(u.username)}','${jsString(u.displayName||u.username)}')">ลบ</button>`:'<span class="muted">—</span>'}</div></td></tr>`;
   }).join("")||`<tr><td colspan="6" class="muted">ยังไม่มีบัญชี</td></tr>`;
+}
+async function deleteTeamUser(username,displayName){
+  if(!canManageUsers())return;
+  const label=displayName&&displayName!==username?`${displayName} (${username})`:username;
+  const ok=confirm(`ลบบัญชี "${label}" ถาวร?\n\nบัญชีนี้จะเข้าสู่ระบบไม่ได้ทันที และจะหายจากรายชื่อพนักงาน\nการลบไม่สามารถย้อนกลับได้`);
+  if(!ok)return;
+  try{
+    await api({action:"user_delete",username});
+    toast(`ลบบัญชี ${username} แล้ว`,"success");
+    await loadTeamUsers();
+  }catch(err){
+    toast(err.message||"ลบบัญชีไม่สำเร็จ","error");
+  }
 }
 function openUserEditor(){
   if(!canManageUsers())return;
