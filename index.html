@@ -49,13 +49,14 @@ button{cursor:pointer}
 .stats-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;display:flex;align-items:center;gap:12px}.stat-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2)}.stat b{display:block;font-size:19px}.stat span{color:var(--muted);font-size:11px}
 
 .chip-row{display:flex;gap:8px;overflow:auto;padding-bottom:6px;margin-bottom:17px}.chip{white-space:nowrap;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700}.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip-manage{border-style:dashed}.shortcut-list{display:flex;flex-direction:column;gap:8px}.shortcut-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}.shortcut-row input{width:18px;height:18px}.shortcut-name{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shortcut-tools{display:flex;gap:6px}.shortcut-move{width:34px;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font-weight:900;color:var(--muted)}.shortcut-move:disabled{opacity:.3;cursor:not-allowed}.shortcut-note{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px}
 .group-section{margin-bottom:30px}.group-head{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:5px 2px}.group-head h3{font-size:16px;margin:0}.group-head span{font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:3px 7px;border-radius:999px}
 .card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 12px rgba(23,32,51,.03);transition:.18s;min-width:0;cursor:pointer;user-select:none}.card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#d9dde5}.card:active{transform:scale(.985)}.card-topline{height:4px}.line-blue{background:var(--blue)}.line-green{background:var(--green)}.line-purple{background:var(--purple)}.line-pink{background:var(--pink)}.line-red{background:var(--red)}
 .card-image{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--surface-2);cursor:pointer}.card-body{padding:13px 14px 12px}.card-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px}.badge{font-size:10px;font-weight:800;padding:4px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.usage{margin-left:auto;font-size:10px;color:var(--muted)}.card-text{font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:126px;overflow:auto;padding-right:2px}.var{background:var(--primary-soft);color:var(--primary);font-weight:800;border-radius:6px;padding:1px 4px}.card-actions{display:flex;gap:7px;padding:0 12px 12px}.copy-btn{flex:1;border:0;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-weight:800;padding:9px}.copy-btn:hover{background:var(--primary);color:#fff}.mini-btn{width:37px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text)}.mini-btn:hover{background:var(--surface-2)}.mini-btn.fav.on{color:#e8a100;background:#fff8df;border-color:#ffe49a}.menu-wrap{position:relative}.card-menu{position:absolute;right:0;bottom:45px;width:132px;background:var(--surface);border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);padding:5px;z-index:15}.card-menu button{width:100%;border:0;background:transparent;color:var(--text);padding:8px 9px;border-radius:8px;text-align:left;font-size:12px}.card-menu button:hover{background:var(--surface-2)}.card-menu .danger{color:var(--danger)}
 .empty{padding:70px 20px;text-align:center;color:var(--muted)}.empty .emoji{font-size:40px}.skeleton{height:210px;border-radius:var(--radius);background:linear-gradient(90deg,var(--surface) 25%,var(--surface-2) 37%,var(--surface) 63%);background-size:400% 100%;animation:sk 1.3s infinite}@keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}
 
 /* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(10,13,18,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;backdrop-filter:blur(4px)}.overlay.show{display:flex}.modal{width:min(650px,100%);max-height:min(88vh,820px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:3}.modal-head h3{margin:0;font-size:18px}.modal-body{padding:20px}.modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:16px 20px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid .full{grid-column:1/-1}.helper-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.token-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);padding:6px 9px;border-radius:8px;font-size:11px}.preview{border:1px dashed var(--border);border-radius:12px;padding:13px;background:var(--surface-2);white-space:pre-wrap;font-size:13px;line-height:1.6}.file-drop{border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--muted);background:var(--surface-2)}.file-drop.drag{border-color:var(--primary);background:var(--primary-soft)}.image-preview{max-height:180px;max-width:100%;border-radius:10px;margin-top:10px}.danger-btn{border:0;background:#fff0f0;color:var(--danger);font-weight:800;padding:11px 15px;border-radius:11px}
+.overlay{position:fixed;inset:0;background:rgba(10,13,18,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;backdrop-filter:blur(4px)}.overlay.show{display:flex}.modal{width:min(650px,100%);max-height:min(88vh,820px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:3}.modal-head h3{margin:0;font-size:18px}.modal-body{padding:20px}.modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:16px 20px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid .full{grid-column:1/-1}.preview{border:1px dashed var(--border);border-radius:12px;padding:13px;background:var(--surface-2);white-space:pre-wrap;font-size:13px;line-height:1.6}.file-drop{border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--muted);background:var(--surface-2)}.file-drop.drag{border-color:var(--primary);background:var(--primary-soft)}.image-preview{max-height:180px;max-width:100%;border-radius:10px;margin-top:10px}.danger-btn{border:0;background:#fff0f0;color:var(--danger);font-weight:800;padding:11px 15px;border-radius:11px}
 
 /* VARIABLE QUICK FILL */
 .variable-list{display:grid;gap:11px}.variable-line{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center}.variable-line b{font-size:12px}.variable-line input{margin:0}
@@ -336,7 +337,7 @@ button{cursor:pointer}
   <input id="newCatInput" class="input hidden" style="margin-top:8px" placeholder="พิมพ์ชื่อหมวดใหม่">
 </div>
         <div class="field"><label>คีย์เวิร์ด / Tag</label><input id="tagInput" class="input" placeholder="เช่น qr, ฝากไม่เข้า, ตรวจสอบ"></div>
-        <div class="field full"><label>ข้อความ *</label><textarea id="textInput" class="input" rows="7" placeholder="พิมพ์ข้อความ..." oninput="updatePreview()"></textarea><div class="helper-row"><button class="token-btn" onclick="insertToken('{name}')">+ {name}</button><button class="token-btn" onclick="insertToken('{amount}')">+ {amount}</button><button class="token-btn" onclick="insertToken('{bank}')">+ {bank}</button><button class="token-btn" onclick="insertToken('{username}')">+ {username}</button></div></div>
+        <div class="field full"><label>ข้อความ *</label><textarea id="textInput" class="input" rows="7" placeholder="พิมพ์ข้อความ..." oninput="updatePreview()"></textarea></div>
         <div class="field full"><label>รูปภาพ / แคตตาล็อก (ไม่บังคับ)</label>
   <div id="dropZone" class="file-drop">
     ลากรูปมาวาง หรือ <button type="button" class="ghost-btn" onclick="document.getElementById('imgInput').click()">เลือกรูป</button>
@@ -350,6 +351,23 @@ button{cursor:pointer}
       </div>
     </div>
     <div class="modal-foot"><button class="secondary-btn" onclick="closeEditor()">ยกเลิก</button><button id="saveBtn" class="primary-btn" onclick="saveItem()">บันทึกข้อมูล</button></div>
+  </div>
+</div>
+
+
+<!-- SHORTCUT MANAGER -->
+<div id="shortcutOverlay" class="overlay" onclick="overlayClose(event,'shortcutOverlay')">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><h3>จัดการปุ่มลัดด้านบน</h3><button class="icon-btn" onclick="closeShortcutManager()">×</button></div>
+    <div class="modal-body">
+      <div class="shortcut-note">ติ๊กเพื่อแสดงปุ่มลัด • เอาติ๊กออกเพื่อซ่อน • ใช้ ↑ ↓ เพื่อเรียงลำดับ โดยไม่ลบหมวดหรือข้อความจริง</div>
+      <div id="shortcutList" class="shortcut-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" onclick="resetShortcuts()">คืนค่าเริ่มต้น</button>
+      <button class="secondary-btn" onclick="closeShortcutManager()">ยกเลิก</button>
+      <button class="primary-btn" onclick="saveShortcuts()">บันทึก</button>
+    </div>
   </div>
 </div>
 
@@ -433,10 +451,18 @@ const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap
 const DATA_CACHE_MS = 30000;
 let CATEGORY_SORT_MODE=false;
 function categoryOrderKey(){return "zap789_v2_category_order_"+(SESSION?.username||"guest")}
+function categoryZoneKey(){return "zap789_v2_category_zone_"+(SESSION?.username||"guest")}
 function getCategoryOrder(){
   try{const v=JSON.parse(localStorage.getItem(categoryOrderKey())||"[]");return Array.isArray(v)?v:[]}catch(_){return []}
 }
 function saveCategoryOrder(v){localStorage.setItem(categoryOrderKey(),JSON.stringify(v))}
+function getCategoryZoneMap(){
+  try{
+    const v=JSON.parse(localStorage.getItem(categoryZoneKey())||"{}");
+    return v&&typeof v==="object"&&!Array.isArray(v)?v:{};
+  }catch(_){return {}}
+}
+function saveCategoryZoneMap(v){localStorage.setItem(categoryZoneKey(),JSON.stringify(v||{}))}
 function sortCategoriesForUser(cats){
   const saved=getCategoryOrder();
   return [...cats].sort((a,b)=>{
@@ -449,22 +475,40 @@ function sortCategoriesForUser(cats){
     return categoryPriority(a)-categoryPriority(b)||a.localeCompare(b,"th");
   });
 }
+function visibleCategoryOrder(){
+  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
+  const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
+  all.forEach(c=>grouped[zoneForCategory(c).id].push(c));
+  return ZONES.flatMap(z=>grouped[z.id]);
+}
 function moveCategory(cat,dir){
-  const all=Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{}));
-  let order=sortCategoriesForUser(all);
-  const zone=zoneForCategory(cat).id;
-  const same=order.filter(c=>zoneForCategory(c).id===zone);
-  const i=same.indexOf(cat), j=i+dir;
-  if(i<0||j<0||j>=same.length)return;
-  [same[i],same[j]]=[same[j],same[i]];
-  let si=0;
-  order=order.map(c=>zoneForCategory(c).id===zone?same[si++]:c);
-  saveCategoryOrder(order); updateNav();
+  const visible=visibleCategoryOrder();
+  const i=visible.indexOf(cat), j=i+Number(dir||0);
+  if(i<0||j<0||j>=visible.length)return;
+
+  const target=visible[j];
+  const targetZone=zoneForCategory(target).id;
+  const zoneMap=getCategoryZoneMap();
+
+  // ข้ามโซนได้ โดยย้ายเฉพาะหัวข้อ ไม่ย้ายทั้งกรอบ
+  if(zoneForCategory(cat).id!==targetZone){
+    zoneMap[cat]=targetZone;
+    saveCategoryZoneMap(zoneMap);
+  }
+
+  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
+  const a=all.indexOf(cat), b=all.indexOf(target);
+  if(a<0||b<0)return;
+  all.splice(a,1);
+  const targetNow=all.indexOf(target);
+  all.splice(dir<0?targetNow:targetNow+1,0,cat);
+  saveCategoryOrder(all);
+  updateNav();
+  if(currentView==="all")render();
 }
 function toggleCategorySort(){
   CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE; updateNav();
 }
-
 let MESSAGE_SORT_MODE=false;
 let MSG_DRAG_ID=null;
 let MESSAGE_SORT_SAVING=false;
@@ -593,7 +637,11 @@ function msgDragEnd(){
 }
 
 function resetCategoryOrder(){
-  localStorage.removeItem(categoryOrderKey()); updateNav(); toast("คืนลำดับเริ่มต้นแล้ว");
+  localStorage.removeItem(categoryOrderKey());
+  localStorage.removeItem(categoryZoneKey());
+  updateNav();
+  if(currentView==="all")render();
+  toast("คืนลำดับหัวข้อเริ่มต้นแล้ว");
 }
 
 let CAT_DRAG = {timer:null, active:false, cat:null, pointerId:null, startY:0};
@@ -623,15 +671,21 @@ function moveCatHold(e){
   if(!target)return;
   const targetCat=target.dataset.cat;
   if(!targetCat || targetCat===CAT_DRAG.cat)return;
-  if(zoneForCategory(targetCat).id!==zoneForCategory(CAT_DRAG.cat).id)return;
 
-  const all=Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{}));
-  let order=sortCategoriesForUser(all);
-  const a=order.indexOf(CAT_DRAG.cat), b=order.indexOf(targetCat);
+  const targetZone=zoneForCategory(targetCat).id;
+  const zoneMap=getCategoryZoneMap();
+  zoneMap[CAT_DRAG.cat]=targetZone;
+  saveCategoryZoneMap(zoneMap);
+
+  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
+  const a=all.indexOf(CAT_DRAG.cat), b=all.indexOf(targetCat);
   if(a<0||b<0)return;
-  order.splice(a,1); order.splice(b,0,CAT_DRAG.cat);
-  saveCategoryOrder(order);
+  all.splice(a,1);
+  const targetNow=all.indexOf(targetCat);
+  all.splice(targetNow,0,CAT_DRAG.cat);
+  saveCategoryOrder(all);
   updateNav();
+  if(currentView==="all")render();
   const src=document.querySelector(`.cat-row[data-cat="${CSS.escape(CAT_DRAG.cat)}"]`);
   src?.classList.add("drag-source");
 }
@@ -798,26 +852,16 @@ async function restoreSession(){
   const token=localStorage.getItem(STORAGE.token);
   if(!token) return false;
   try{
-    const cached=JSON.parse(localStorage.getItem(STORAGE.session)||"null");
-    if(cached && cached.username){
-      SESSION=cached;
-      return true;
-    }
-  }catch(_){}
-  try{
     const result=await api({action:"me"});
     SESSION=result.user;
     if(SESSION) localStorage.setItem(STORAGE.session,JSON.stringify(SESSION));
     return !!SESSION;
   }catch(err){
-    // Only clear the login when the server explicitly says the session is invalid/expired.
     const msg=String(err&&err.message||"");
     if(/session|เข้าสู่ระบบใหม่|หมดอายุ/i.test(msg)){
       localStorage.removeItem(STORAGE.token);
       localStorage.removeItem(STORAGE.session);
-      return false;
     }
-    // Temporary network/server issue: keep the saved token instead of logging the user out.
     return false;
   }
 }
@@ -951,9 +995,14 @@ function render(){
     el("content").innerHTML=`<div class="card-grid">${items.map(cardHTML).join("")}</div>`;
   }
 }
-function zoneForCategory(cat){
+function baseZoneForCategory(cat){
   const s=String(cat||"").toLowerCase();
   return ZONES.find(z=>z.id!=="other"&&z.keywords.some(k=>s.includes(k.toLowerCase()))) || ZONES.find(z=>z.id==="other");
+}
+function zoneForCategory(cat){
+  const map=getCategoryZoneMap();
+  const forced=ZONES.find(z=>z.id===map[String(cat||"")]);
+  return forced || baseZoneForCategory(cat);
 }
 function getOpenZones(){ return ZONES.map(z=>z.id); }
 function setOpenZones(ids){}
@@ -1020,9 +1069,81 @@ function updateHead(){
   const map={all:["ข้อความทั้งหมด","เลือกหมวดหมู่หรือค้นหาเพื่อเข้าถึงข้อความได้เร็วขึ้น"],favorites:["รายการโปรด","ข้อความที่คุณปักดาวไว้"],recent:["ใช้ล่าสุด","ข้อความที่คัดลอกล่าสุดของอุปกรณ์นี้"],category:[currentCat,`หมวดหมู่ ${currentCat}`]};
   const [t,s]=map[currentView]||map.all;el("pageTitle").textContent=t;el("pageSubtitle").textContent=s;
 }
+function shortcutKey(){return "zap789_v2_shortcuts_"+(SESSION?.username||"guest")}
+function allShortcutCategories(){
+  return sortCategoriesForUser([...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))]);
+}
+function getShortcutConfig(){
+  const cats=allShortcutCategories();
+  let cfg=null;
+  try{cfg=JSON.parse(localStorage.getItem(shortcutKey())||"null")}catch(_){}
+  if(!cfg || !Array.isArray(cfg.order) || !Array.isArray(cfg.visible)){
+    const defaults=cats.slice(0,10);
+    return {order:[...cats],visible:defaults};
+  }
+  const order=[...cfg.order.filter(c=>cats.includes(c)),...cats.filter(c=>!cfg.order.includes(c))];
+  const visible=cfg.visible.filter(c=>cats.includes(c));
+  return {order,visible};
+}
+function setShortcutConfig(cfg){localStorage.setItem(shortcutKey(),JSON.stringify(cfg))}
+let SHORTCUT_EDIT=null;
 function updateChips(){
-  const cats=sortCategoriesForUser([...new Set(DATA.map(x=>x.cat))]);
-  el("chips").innerHTML=`<button class="chip ${currentView==='all'?'active':''}" onclick="setView('all')">ทั้งหมด</button><button class="chip ${currentView==='favorites'?'active':''}" onclick="setView('favorites')">★ โปรด</button><button class="chip ${currentView==='recent'?'active':''}" onclick="setView('recent')">◷ ล่าสุด</button>${cats.slice(0,10).map(c=>`<button class="chip ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')">${escapeHTML(c)}</button>`).join("")}`;
+  const cfg=getShortcutConfig();
+  const shown=cfg.order.filter(c=>cfg.visible.includes(c));
+  el("chips").innerHTML=`<button class="chip ${currentView==='all'?'active':''}" onclick="setView('all')">ทั้งหมด</button><button class="chip ${currentView==='favorites'?'active':''}" onclick="setView('favorites')">★ โปรด</button><button class="chip ${currentView==='recent'?'active':''}" onclick="setView('recent')">◷ ล่าสุด</button>${shown.map(c=>`<button class="chip ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')">${escapeHTML(c)}</button>`).join("")}<button class="chip chip-manage" onclick="openShortcutManager()">⚙ จัดการ</button>`;
+}
+function openShortcutManager(){
+  SHORTCUT_EDIT=getShortcutConfig();
+  renderShortcutManager();
+  el("shortcutOverlay").classList.add("show");
+}
+function closeShortcutManager(){
+  el("shortcutOverlay").classList.remove("show");
+  SHORTCUT_EDIT=null;
+}
+function renderShortcutManager(){
+  if(!SHORTCUT_EDIT)return;
+  el("shortcutList").innerHTML=SHORTCUT_EDIT.order.map((c,i)=>{
+    const checked=SHORTCUT_EDIT.visible.includes(c)?"checked":"";
+    return `<div class="shortcut-row">
+      <input type="checkbox" ${checked} onchange="toggleShortcut('${jsString(c)}',this.checked)">
+      <div class="shortcut-name">${escapeHTML(c)}</div>
+      <div class="shortcut-tools">
+        <button class="shortcut-move" onclick="moveShortcut(${i},-1)" ${i===0?"disabled":""}>↑</button>
+        <button class="shortcut-move" onclick="moveShortcut(${i},1)" ${i===SHORTCUT_EDIT.order.length-1?"disabled":""}>↓</button>
+      </div>
+    </div>`;
+  }).join("") || '<div class="muted">ยังไม่มีหมวดข้อความ</div>';
+}
+function toggleShortcut(cat,on){
+  if(!SHORTCUT_EDIT)return;
+  if(on){
+    if(!SHORTCUT_EDIT.visible.includes(cat))SHORTCUT_EDIT.visible.push(cat);
+  }else{
+    SHORTCUT_EDIT.visible=SHORTCUT_EDIT.visible.filter(c=>c!==cat);
+  }
+}
+function moveShortcut(index,dir){
+  if(!SHORTCUT_EDIT)return;
+  const j=index+dir;
+  if(j<0||j>=SHORTCUT_EDIT.order.length)return;
+  const a=SHORTCUT_EDIT.order;
+  [a[index],a[j]]=[a[j],a[index]];
+  renderShortcutManager();
+}
+function saveShortcuts(){
+  if(!SHORTCUT_EDIT)return;
+  setShortcutConfig(SHORTCUT_EDIT);
+  closeShortcutManager();
+  updateChips();
+  toast("บันทึกปุ่มลัดแล้ว");
+}
+function resetShortcuts(){
+  localStorage.removeItem(shortcutKey());
+  SHORTCUT_EDIT=getShortcutConfig();
+  renderShortcutManager();
+  updateChips();
+  toast("คืนค่าปุ่มลัดเริ่มต้นแล้ว");
 }
 
 /* ===================== COPY / FAVORITES / RECENT ===================== */
@@ -1110,11 +1231,6 @@ function closeEditor(){
   el("newCatInput").value="";
   el("imageInfo").textContent="";
   el("dropZone").classList.remove("processing");
-}
-function insertToken(token){
-  const t=el("textInput"),start=t.selectionStart,end=t.selectionEnd;
-  t.value=t.value.slice(0,start)+token+t.value.slice(end);
-  t.focus();t.selectionStart=t.selectionEnd=start+token.length;updatePreview()
 }
 function updatePreview(){
   const text=el("textInput").value;
@@ -1248,7 +1364,13 @@ async function changeOwnPassword(){
   if(p.length<8){toast("รหัสผ่านต้องมีอย่างน้อย 8 ตัว","error");return}
   if(p!==c){toast("ยืนยันรหัสผ่านไม่ตรงกัน","error");return}
   const btn=el("forcePasswordBtn");setBusy(btn,true,"กำลังบันทึก...");
-  try{await api({action:"change_password",password:p});SESSION.forceChange=false;el("forcePasswordOverlay").classList.remove("show");toast("ตั้งรหัสผ่านใหม่แล้ว","success")}catch(err){toast(err.message,"error")}finally{setBusy(btn,false,"บันทึกรหัสใหม่")}
+  try{
+    await api({action:"change_password",password:p});
+    SESSION.forceChange=false;
+    localStorage.setItem(STORAGE.session,JSON.stringify(SESSION));
+    el("forcePasswordOverlay").classList.remove("show");
+    toast("ตั้งรหัสผ่านใหม่แล้ว","success");
+  }catch(err){toast(err.message,"error")}finally{setBusy(btn,false,"บันทึกรหัสใหม่")}
 }
 
 /* ===================== TEAM USERS ===================== */
