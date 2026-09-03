@@ -104,21 +104,31 @@ button{cursor:pointer}
 .category-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tiny-sort-btn{border:0;background:transparent;color:var(--primary);font-size:11px;font-weight:800;cursor:pointer;padding:4px 6px;border-radius:7px}
 .tiny-sort-btn:hover{background:var(--primary-soft)}
-.cat-row{display:flex;align-items:center;gap:4px}
+.cat-sort-guide{margin:5px 2px 9px;padding:9px 10px;border:1px dashed #ffc98f;background:var(--primary-soft);color:var(--primary);border-radius:10px;font-size:10px;font-weight:800;line-height:1.45}
+.cat-row{display:flex;align-items:center;gap:5px;border-radius:9px;transition:.15s}
 .cat-row>.nav-item{flex:1;min-width:0}
+.cat-row.sorting{padding:3px 4px;border:1px solid var(--border);background:var(--surface)}
+.cat-row.sorting:hover{border-color:#ffc98f}
+.cat-drag-handle{width:25px;height:30px;border:0;background:transparent;color:var(--muted);font-size:17px;font-weight:900;cursor:grab;display:grid;place-items:center;flex:0 0 auto}
+.cat-drag-handle:active{cursor:grabbing}
+.cat-zone-select{width:78px;min-width:78px;height:29px;border:1px solid var(--border);border-radius:7px;background:var(--surface-2);color:var(--text);font-size:9px;font-weight:800;padding:0 3px;outline:none}
 .cat-order-tools{display:flex;gap:2px;flex:0 0 auto}
-.cat-order-btn{width:26px;height:28px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:900}
-.cat-order-btn:hover{background:var(--surface-2);color:var(--text)}
-.sort-reset{width:100%;border:0;background:transparent;color:var(--muted);padding:6px 10px 10px;font-size:11px;cursor:pointer;text-align:left}
+.cat-order-btn{width:27px;height:29px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:900}
+.cat-order-btn:hover{background:var(--primary-soft);color:var(--primary);border-color:#ffc98f}
+.cat-order-btn:disabled{opacity:.28;cursor:not-allowed}
+.sort-reset{width:100%;border:0;background:transparent;color:var(--muted);padding:8px 10px 10px;font-size:11px;cursor:pointer;text-align:left}
 .sort-reset:hover{color:var(--primary)}
 .card-actions .mini-btn.edit-direct,.card-actions .mini-btn.delete-direct{width:auto;min-width:40px;padding:0 11px}
-
-
-.cat-row{touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.category-dragging{cursor:grabbing}
-.category-dragging .cat-row{touch-action:none}
-.cat-row.drag-source{opacity:.62;transform:scale(.985);background:var(--primary-soft);border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.10)}
-.cat-row.drag-source .nav-item{background:transparent}
+.cat-row.cat-dragging{opacity:.42;background:var(--primary-soft);border-color:var(--primary)}
+.cat-row.cat-drag-over{outline:2px dashed var(--primary);outline-offset:1px}
+.zone-block.cat-zone-drop{border:1px dashed transparent;border-radius:11px;padding:1px;transition:.15s}
+.zone-block.cat-zone-drop.drag-over-zone{border-color:var(--primary);background:var(--primary-soft)}
+.zone-drop-empty{padding:8px 12px;margin:3px 8px 6px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:10px;text-align:center}
+@media(max-width:760px){
+  .cat-row.sorting{flex-wrap:wrap}
+  .cat-row.sorting>.nav-item{min-width:calc(100% - 34px)}
+  .cat-zone-select{margin-left:30px;width:calc(100% - 98px);min-width:0}
+}
 
 
 #catSelect{cursor:pointer}
@@ -463,6 +473,9 @@ function getCategoryZoneMap(){
   }catch(_){return {}}
 }
 function saveCategoryZoneMap(v){localStorage.setItem(categoryZoneKey(),JSON.stringify(v||{}))}
+function allCategories(){
+  return [...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))];
+}
 function sortCategoriesForUser(cats){
   const saved=getCategoryOrder();
   return [...cats].sort((a,b)=>{
@@ -475,39 +488,62 @@ function sortCategoriesForUser(cats){
     return categoryPriority(a)-categoryPriority(b)||a.localeCompare(b,"th");
   });
 }
-function visibleCategoryOrder(){
-  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
-  const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
-  all.forEach(c=>grouped[zoneForCategory(c).id].push(c));
-  return ZONES.flatMap(z=>grouped[z.id]);
+function normalizeCategoryOrder(){
+  const cats=allCategories();
+  const order=sortCategoriesForUser(cats);
+  saveCategoryOrder(order);
+  return order;
+}
+function categoriesInZone(zoneId){
+  return normalizeCategoryOrder().filter(c=>zoneForCategory(c).id===zoneId);
 }
 function moveCategory(cat,dir){
-  const visible=visibleCategoryOrder();
-  const i=visible.indexOf(cat), j=i+Number(dir||0);
-  if(i<0||j<0||j>=visible.length)return;
-
-  const target=visible[j];
-  const targetZone=zoneForCategory(target).id;
+  const zoneId=zoneForCategory(cat).id;
+  const same=categoriesInZone(zoneId);
+  const i=same.indexOf(cat), j=i+Number(dir||0);
+  if(i<0||j<0||j>=same.length)return;
+  const order=normalizeCategoryOrder();
+  const a=order.indexOf(cat), b=order.indexOf(same[j]);
+  [order[a],order[b]]=[order[b],order[a]];
+  saveCategoryOrder(order);
+  updateNav();
+  if(currentView==="all")render();
+}
+function moveCategoryToZone(cat,zoneId){
+  if(!ZONES.some(z=>z.id===zoneId))return;
+  const order=normalizeCategoryOrder().filter(c=>c!==cat);
   const zoneMap=getCategoryZoneMap();
+  zoneMap[cat]=zoneId;
+  saveCategoryZoneMap(zoneMap);
 
-  // ข้ามโซนได้ โดยย้ายเฉพาะหัวข้อ ไม่ย้ายทั้งกรอบ
-  if(zoneForCategory(cat).id!==targetZone){
-    zoneMap[cat]=targetZone;
-    saveCategoryZoneMap(zoneMap);
+  const inTarget=order.filter(c=>zoneForCategory(c).id===zoneId);
+  if(inTarget.length){
+    const last=inTarget[inTarget.length-1];
+    order.splice(order.indexOf(last)+1,0,cat);
+  }else{
+    order.push(cat);
   }
-
-  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
-  const a=all.indexOf(cat), b=all.indexOf(target);
-  if(a<0||b<0)return;
-  all.splice(a,1);
-  const targetNow=all.indexOf(target);
-  all.splice(dir<0?targetNow:targetNow+1,0,cat);
-  saveCategoryOrder(all);
+  saveCategoryOrder(order);
+  updateNav();
+  if(currentView==="all")render();
+}
+function placeCategoryBefore(cat,targetCat){
+  if(!cat||!targetCat||cat===targetCat)return;
+  const order=normalizeCategoryOrder().filter(c=>c!==cat);
+  const targetIndex=order.indexOf(targetCat);
+  if(targetIndex<0)return;
+  const zoneMap=getCategoryZoneMap();
+  zoneMap[cat]=zoneForCategory(targetCat).id;
+  saveCategoryZoneMap(zoneMap);
+  order.splice(targetIndex,0,cat);
+  saveCategoryOrder(order);
   updateNav();
   if(currentView==="all")render();
 }
 function toggleCategorySort(){
-  CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE; updateNav();
+  CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE;
+  CAT_DND_CAT=null;
+  updateNav();
 }
 let MESSAGE_SORT_MODE=false;
 let MSG_DRAG_ID=null;
@@ -639,63 +675,57 @@ function msgDragEnd(){
 function resetCategoryOrder(){
   localStorage.removeItem(categoryOrderKey());
   localStorage.removeItem(categoryZoneKey());
+  CAT_DND_CAT=null;
   updateNav();
   if(currentView==="all")render();
   toast("คืนลำดับหัวข้อเริ่มต้นแล้ว");
 }
 
-let CAT_DRAG = {timer:null, active:false, cat:null, pointerId:null, startY:0};
-function clearCatLongPress(){
-  if(CAT_DRAG.timer){clearTimeout(CAT_DRAG.timer);CAT_DRAG.timer=null}
+let CAT_DND_CAT=null;
+function catDragStart(e,cat){
+  if(!CATEGORY_SORT_MODE){e.preventDefault();return}
+  CAT_DND_CAT=cat;
+  e.dataTransfer.effectAllowed="move";
+  e.dataTransfer.setData("text/plain",cat);
+  requestAnimationFrame(()=>e.currentTarget.classList.add("cat-dragging"));
 }
-function beginCatHold(e,cat){
-  if(e.button!==undefined && e.button!==0)return;
-  clearCatLongPress();
-  CAT_DRAG.active=false; CAT_DRAG.cat=cat; CAT_DRAG.pointerId=e.pointerId; CAT_DRAG.startY=e.clientY;
-  CAT_DRAG.timer=setTimeout(()=>{
-    CAT_DRAG.active=true;
-    document.body.classList.add("category-dragging");
-    const row=document.querySelector(`.cat-row[data-cat="${CSS.escape(cat)}"]`);
-    row?.classList.add("drag-source");
-    try{e.currentTarget.setPointerCapture(e.pointerId)}catch(_){}
-    if(navigator.vibrate) navigator.vibrate(25);
-  },380);
-}
-function moveCatHold(e){
-  if(!CAT_DRAG.timer && !CAT_DRAG.active)return;
-  if(!CAT_DRAG.active && Math.abs(e.clientY-CAT_DRAG.startY)>8){clearCatLongPress();return}
-  if(!CAT_DRAG.active)return;
+function catDragOver(e){
+  if(!CATEGORY_SORT_MODE||!CAT_DND_CAT)return;
   e.preventDefault();
-  const elAt=document.elementFromPoint(e.clientX,e.clientY);
-  const target=elAt?.closest(".cat-row");
-  if(!target)return;
-  const targetCat=target.dataset.cat;
-  if(!targetCat || targetCat===CAT_DRAG.cat)return;
-
-  const targetZone=zoneForCategory(targetCat).id;
-  const zoneMap=getCategoryZoneMap();
-  zoneMap[CAT_DRAG.cat]=targetZone;
-  saveCategoryZoneMap(zoneMap);
-
-  const all=sortCategoriesForUser(Object.keys(DATA.reduce((o,x)=>(o[x.cat]=1,o),{})));
-  const a=all.indexOf(CAT_DRAG.cat), b=all.indexOf(targetCat);
-  if(a<0||b<0)return;
-  all.splice(a,1);
-  const targetNow=all.indexOf(targetCat);
-  all.splice(targetNow,0,CAT_DRAG.cat);
-  saveCategoryOrder(all);
-  updateNav();
-  if(currentView==="all")render();
-  const src=document.querySelector(`.cat-row[data-cat="${CSS.escape(CAT_DRAG.cat)}"]`);
-  src?.classList.add("drag-source");
+  e.dataTransfer.dropEffect="move";
+  e.currentTarget.classList.add("cat-drag-over");
 }
-function endCatHold(){
-  clearCatLongPress();
-  if(CAT_DRAG.active){
-    document.body.classList.remove("category-dragging");
-    document.querySelectorAll(".drag-source").forEach(x=>x.classList.remove("drag-source"));
-  }
-  CAT_DRAG={timer:null,active:false,cat:null,pointerId:null,startY:0};
+function catDragLeave(e){
+  e.currentTarget.classList.remove("cat-drag-over");
+}
+function catDropOnCategory(e,targetCat){
+  if(!CATEGORY_SORT_MODE)return;
+  e.preventDefault();
+  e.stopPropagation();
+  const cat=e.dataTransfer.getData("text/plain")||CAT_DND_CAT;
+  document.querySelectorAll(".cat-drag-over").forEach(x=>x.classList.remove("cat-drag-over"));
+  placeCategoryBefore(cat,targetCat);
+}
+function catZoneDragOver(e){
+  if(!CATEGORY_SORT_MODE||!CAT_DND_CAT)return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect="move";
+  e.currentTarget.classList.add("drag-over-zone");
+}
+function catZoneDragLeave(e){
+  if(e.currentTarget.contains(e.relatedTarget))return;
+  e.currentTarget.classList.remove("drag-over-zone");
+}
+function catDropOnZone(e,zoneId){
+  if(!CATEGORY_SORT_MODE)return;
+  e.preventDefault();
+  const cat=e.dataTransfer.getData("text/plain")||CAT_DND_CAT;
+  e.currentTarget.classList.remove("drag-over-zone");
+  if(cat)moveCategoryToZone(cat,zoneId);
+}
+function catDragEnd(){
+  CAT_DND_CAT=null;
+  document.querySelectorAll(".cat-dragging,.cat-drag-over,.drag-over-zone").forEach(x=>x.classList.remove("cat-dragging","cat-drag-over","drag-over-zone"));
 }
 const ZONES = [
   {id:"frequent",icon:"💬",title:"ลูกค้าทักเข้ามา / ข้อความเริ่มต้น",color:"blue",keywords:["สมัคร","ทางเข้า","ทัก","ยินดี","สวัสดี","ปิดแชท","ปิดปรับปรุง"]},
@@ -1047,17 +1077,42 @@ function updateNav(){
   const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
-  el("categoryNav").innerHTML=ZONES.filter(z=>grouped[z.id].length).map(z=>{
+  const zonesToShow=CATEGORY_SORT_MODE?ZONES:ZONES.filter(z=>grouped[z.id].length);
+  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">จัดเรียงใหม่: ลาก ⠿ เพื่อวางหัวข้อ • เลือกกรอบจากเมนู • ↑ ↓ เรียงภายในกรอบ</div>':"";
+
+  html+=zonesToShow.map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
     const children=grouped[z.id].map((c,i)=>{
-      const nav=`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="if(!CAT_DRAG.active)setCategory('${jsString(c)}')"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`;
-      const tools=CATEGORY_SORT_MODE?`<div class="cat-order-tools"><button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',-1)" ${i===0?'disabled':''}>↑</button><button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',1)" ${i===grouped[z.id].length-1?'disabled':''}>↓</button></div>`:"";
-      return `<div class="cat-row" data-cat="${escAttr(c)}" onpointerdown="beginCatHold(event,'${jsString(c)}')" onpointermove="moveCatHold(event)" onpointerup="endCatHold()" onpointercancel="endCatHold()" oncontextmenu="event.preventDefault()">${nav}${tools}</div>`;
-    }).join("");
-    return `<div class="zone-block open"><div class="nav-item zone-toggle zone-static"><span class="nav-icon">${z.icon}</span><span>${z.title}</span><span class="nav-count">${total}</span></div><div class="zone-items">${children}</div></div>`;
-  }).join("") || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
+      const nav=`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="${CATEGORY_SORT_MODE?'event.preventDefault()':`setCategory('${jsString(c)}')`}"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`;
+      if(!CATEGORY_SORT_MODE)return `<div class="cat-row" data-cat="${escAttr(c)}">${nav}</div>`;
 
-  if(CATEGORY_SORT_MODE) el("categoryNav").insertAdjacentHTML("beforeend",'<button class="sort-reset" onclick="resetCategoryOrder()">↺ คืนลำดับเริ่มต้น</button>');
+      const zoneOptions=ZONES.map(opt=>`<option value="${escAttr(opt.id)}" ${opt.id===z.id?'selected':''}>${opt.icon} ${escapeHTML(opt.title)}</option>`).join("");
+      return `<div class="cat-row sorting" data-cat="${escAttr(c)}" draggable="true"
+        ondragstart="catDragStart(event,'${jsString(c)}')"
+        ondragover="catDragOver(event)"
+        ondragleave="catDragLeave(event)"
+        ondrop="catDropOnCategory(event,'${jsString(c)}')"
+        ondragend="catDragEnd()">
+        <button type="button" class="cat-drag-handle" title="ลากเพื่อย้าย">⠿</button>
+        ${nav}
+        <select class="cat-zone-select" title="ย้ายไปกรอบอื่น" onchange="event.stopPropagation();moveCategoryToZone('${jsString(c)}',this.value)">${zoneOptions}</select>
+        <div class="cat-order-tools">
+          <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',-1)" ${i===0?'disabled':''} title="เลื่อนขึ้น">↑</button>
+          <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',1)" ${i===grouped[z.id].length-1?'disabled':''} title="เลื่อนลง">↓</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    const empty=CATEGORY_SORT_MODE&&!children?'<div class="zone-drop-empty">ลากหัวข้อมาวางในกรอบนี้ได้</div>':"";
+    return `<div class="zone-block open ${CATEGORY_SORT_MODE?'cat-zone-drop':''}"
+      ${CATEGORY_SORT_MODE?`ondragover="catZoneDragOver(event)" ondragleave="catZoneDragLeave(event)" ondrop="catDropOnZone(event,'${jsString(z.id)}')"`:""}>
+      <div class="nav-item zone-toggle zone-static"><span class="nav-icon">${z.icon}</span><span>${z.title}</span><span class="nav-count">${total}</span></div>
+      <div class="zone-items">${children}${empty}</div>
+    </div>`;
+  }).join("");
+
+  el("categoryNav").innerHTML=html || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
+  if(CATEGORY_SORT_MODE) el("categoryNav").insertAdjacentHTML("beforeend",'<button class="sort-reset" onclick="resetCategoryOrder()">↺ คืนลำดับหัวข้อเริ่มต้น</button>');
   if(el("sortCatBtn")) el("sortCatBtn").textContent=CATEGORY_SORT_MODE?"✓ เสร็จ":"↕ จัดเรียง";
 
   el("countAll").textContent=DATA.length;
