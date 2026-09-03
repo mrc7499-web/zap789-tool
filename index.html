@@ -480,19 +480,66 @@ const DEMO_SEED = [
 const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
 const DATA_CACHE_MS = 30000;
 let CATEGORY_SORT_MODE=false;
-function categoryOrderKey(){return "zap789_v2_category_order_"+(SESSION?.username||"guest")}
-function categoryZoneKey(){return "zap789_v2_category_zone_"+(SESSION?.username||"guest")}
+const CATEGORY_LAYOUT_CAT="__ZAP789_CATEGORY_LAYOUT__";
+let CATEGORY_LAYOUT_ROW_ID=null;
+let CATEGORY_LAYOUT={order:[],zones:{}};
+let CATEGORY_LAYOUT_SAVING=false;
+
 function getCategoryOrder(){
-  try{const v=JSON.parse(localStorage.getItem(categoryOrderKey())||"[]");return Array.isArray(v)?v:[]}catch(_){return []}
+  return Array.isArray(CATEGORY_LAYOUT.order)?CATEGORY_LAYOUT.order:[];
 }
-function saveCategoryOrder(v){localStorage.setItem(categoryOrderKey(),JSON.stringify(v))}
 function getCategoryZoneMap(){
-  try{
-    const v=JSON.parse(localStorage.getItem(categoryZoneKey())||"{}");
-    return v&&typeof v==="object"&&!Array.isArray(v)?v:{};
-  }catch(_){return {}}
+  return CATEGORY_LAYOUT&&CATEGORY_LAYOUT.zones&&typeof CATEGORY_LAYOUT.zones==="object"?CATEGORY_LAYOUT.zones:{};
 }
-function saveCategoryZoneMap(v){localStorage.setItem(categoryZoneKey(),JSON.stringify(v||{}))}
+function applyCategoryLayoutFromRows(rows){
+  const meta=(Array.isArray(rows)?rows:[]).find(r=>String(r?.cat??(Array.isArray(r)?r[0]:""))===CATEGORY_LAYOUT_CAT);
+  CATEGORY_LAYOUT_ROW_ID=null;
+  CATEGORY_LAYOUT={order:[],zones:{}};
+  if(!meta)return;
+  const n=normalizeRow(meta,0);
+  CATEGORY_LAYOUT_ROW_ID=n.id;
+  try{
+    const cfg=JSON.parse(n.text||"{}");
+    CATEGORY_LAYOUT={
+      order:Array.isArray(cfg.order)?cfg.order.map(String):[],
+      zones:cfg.zones&&typeof cfg.zones==="object"&&!Array.isArray(cfg.zones)?cfg.zones:{}
+    };
+  }catch(_){}
+}
+async function saveSharedCategoryLayout(next){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดหัวข้อกลางได้");return false}
+  if(CATEGORY_LAYOUT_SAVING)return false;
+  CATEGORY_LAYOUT_SAVING=true;
+  const before=JSON.parse(JSON.stringify(CATEGORY_LAYOUT));
+  CATEGORY_LAYOUT={
+    order:Array.isArray(next?.order)?next.order:[],
+    zones:next?.zones&&typeof next.zones==="object"?next.zones:{}
+  };
+  updateNav();
+  try{
+    const payloadText=JSON.stringify(CATEGORY_LAYOUT);
+    if(CATEGORY_LAYOUT_ROW_ID){
+      await api({action:"edit",id:CATEGORY_LAYOUT_ROW_ID,cat:CATEGORY_LAYOUT_CAT,text:payloadText,tags:"system category layout",image:""});
+    }else{
+      await api({action:"add",cat:CATEGORY_LAYOUT_CAT,text:payloadText,tags:"system category layout",image:""});
+      // Fetch once so we know the metadata row id for later edits.
+      const result=await api({action:"list"});
+      const rows=Array.isArray(result)?result:(result.items||[]);
+      applyCategoryLayoutFromRows(rows);
+      DATA=rows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted"&&x.cat!==CATEGORY_LAYOUT_CAT);
+      saveDataCache(DATA);
+    }
+    toast("บันทึกลำดับหัวข้อกลางแล้ว • ทุกบัญชีจะใช้แบบเดียวกัน");
+    return true;
+  }catch(err){
+    CATEGORY_LAYOUT=before;
+    updateNav();
+    toast(err.message||"บันทึกลำดับหัวข้อไม่สำเร็จ");
+    return false;
+  }finally{
+    CATEGORY_LAYOUT_SAVING=false;
+  }
+}
 function allCategories(){
   return [...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))];
 }
@@ -514,31 +561,30 @@ function visibleCategoryOrder(){
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
   return ZONES.flatMap(z=>grouped[z.id]);
 }
-function moveCategory(cat,dir){
+async function moveCategory(cat,dir){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดหัวข้อกลางได้");return}
   const visible=visibleCategoryOrder();
   const i=visible.indexOf(cat), j=i+Number(dir||0);
   if(i<0||j<0||j>=visible.length)return;
 
   const target=visible[j];
-  const targetZone=zoneForCategory(target).id;
-  const currentZone=zoneForCategory(cat).id;
-  const zoneMap=getCategoryZoneMap();
-
-  // ถ้าเลื่อนข้ามกรอบ ให้ย้ายเฉพาะหัวข้อนี้ไปกรอบของหัวข้อข้างเคียง
-  if(currentZone!==targetZone){
-    zoneMap[cat]=targetZone;
-    saveCategoryZoneMap(zoneMap);
-  }
-
   const order=sortCategoriesForUser(allCategories());
-  const a=order.indexOf(cat), b=order.indexOf(target);
-  [order[a],order[b]]=[order[b],order[a]];
-  saveCategoryOrder(order);
+  const zones={...getCategoryZoneMap()};
+  const targetZone=zoneForCategory(target).id;
 
-  updateNav();
+  if(zoneForCategory(cat).id!==targetZone) zones[cat]=targetZone;
+
+  const a=order.indexOf(cat), b=order.indexOf(target);
+  if(a<0||b<0)return;
+  order.splice(a,1);
+  const targetNow=order.indexOf(target);
+  order.splice(dir<0?targetNow:targetNow+1,0,cat);
+
+  await saveSharedCategoryLayout({order,zones});
   if(currentView==="all")render();
 }
 function toggleCategorySort(){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดหัวข้อกลางได้");return}
   CATEGORY_SORT_MODE=!CATEGORY_SORT_MODE;
   updateNav();
 }
@@ -698,19 +744,17 @@ async function saveCategoryName(){
 
   try{
     for(const item of affected){
-      await api({action:"save",id:item.id,cat:newName,text:item.text,tags:item.tags||"",image:item.img||item.image||""});
+      await api({action:"edit",id:item.id,cat:newName,text:item.text,tags:item.tags||"",image:item.img||item.image||""});
       item.cat=newName;
     }
 
-    const order=getCategoryOrder().map(c=>c===oldName?newName:c);
-    saveCategoryOrder([...new Set(order)]);
-
-    const zoneMap=getCategoryZoneMap();
+    const order=[...new Set(getCategoryOrder().map(c=>c===oldName?newName:c))];
+    const zoneMap={...getCategoryZoneMap()};
     if(zoneMap[oldName]){
       zoneMap[newName]=zoneMap[oldName];
       delete zoneMap[oldName];
-      saveCategoryZoneMap(zoneMap);
     }
+    await saveSharedCategoryLayout({order,zones:zoneMap});
 
     // Preserve shortcut preference under the renamed category
     try{
@@ -753,14 +797,14 @@ async function confirmCategoryDelete(){
   const before=DATA.map(x=>({...x}));
   try{
     for(const item of affected){
-      await api({action:"save",id:item.id,cat:"อื่น ๆ",text:item.text,tags:item.tags||"",image:item.img||item.image||""});
+      await api({action:"edit",id:item.id,cat:"อื่น ๆ",text:item.text,tags:item.tags||"",image:item.img||item.image||""});
       item.cat="อื่น ๆ";
     }
 
-    saveCategoryOrder(getCategoryOrder().filter(c=>c!==cat));
-    const zoneMap=getCategoryZoneMap();
+    const order=getCategoryOrder().filter(c=>c!==cat);
+    const zoneMap={...getCategoryZoneMap()};
     delete zoneMap[cat];
-    saveCategoryZoneMap(zoneMap);
+    await saveSharedCategoryLayout({order,zones:zoneMap});
 
     try{
       const cfg=JSON.parse(localStorage.getItem(shortcutKey())||"null");
@@ -785,12 +829,12 @@ async function confirmCategoryDelete(){
   }
 }
 
-function resetCategoryOrder(){
-  localStorage.removeItem(categoryOrderKey());
-  localStorage.removeItem(categoryZoneKey());
+async function resetCategoryOrder(){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดหัวข้อกลางได้");return}
+  if(!confirm("คืนลำดับหัวข้อกลางเป็นค่าเริ่มต้นสำหรับทุกบัญชีใช่หรือไม่?"))return;
+  await saveSharedCategoryLayout({order:[],zones:{}});
   updateNav();
   if(currentView==="all")render();
-  toast("คืนลำดับหัวข้อเริ่มต้นแล้ว");
 }
 const ZONES = [
   {id:"frequent",icon:"💬",title:"ลูกค้าทักเข้ามา / ข้อความเริ่มต้น",color:"blue",keywords:["สมัคร","ทางเข้า","ทัก","ยินดี","สวัสดี","ปิดแชท","ปิดปรับปรุง"]},
@@ -975,18 +1019,19 @@ async function loadData(force=false){
     if(Array.isArray(c)) cachedRows=c;
   }catch(_){}
   if(cachedRows){
-    DATA=cachedRows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted");
+    DATA=cachedRows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted"&&x.cat!==CATEGORY_LAYOUT_CAT);
     render();
     // Prevent every refresh from hammering Apps Script / Google Sheets.
-    if(!force && Date.now()-cachedAt < DATA_CACHE_MS) return;
+    // หัวข้อเป็นค่ากลาง จึงตรวจรายการจากเซิร์ฟเวอร์ทุกครั้งที่เปิด/รีเฟรช เพื่อให้ทุกยูสเห็นตรงกัน
   }else{
     el("content").innerHTML='<div class="card-grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>';
   }
   try{
     const result=await api({action:"list"});
     const rows=Array.isArray(result)?result:(result.items||[]);
-    DATA=rows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted");
-    localStorage.setItem(STORAGE.data,JSON.stringify(rows));
+    applyCategoryLayoutFromRows(rows);
+    DATA=rows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted"&&x.cat!==CATEGORY_LAYOUT_CAT);
+    localStorage.setItem(STORAGE.data,JSON.stringify(DATA));
     localStorage.setItem(STORAGE.dataAt,String(Date.now()));
     render();
   }catch(err){
@@ -1143,7 +1188,7 @@ function updateNav(){
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
   const visible=ZONES.flatMap(z=>grouped[z.id]);
-  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">กด ↑ ↓ เพื่อย้ายหัวข้อ • Owner/Admin กด “แก้ชื่อ” หรือ “ลบ” ได้จากตรงนี้</div>':"";
+  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">ลำดับหัวข้อกลาง • Owner/Admin จัดครั้งเดียว ทุกบัญชีใช้ตาม • กด ↑ ↓ เพื่อย้าย</div>':"";
 
   html+=ZONES.filter(z=>grouped[z.id].length).map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
@@ -1169,7 +1214,10 @@ function updateNav(){
 
   el("categoryNav").innerHTML=html || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
   if(CATEGORY_SORT_MODE) el("categoryNav").insertAdjacentHTML("beforeend",'<button class="sort-reset" onclick="resetCategoryOrder()">↺ คืนลำดับหัวข้อเริ่มต้น</button>');
-  if(el("sortCatBtn")) el("sortCatBtn").textContent=CATEGORY_SORT_MODE?"✓ เสร็จ":"↕ จัดเรียง";
+  if(el("sortCatBtn")){
+    el("sortCatBtn").textContent=CATEGORY_SORT_MODE?"✓ เสร็จ":"↕ จัดเรียง";
+    el("sortCatBtn").classList.toggle("hidden",!isAdmin());
+  }
 
   el("countAll").textContent=DATA.length;
   el("countFav").textContent=FAVORITES.filter(id=>DATA.some(x=>x.id===id)).length;
