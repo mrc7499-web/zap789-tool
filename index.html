@@ -1253,15 +1253,22 @@ function leaveUserManagement(){
 }
 function setView(view,cat=null){
   leaveUserManagement();
+  if(el("search")) el("search").value="";
   currentView=view;currentCat=cat||"ทั้งหมด";
   document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
   render();closeDrawer();
 }
 function setCategory(cat){
   leaveUserManagement();
+  // กดหัวข้อ = เปิดข้อความของหัวข้อนั้นทันที ไม่ให้คำค้นเก่าซ่อนข้อความไว้
+  if(el("search")) el("search").value="";
   currentView="category";currentCat=cat;
   document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.classList.remove('active'));
   render();closeDrawer();
+}
+function clearSearchAndRender(){
+  if(el("search")) el("search").value="";
+  render();
 }
 function handleSearchInput(){
   if(currentView==="users"){
@@ -1296,7 +1303,12 @@ function render(){
   if(el("messageSortBtn")) el("messageSortBtn").textContent=MESSAGE_SORT_MODE?"✓ เสร็จจัดเรียง":"↕ จัดเรียงข้อความกลาง";
 
   if(!items.length){
-    el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>ลองเปลี่ยนคำค้น หมวดหมู่ หรือตัวกรอง</p></div>';
+    const hasCategoryItems=currentView==="category" && DATA.some(x=>x.cat===currentCat);
+    if(q && hasCategoryItems){
+      el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ข้อความถูกคำค้นกรองอยู่</h3><p>หมวดนี้มีข้อความ แต่ไม่ตรงกับคำค้นปัจจุบัน</p><button class="secondary-btn" onclick="clearSearchAndRender()">ล้างคำค้นแล้วแสดงทั้งหมดในหมวดนี้</button></div>';
+    }else{
+      el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>หมวดนี้ยังไม่มีข้อความ หรือข้อมูลยังไม่ถูกโหลดเข้ามา</p><button class="secondary-btn" onclick="loadData(true)">โหลดข้อมูลใหม่</button></div>';
+    }
     return;
   }
 
