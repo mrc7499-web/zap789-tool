@@ -659,7 +659,7 @@ async function saveSharedCategoryLayout(next){
   }
 }
 function allCategories(){
-  return [...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))];
+  return [...new Set(DATA.map(x=>cleanCategory(x.cat)).filter(Boolean))];
 }
 function sortCategoriesForUser(cats){
   const saved=getCategoryOrder();
@@ -743,7 +743,7 @@ function getVisibleItemsForSort(){
   let items=DATA.slice();
   if(currentView==="favorites") items=items.filter(x=>FAVORITES.includes(x.id));
   else if(currentView==="recent") items=RECENT.map(id=>items.find(x=>x.id===id)).filter(Boolean);
-  else if(currentView==="category") items=items.filter(x=>x.cat===currentCat);
+  else if(currentView==="category") items=items.filter(x=>sameCategory(x.cat,currentCat));
   if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
   return items;
 }
@@ -961,7 +961,7 @@ function closeCategoryManager(){
 function renderCategoryManager(){
   const box=el("categoryManagerList");
   if(!box)return;
-  const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
+  const counts={}; DATA.forEach(x=>{const c=cleanCategory(x.cat);if(c)counts[c]=(counts[c]||0)+1});
   const cats=visibleCategoryOrder();
 
   let html=`<div class="category-manage-row head">
@@ -1226,9 +1226,19 @@ async function loadData(force=false){
     el("content").innerHTML=`<div class="empty"><div class="emoji">⚠️</div><h3>โหลดข้อมูลไม่สำเร็จ</h3><p>${escapeHTML(msg)}</p><button class="secondary-btn" onclick="loadData(true)">ลองใหม่</button></div>`;
   }
 }
+function cleanCategory(v){
+  return String(v??"")
+    .normalize("NFC")
+    .replace(/\u00a0/g," ")
+    .replace(/[\u200B-\u200D\uFEFF]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+}
+function sameCategory(a,b){return cleanCategory(a)===cleanCategory(b)}
+
 function normalizeRow(r,i){
-  if(Array.isArray(r)) return {id:String(r[4]??i),cat:String(r[0]??""),text:String(r[1]??""),status:String(r[2]??""),img:String(r[3]??""),tags:String(r[5]??"")};
-  return {id:String(r.id??r.index??i),cat:String(r.cat??""),text:String(r.text??""),status:String(r.status??""),img:String(r.image??r.img??""),tags:String(r.tags??"")};
+  if(Array.isArray(r)) return {id:String(r[4]??i),cat:cleanCategory(r[0]),text:String(r[1]??""),status:String(r[2]??""),img:String(r[3]??""),tags:String(r[5]??"")};
+  return {id:String(r.id??r.index??i),cat:cleanCategory(r.cat),text:String(r.text??""),status:String(r.status??""),img:String(r.image??r.img??""),tags:String(r.tags??"")};
 }
 
 /* ===================== APP / STATE ===================== */
@@ -1262,7 +1272,7 @@ function setCategory(cat){
   leaveUserManagement();
   // กดหัวข้อ = เปิดข้อความของหัวข้อนั้นทันที ไม่ให้คำค้นเก่าซ่อนข้อความไว้
   if(el("search")) el("search").value="";
-  currentView="category";currentCat=cat;
+  currentView="category";currentCat=cleanCategory(cat);
   document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.classList.remove('active'));
   render();closeDrawer();
 }
@@ -1285,7 +1295,7 @@ function render(){
   let items=DATA.slice();
   if(currentView==="favorites") items=items.filter(x=>FAVORITES.includes(x.id));
   else if(currentView==="recent") items=RECENT.map(id=>items.find(x=>x.id===id)).filter(Boolean);
-  else if(currentView==="category") items=items.filter(x=>x.cat===currentCat);
+  else if(currentView==="category") items=items.filter(x=>sameCategory(x.cat,currentCat));
   if(q) items=items.filter(x=>`${x.cat} ${x.text} ${x.tags}`.toLowerCase().includes(q));
 
   const sort=el("sortSelect").value;
@@ -1303,11 +1313,11 @@ function render(){
   if(el("messageSortBtn")) el("messageSortBtn").textContent=MESSAGE_SORT_MODE?"✓ เสร็จจัดเรียง":"↕ จัดเรียงข้อความกลาง";
 
   if(!items.length){
-    const hasCategoryItems=currentView==="category" && DATA.some(x=>x.cat===currentCat);
+    const hasCategoryItems=currentView==="category" && DATA.some(x=>sameCategory(x.cat,currentCat));
     if(q && hasCategoryItems){
       el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ข้อความถูกคำค้นกรองอยู่</h3><p>หมวดนี้มีข้อความ แต่ไม่ตรงกับคำค้นปัจจุบัน</p><button class="secondary-btn" onclick="clearSearchAndRender()">ล้างคำค้นแล้วแสดงทั้งหมดในหมวดนี้</button></div>';
     }else{
-      el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>หมวดนี้ยังไม่มีข้อความ หรือข้อมูลยังไม่ถูกโหลดเข้ามา</p><button class="secondary-btn" onclick="loadData(true)">โหลดข้อมูลใหม่</button></div>';
+      el("content").innerHTML='<div class="empty"><div class="emoji">🔎</div><h3>ไม่พบข้อความ</h3><p>ไม่พบรายการในหมวดนี้ ถ้าข้อมูลเพิ่งถูกแก้ไขให้กดโหลดใหม่อีกครั้ง</p><button class="secondary-btn" onclick="loadData(true)">โหลดข้อมูลใหม่</button></div>';
     }
     return;
   }
@@ -1367,7 +1377,7 @@ function cardHTML(item){
   </article>`;
 }
 function updateNav(){
-  const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
+  const counts={}; DATA.forEach(x=>{const c=cleanCategory(x.cat);if(c)counts[c]=(counts[c]||0)+1});
   const cats=sortCategoriesForUser(Object.keys(counts));
   const grouped={}; ZONES.forEach(z=>grouped[z.id]=[]);
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
@@ -1402,7 +1412,7 @@ function updateHead(){
 }
 function shortcutKey(){return "zap789_v2_shortcuts_"+(SESSION?.username||"guest")}
 function allShortcutCategories(){
-  return sortCategoriesForUser([...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))]);
+  return sortCategoriesForUser([...new Set(DATA.map(x=>cleanCategory(x.cat)).filter(Boolean))]);
 }
 function getShortcutConfig(){
   const cats=allShortcutCategories();
@@ -1505,7 +1515,7 @@ function toggleFavorite(id){FAVORITES=FAVORITES.includes(id)?FAVORITES.filter(x=
 
 /* ===================== EDITOR CRUD ===================== */
 function allCategories(){
-  return [...new Set(DATA.map(x=>String(x.cat||"").trim()).filter(Boolean))];
+  return [...new Set(DATA.map(x=>cleanCategory(x.cat)).filter(Boolean))];
 }
 function buildCategoryOptions(selected=""){
   const cats=sortCategoriesForUser(allCategories());
@@ -1540,7 +1550,7 @@ function openEditor(id=null){
   if(!isAdmin()){toast("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล","error");return}
   editId=id; editImage=null;
   const item=id?DATA.find(x=>x.id===id):null;
-  const selected=item?.cat||((currentView==="category")?currentCat:"");
+  const selected=cleanCategory(item?.cat||((currentView==="category")?currentCat:""));
 
   el("editorTitle").textContent=item?"แก้ไขข้อความ":"เพิ่มข้อความ";
   el("tagInput").value=item?.tags||"";
