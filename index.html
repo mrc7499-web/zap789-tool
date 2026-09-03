@@ -289,6 +289,42 @@ button{cursor:pointer}
 .danger-user-btn{color:#d92d20!important;border-color:#f4c7c3!important;background:#fff8f7!important}
 .danger-user-btn:hover{background:#fff0ee!important}
 
+
+/* SIMPLE DESKTOP CATEGORY MANAGER */
+.category-manage-list{display:flex;flex-direction:column;gap:8px}
+.category-manage-row{
+  display:grid;
+  grid-template-columns:48px minmax(220px,1fr) 170px 70px 210px;
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+}
+.category-manage-row.head{
+  background:transparent;
+  border:0;
+  padding:0 12px 5px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+}
+.category-manage-name{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.category-manage-count{text-align:center;font-weight:800;color:var(--muted)}
+.category-manage-actions{display:flex;gap:6px;justify-content:flex-end}
+.category-manage-actions button{height:34px}
+.category-manage-order{display:flex;gap:4px}
+.category-manage-order button{
+  width:34px;height:34px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);font-weight:900
+}
+.category-manage-order button:disabled{opacity:.3;cursor:not-allowed}
+.category-manage-zone{
+  width:100%;height:34px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);color:var(--text);padding:0 8px
+}
+
 </style>
 </head>
 <body>
@@ -317,7 +353,7 @@ button{cursor:pointer}
     <button class="nav-item active" data-view="all" onclick="setView('all')"><span class="nav-icon">▦</span>ทั้งหมด<span id="countAll" class="nav-count">0</span></button>
     <button class="nav-item" data-view="favorites" onclick="setView('favorites')"><span class="nav-icon">★</span>รายการโปรด<span id="countFav" class="nav-count">0</span></button>
     <button class="nav-item" data-view="recent" onclick="setView('recent')"><span class="nav-icon">◷</span>ใช้ล่าสุด<span id="countRecent" class="nav-count">0</span></button>
-<div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="toggleCategorySort()">↕ จัดเรียง</button></div>
+<div class="side-title category-title-row"><span>โซนข้อความ</span><button id="sortCatBtn" class="tiny-sort-btn" onclick="openCategoryManager()">⚙ จัดการ</button></div>
     <div id="categoryNav"></div>
     <div id="adminSection" class="hidden">
       <div class="side-title">จัดการ</div>
@@ -416,6 +452,27 @@ button{cursor:pointer}
 </div>
 
 
+
+
+<!-- CATEGORY MANAGER WINDOW -->
+<div id="categoryManagerOverlay" class="overlay" onclick="overlayClose(event,'categoryManagerOverlay')">
+  <div class="modal" style="max-width:980px">
+    <div class="modal-head">
+      <div>
+        <h3 style="margin-bottom:4px">จัดการหัวข้อ</h3>
+        <div class="muted" style="font-size:11px">Owner/Admin จัดตรงนี้ครั้งเดียว ทุกบัญชีจะเห็นเหมือนกัน</div>
+      </div>
+      <button class="icon-btn" onclick="closeCategoryManager()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="categoryManagerList" class="category-manage-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" onclick="resetCategoryOrder()">คืนลำดับเริ่มต้น</button>
+      <button class="primary-btn" onclick="closeCategoryManager()">เสร็จ</button>
+    </div>
+  </div>
+</div>
 
 <!-- CATEGORY MANAGER -->
 <div id="categoryEditOverlay" class="overlay" onclick="overlayClose(event,'categoryEditOverlay')">
@@ -830,7 +887,7 @@ async function saveCategoryName(){
     if(currentCat===oldName)currentCat=newName;
     saveDataCache(DATA);
     closeCategoryEditor();
-    updateNav(); updateChips(); render();
+    updateNav(); updateChips(); render(); if(el("categoryManagerOverlay")?.classList.contains("show"))renderCategoryManager();
     toast("เปลี่ยนชื่อหัวข้อแล้ว");
   }catch(err){
     DATA=before;
@@ -879,7 +936,7 @@ async function confirmCategoryDelete(){
     if(currentView==="category"&&currentCat===cat){currentView="all";currentCat="ทั้งหมด"}
     saveDataCache(DATA);
     closeCategoryDelete();
-    updateNav(); updateChips(); render();
+    updateNav(); updateChips(); render(); if(el("categoryManagerOverlay")?.classList.contains("show"))renderCategoryManager();
     toast("ลบหัวข้อแล้ว • ข้อความถูกย้ายไป อื่น ๆ");
   }catch(err){
     DATA=before;
@@ -890,11 +947,66 @@ async function confirmCategoryDelete(){
   }
 }
 
+
+function openCategoryManager(){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดการหัวข้อได้");return}
+  CATEGORY_SORT_MODE=false;
+  renderCategoryManager();
+  el("categoryManagerOverlay").classList.add("show");
+}
+function closeCategoryManager(){
+  el("categoryManagerOverlay").classList.remove("show");
+  updateNav();
+}
+function renderCategoryManager(){
+  const box=el("categoryManagerList");
+  if(!box)return;
+  const counts={}; DATA.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);
+  const cats=visibleCategoryOrder();
+
+  let html=`<div class="category-manage-row head">
+    <div>ลำดับ</div><div>ชื่อหัวข้อ</div><div>กรอบ</div><div style="text-align:center">จำนวน</div><div style="text-align:right">จัดการ</div>
+  </div>`;
+
+  html+=cats.map((c,i)=>{
+    const zone=zoneForCategory(c);
+    const zoneOptions=ZONES.map(z=>`<option value="${escAttr(z.id)}" ${z.id===zone.id?"selected":""}>${z.icon} ${escapeHTML(z.title)}</option>`).join("");
+    return `<div class="category-manage-row">
+      <div class="category-manage-order">
+        <button onclick="moveCategoryFromManager('${jsString(c)}',-1)" ${i===0?"disabled":""} title="เลื่อนขึ้น">↑</button>
+        <button onclick="moveCategoryFromManager('${jsString(c)}',1)" ${i===cats.length-1?"disabled":""} title="เลื่อนลง">↓</button>
+      </div>
+      <div class="category-manage-name" title="${escAttr(c)}">${escapeHTML(c)}</div>
+      <div><select class="category-manage-zone" onchange="changeCategoryZoneFromManager('${jsString(c)}',this.value)">${zoneOptions}</select></div>
+      <div class="category-manage-count">${counts[c]||0}</div>
+      <div class="category-manage-actions">
+        <button class="secondary-btn" onclick="openCategoryEditor('${jsString(c)}')">แก้ชื่อ</button>
+        <button class="danger-btn" onclick="askCategoryDelete('${jsString(c)}')">ลบ</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  box.innerHTML=html || '<div class="empty">ยังไม่มีหัวข้อ</div>';
+}
+async function moveCategoryFromManager(cat,dir){
+  await moveCategory(cat,dir);
+  renderCategoryManager();
+}
+async function changeCategoryZoneFromManager(cat,zoneId){
+  if(!isAdmin())return;
+  const order=sortCategoriesForUser(allCategories());
+  const zones={...getCategoryZoneMap(),[cat]:zoneId};
+  await saveSharedCategoryLayout({order,zones});
+  updateNav();
+  renderCategoryManager();
+  if(currentView==="all")render();
+}
 async function resetCategoryOrder(){
   if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่จัดหัวข้อกลางได้");return}
   if(!confirm("คืนลำดับหัวข้อกลางเป็นค่าเริ่มต้นสำหรับทุกบัญชีใช่หรือไม่?"))return;
   await saveSharedCategoryLayout({order:[],zones:{}});
   updateNav();
+  if(el("categoryManagerOverlay")?.classList.contains("show"))renderCategoryManager();
   if(currentView==="all")render();
 }
 const ZONES = [
@@ -1249,22 +1361,13 @@ function updateNav(){
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
   const visible=ZONES.flatMap(z=>grouped[z.id]);
-  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">จัดการหัวข้อกลาง • ใช้ ↑ ↓ ย้ายตำแหน่ง • แก้ชื่อ/ลบด้านขวา • ทุกบัญชีใช้ตาม</div>':"";
+  let html="";
 
   html+=ZONES.filter(z=>grouped[z.id].length).map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
     const children=grouped[z.id].map(c=>{
-      const globalIndex=visible.indexOf(c);
-      const nav=`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="${CATEGORY_SORT_MODE?'event.preventDefault()':`setCategory('${jsString(c)}')`}"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`;
-      if(!CATEGORY_SORT_MODE)return `<div class="cat-row" data-cat="${escAttr(c)}">${nav}</div>`;
-      return `<div class="cat-row sorting" data-cat="${escAttr(c)}">
-        ${nav}
-        <div class="cat-order-tools">
-          <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',-1)" ${globalIndex===0?'disabled':''} title="เลื่อนขึ้น">↑</button>
-          <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',1)" ${globalIndex===visible.length-1?'disabled':''} title="เลื่อนลง">↓</button>
-          ${isAdmin()?`<button class="cat-manage-btn" onclick="event.stopPropagation();openCategoryEditor('${jsString(c)}')" title="แก้ชื่อ">แก้ชื่อ</button><button class="cat-manage-btn cat-delete-btn" onclick="event.stopPropagation();askCategoryDelete('${jsString(c)}')" title="ลบหัวข้อ">ลบ</button>`:""}
-        </div>
-      </div>`;
+      const nav=`<button class="nav-item ${currentView==='category'&&currentCat===c?'active':''}" onclick="setCategory('${jsString(c)}')"><span class="category-name">${escapeHTML(c)}</span><span class="nav-count">${counts[c]}</span></button>`;
+      return `<div class="cat-row" data-cat="${escAttr(c)}">${nav}</div>`;
     }).join("");
 
     return `<div class="zone-block open">
@@ -1274,11 +1377,7 @@ function updateNav(){
   }).join("");
 
   el("categoryNav").innerHTML=html || '<div class="zone-empty">ยังไม่มีหมวดหมู่</div>';
-  if(CATEGORY_SORT_MODE) el("categoryNav").insertAdjacentHTML("beforeend",'<button class="sort-reset" onclick="resetCategoryOrder()">↺ คืนลำดับหัวข้อเริ่มต้น</button>');
-  if(el("sortCatBtn")){
-    el("sortCatBtn").textContent=CATEGORY_SORT_MODE?"✓ เสร็จ":"✎ จัดการหัวข้อ";
-    el("sortCatBtn").classList.toggle("hidden",!isAdmin());
-  }
+  if(el("sortCatBtn")) el("sortCatBtn").classList.toggle("hidden",!isAdmin());
 
   el("countAll").textContent=DATA.length;
   el("countFav").textContent=FAVORITES.filter(id=>DATA.some(x=>x.id===id)).length;
