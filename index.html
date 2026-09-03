@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ff7a00">
-<title>Zap789 PRO V2 — Full Production</title>
+<title>Zap789 PRO V3 — Full Production</title>
 <style>
 :root{
   --primary:#ff7a00;--primary-2:#ff9a3d;--primary-soft:#fff3e8;
@@ -336,7 +336,7 @@ button{cursor:pointer}
 <div id="loginOverlay" class="login-overlay hidden">
   <div class="login-card">
     <div class="login-logo">🔥</div>
-    <h1>Zap789 PRO V2</h1>
+    <h1>Zap789 PRO V3</h1>
     <p>ระบบคลังข้อความสำหรับทีมแอดมิน <b style="color:#ffad61">• TEAM</b></p>
     <div class="field"><label>ชื่อผู้ใช้</label><input id="loginUser" class="input" autocomplete="username" placeholder="Username"></div>
     <div class="field"><label>รหัสผ่าน</label><input id="loginPass" class="input" type="password" autocomplete="current-password" placeholder="Password"></div>
@@ -348,7 +348,7 @@ button{cursor:pointer}
 
 <div id="app" class="app hidden">
   <aside id="sidebar" class="sidebar">
-    <div class="brand"><div class="brand-mark">🔥</div><div><b>Zap789 PRO</b><small>V2 Workspace • TEAM</small></div></div>
+    <div class="brand"><div class="brand-mark">🔥</div><div><b>Zap789 PRO</b><small>V3 Workspace • TEAM</small></div></div>
     <div class="side-title">ทางลัด</div>
     <button class="nav-item active" data-view="all" onclick="setView('all')"><span class="nav-icon">▦</span>ทั้งหมด<span id="countAll" class="nav-count">0</span></button>
     <button class="nav-item" data-view="favorites" onclick="setView('favorites')"><span class="nav-icon">★</span>รายการโปรด<span id="countFav" class="nav-count">0</span></button>
@@ -596,7 +596,7 @@ const DEMO_SEED = [
   {id:"d10",cat:"ปิดแชท",text:"ขอบคุณที่ใช้บริการค่ะ 💛 หากต้องการสอบถามเพิ่มเติม ทักหาแอดมินได้ตลอดนะคะ",tags:"ขอบคุณ ปิดแชท"}
 ];
 const STORAGE = {token:"zap789_v2_token", session:"zap789_v2_session", data:"zap789_v2_data_cache", dataAt:"zap789_v2_data_cache_at", theme:"zap789_theme", favorites:"zap789_v2_favorites", recent:"zap789_v2_recent", usage:"zap789_v2_usage", zones:"zap789_v2_open_zones"};
-const DATA_CACHE_MS = 30000;
+const DATA_CACHE_MS = 60000;
 let CATEGORY_SORT_MODE=false;
 const CATEGORY_LAYOUT_CAT="__ZAP789_CATEGORY_LAYOUT__";
 let CATEGORY_LAYOUT_ROW_ID=null;
@@ -639,13 +639,8 @@ async function saveSharedCategoryLayout(next){
     if(CATEGORY_LAYOUT_ROW_ID){
       await api({action:"edit",id:CATEGORY_LAYOUT_ROW_ID,cat:CATEGORY_LAYOUT_CAT,text:payloadText,tags:"system category layout",image:""});
     }else{
-      await api({action:"add",cat:CATEGORY_LAYOUT_CAT,text:payloadText,tags:"system category layout",image:""});
-      // Fetch once so we know the metadata row id for later edits.
-      const result=await api({action:"list"});
-      const rows=Array.isArray(result)?result:(result.items||[]);
-      applyCategoryLayoutFromRows(rows);
-      DATA=rows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted"&&x.cat!==CATEGORY_LAYOUT_CAT);
-      saveDataCache(DATA);
+      const created=await api({action:"add",cat:CATEGORY_LAYOUT_CAT,text:payloadText,tags:"system category layout",image:""});
+      CATEGORY_LAYOUT_ROW_ID=String(created?.id||created?.item?.id||"");
     }
     toast("บันทึกลำดับหัวข้อกลางแล้ว • ทุกบัญชีจะใช้แบบเดียวกัน");
     return true;
@@ -726,7 +721,8 @@ function saveDataCache(items){
     updatedAt:x.updatedAt||"",
     updatedBy:String(x.updatedBy||"")
   }));
-  localStorage.setItem(STORAGE.data,JSON.stringify(rows));
+  const json=JSON.stringify(rows);
+  if(localStorage.getItem(STORAGE.data)!==json)localStorage.setItem(STORAGE.data,json);
   localStorage.setItem(STORAGE.dataAt,String(Date.now()));
 }
 function toggleMessageSort(){
@@ -1195,7 +1191,7 @@ async function loadData(force=false){
     DATA=cachedRows.map((r,i)=>normalizeRow(r,i)).filter(x=>x.status!=="deleted"&&x.cat!==CATEGORY_LAYOUT_CAT);
     render();
     // Prevent every refresh from hammering Apps Script / Google Sheets.
-    // หัวข้อเป็นค่ากลาง จึงตรวจรายการจากเซิร์ฟเวอร์ทุกครั้งที่เปิด/รีเฟรช เพื่อให้ทุกยูสเห็นตรงกัน
+    if(!force && Date.now()-cachedAt < DATA_CACHE_MS){ setTimeout(()=>loadData(true).catch(()=>{}),0); return; }
   }else{
     el("content").innerHTML='<div class="card-grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>';
   }
@@ -1280,13 +1276,15 @@ function clearSearchAndRender(){
   if(el("search")) el("search").value="";
   render();
 }
+let SEARCH_RENDER_TIMER=null;
 function handleSearchInput(){
   if(currentView==="users"){
     leaveUserManagement();
     currentView="all";currentCat="ทั้งหมด";
     document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view==="all"));
   }
-  render();
+  clearTimeout(SEARCH_RENDER_TIMER);
+  SEARCH_RENDER_TIMER=setTimeout(()=>render(),90);
 }
 
 /* ===================== RENDER ===================== */
