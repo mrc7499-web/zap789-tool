@@ -109,6 +109,10 @@ button{cursor:pointer}
 .cat-row>.nav-item{flex:1;min-width:0}
 .cat-row.sorting{padding:3px 4px;border:1px solid var(--border);background:var(--surface)}
 .cat-order-tools{display:flex;gap:4px;flex:0 0 auto}
+.cat-manage-btn{height:32px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:0 8px;cursor:pointer;font-size:11px;font-weight:800}
+.cat-manage-btn:hover{background:var(--primary-soft);color:var(--primary);border-color:#ffc98f}
+.cat-delete-btn{color:var(--danger)}
+.cat-delete-btn:hover{background:#fff0f0;color:var(--danger);border-color:#f4c7c3}
 .cat-order-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;cursor:pointer;font-weight:900}
 .cat-order-btn:hover{background:var(--primary-soft);color:var(--primary);border-color:#ffc98f}
 .cat-order-btn:disabled{opacity:.28;cursor:not-allowed}
@@ -350,6 +354,36 @@ button{cursor:pointer}
   </div>
 </div>
 
+
+
+<!-- CATEGORY MANAGER -->
+<div id="categoryEditOverlay" class="overlay" onclick="overlayClose(event,'categoryEditOverlay')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><h3>แก้ไขหัวข้อ</h3><button class="icon-btn" onclick="closeCategoryEditor()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>ชื่อหัวข้อ *</label><input id="categoryEditName" class="input" placeholder="ชื่อหัวข้อ"></div>
+      <div class="muted" style="font-size:11px;line-height:1.6">การเปลี่ยนชื่อจะเปลี่ยนหมวดของข้อความทั้งหมดที่อยู่ในหัวข้อนี้ด้วย</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" onclick="closeCategoryEditor()">ยกเลิก</button>
+      <button class="primary-btn" onclick="saveCategoryName()">บันทึกชื่อใหม่</button>
+    </div>
+  </div>
+</div>
+
+<div id="categoryDeleteOverlay" class="overlay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><h3>ลบหัวข้อ</h3><button class="icon-btn" onclick="closeCategoryDelete()">×</button></div>
+    <div class="modal-body">
+      <div id="categoryDeleteText" style="line-height:1.65"></div>
+      <div class="muted" style="font-size:11px;line-height:1.6;margin-top:10px">เพื่อป้องกันข้อความหาย ระบบจะย้ายข้อความในหัวข้อนี้ไปที่ “อื่น ๆ” ก่อน แล้วจึงลบหัวข้อออกจากรายการ</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" onclick="closeCategoryDelete()">ยกเลิก</button>
+      <button class="danger-btn" onclick="confirmCategoryDelete()">ลบหัวข้อ</button>
+    </div>
+  </div>
+</div>
 
 <!-- SHORTCUT MANAGER -->
 <div id="shortcutOverlay" class="overlay" onclick="overlayClose(event,'shortcutOverlay')">
@@ -633,6 +667,122 @@ async function msgDrop(e,targetId){
 function msgDragEnd(){
   MSG_DRAG_ID=null;
   document.querySelectorAll(".msg-dragging,.msg-drag-over").forEach(x=>x.classList.remove("msg-dragging","msg-drag-over"));
+}
+
+
+let CATEGORY_EDIT_OLD=null;
+let CATEGORY_DELETE_NAME=null;
+
+function openCategoryEditor(cat){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่แก้ไขหัวข้อได้");return}
+  CATEGORY_EDIT_OLD=cat;
+  el("categoryEditName").value=cat;
+  el("categoryEditOverlay").classList.add("show");
+  setTimeout(()=>el("categoryEditName").focus(),50);
+}
+function closeCategoryEditor(){
+  el("categoryEditOverlay").classList.remove("show");
+  CATEGORY_EDIT_OLD=null;
+}
+async function saveCategoryName(){
+  if(!CATEGORY_EDIT_OLD)return;
+  const oldName=CATEGORY_EDIT_OLD;
+  const newName=el("categoryEditName").value.trim();
+  if(!newName){toast("กรุณาใส่ชื่อหัวข้อ");return}
+  if(newName===oldName){closeCategoryEditor();return}
+  if(DATA.some(x=>x.cat===newName)){toast("มีหัวขื่อนี้อยู่แล้ว");return}
+
+  const affected=DATA.filter(x=>x.cat===oldName);
+  if(!affected.length){closeCategoryEditor();return}
+  const before=DATA.map(x=>({...x}));
+
+  try{
+    for(const item of affected){
+      await api({action:"save",id:item.id,cat:newName,text:item.text,tags:item.tags||"",image:item.img||item.image||""});
+      item.cat=newName;
+    }
+
+    const order=getCategoryOrder().map(c=>c===oldName?newName:c);
+    saveCategoryOrder([...new Set(order)]);
+
+    const zoneMap=getCategoryZoneMap();
+    if(zoneMap[oldName]){
+      zoneMap[newName]=zoneMap[oldName];
+      delete zoneMap[oldName];
+      saveCategoryZoneMap(zoneMap);
+    }
+
+    // Preserve shortcut preference under the renamed category
+    try{
+      const cfg=JSON.parse(localStorage.getItem(shortcutKey())||"null");
+      if(cfg&&Array.isArray(cfg.order)&&Array.isArray(cfg.visible)){
+        cfg.order=cfg.order.map(c=>c===oldName?newName:c);
+        cfg.visible=cfg.visible.map(c=>c===oldName?newName:c);
+        localStorage.setItem(shortcutKey(),JSON.stringify(cfg));
+      }
+    }catch(_){}
+
+    if(currentCat===oldName)currentCat=newName;
+    saveDataCache(DATA);
+    closeCategoryEditor();
+    updateNav(); updateChips(); render();
+    toast("เปลี่ยนชื่อหัวข้อแล้ว");
+  }catch(err){
+    DATA=before;
+    saveDataCache(DATA);
+    updateNav(); updateChips(); render();
+    toast(err.message||"เปลี่ยนชื่อหัวข้อไม่สำเร็จ");
+    try{await loadData(true)}catch(_){}
+  }
+}
+function askCategoryDelete(cat){
+  if(!isAdmin()){toast("เฉพาะ Owner / Admin เท่านั้นที่ลบหัวข้อได้");return}
+  CATEGORY_DELETE_NAME=cat;
+  const count=DATA.filter(x=>x.cat===cat).length;
+  el("categoryDeleteText").innerHTML=`ต้องการลบหัวข้อ <b>${escapeHTML(cat)}</b> ใช่หรือไม่?<br>มีข้อความในหัวข้อนี้ <b>${count}</b> รายการ`;
+  el("categoryDeleteOverlay").classList.add("show");
+}
+function closeCategoryDelete(){
+  el("categoryDeleteOverlay").classList.remove("show");
+  CATEGORY_DELETE_NAME=null;
+}
+async function confirmCategoryDelete(){
+  const cat=CATEGORY_DELETE_NAME;
+  if(!cat)return;
+  const affected=DATA.filter(x=>x.cat===cat);
+  const before=DATA.map(x=>({...x}));
+  try{
+    for(const item of affected){
+      await api({action:"save",id:item.id,cat:"อื่น ๆ",text:item.text,tags:item.tags||"",image:item.img||item.image||""});
+      item.cat="อื่น ๆ";
+    }
+
+    saveCategoryOrder(getCategoryOrder().filter(c=>c!==cat));
+    const zoneMap=getCategoryZoneMap();
+    delete zoneMap[cat];
+    saveCategoryZoneMap(zoneMap);
+
+    try{
+      const cfg=JSON.parse(localStorage.getItem(shortcutKey())||"null");
+      if(cfg&&Array.isArray(cfg.order)&&Array.isArray(cfg.visible)){
+        cfg.order=cfg.order.filter(c=>c!==cat);
+        cfg.visible=cfg.visible.filter(c=>c!==cat);
+        localStorage.setItem(shortcutKey(),JSON.stringify(cfg));
+      }
+    }catch(_){}
+
+    if(currentView==="category"&&currentCat===cat){currentView="all";currentCat="ทั้งหมด"}
+    saveDataCache(DATA);
+    closeCategoryDelete();
+    updateNav(); updateChips(); render();
+    toast("ลบหัวข้อแล้ว • ข้อความถูกย้ายไป อื่น ๆ");
+  }catch(err){
+    DATA=before;
+    saveDataCache(DATA);
+    updateNav(); updateChips(); render();
+    toast(err.message||"ลบหัวข้อไม่สำเร็จ");
+    try{await loadData(true)}catch(_){}
+  }
 }
 
 function resetCategoryOrder(){
@@ -993,7 +1143,7 @@ function updateNav(){
   cats.forEach(c=>grouped[zoneForCategory(c).id].push(c));
 
   const visible=ZONES.flatMap(z=>grouped[z.id]);
-  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">กด ↑ หรือ ↓ เพื่อย้ายหัวข้อได้เลย • ถ้าถึงขอบกรอบ ระบบจะย้ายหัวข้อข้ามกรอบให้อัตโนมัติ</div>':"";
+  let html=CATEGORY_SORT_MODE?'<div class="cat-sort-guide">กด ↑ ↓ เพื่อย้ายหัวข้อ • Owner/Admin กด “แก้ชื่อ” หรือ “ลบ” ได้จากตรงนี้</div>':"";
 
   html+=ZONES.filter(z=>grouped[z.id].length).map(z=>{
     const total=grouped[z.id].reduce((sum,c)=>sum+(counts[c]||0),0);
@@ -1006,6 +1156,7 @@ function updateNav(){
         <div class="cat-order-tools">
           <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',-1)" ${globalIndex===0?'disabled':''} title="เลื่อนขึ้น">↑</button>
           <button class="cat-order-btn" onclick="event.stopPropagation();moveCategory('${jsString(c)}',1)" ${globalIndex===visible.length-1?'disabled':''} title="เลื่อนลง">↓</button>
+          ${isAdmin()?`<button class="cat-manage-btn" onclick="event.stopPropagation();openCategoryEditor('${jsString(c)}')" title="แก้ชื่อ">แก้ชื่อ</button><button class="cat-manage-btn cat-delete-btn" onclick="event.stopPropagation();askCategoryDelete('${jsString(c)}')" title="ลบหัวข้อ">ลบ</button>`:""}
         </div>
       </div>`;
     }).join("");
